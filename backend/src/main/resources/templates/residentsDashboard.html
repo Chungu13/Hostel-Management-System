@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            color: #1c1e21;
+        }
+
+        .dashboard-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 60px 40px;
+            border-radius: 30px;
+            color: white;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(118, 75, 162, 0.3);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 35px;
+            border-radius: 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.02);
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .card-icon {
+            width: 80px;
+            height: 80px;
+            background: #f3f4f9;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: #667eea;
+            margin-bottom: 25px;
+            transition: 0.3s;
+        }
+
+        .card:hover .card-icon {
+            background: #667eea;
+            color: white;
+        }
+
+        .card h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            color: #65676b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logout-link {
+            color: #65676b;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+
+        .logout-link:hover {
+            color: #ff4757;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dashboard-wrapper">
+        <nav class="navbar">
+            <span style="font-weight: 600; font-size: 18px;">APU Hostel Resident Portal</span>
+            <a th:href="@{/logout}" class="logout-link"><i class="bi bi-box-arrow-right"></i> Logout</a>
+        </nav>
+
+        <header class="header">
+            <h1>Hello, <span th:text="${username}">Resident</span>!</h1>
+            <p>Welcome to your personal dashboard. Manage your visits and profile here.</p>
+        </header>
+
+        <section class="grid-container">
+            <a th:href="@{/editProfile}" class="card">
+                <div class="card-icon"><i class="bi bi-person-badge"></i></div>
+                <h3>Edit Profile</h3>
+                <p>Keep your personal information and contact details up to date.</p>
+            </a>
+
+            <a th:href="@{/requestVisit}" class="card">
+                <div class="card-icon"><i class="bi bi-plus-circle"></i></div>
+                <h3>New Visit Request</h3>
+                <p>Register a visitor and generate a secure access code for them.</p>
+            </a>
+
+            <a th:href="@{/viewVisitRequests}" class="card">
+                <div class="card-icon"><i class="bi bi-card-checklist"></i></div>
+                <h3>Active Requests</h3>
+                <p>Monitor the status of your current pending visitor approvals.</p>
+            </a>
+
+            <a th:href="@{/viewVisitHistory}" class="card">
+                <div class="card-icon"><i class="bi bi-clock-history"></i></div>
+                <h3>Visit History</h3>
+                <p>View a log of all past visitors and verification timestamps.</p>
+            </a>
+        </section>
+    </div>
+
+</body>
+
+</html>

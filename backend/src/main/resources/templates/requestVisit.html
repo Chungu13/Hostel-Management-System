@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Request a Visit - APU Hostel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #fdfdfd;
+            background-image: radial-gradient(#dee1e6 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+            color: #333;
+            padding: 50px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .form-container {
+            background: white;
+            padding: 50px;
+            border-radius: 30px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 550px;
+            position: relative;
+        }
+
+        .form-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 30px 30px 0 0;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1a1a2e;
+            text-align: center;
+        }
+
+        p.subtitle {
+            color: #777;
+            margin-bottom: 40px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #f0f0f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: 0.3s;
+            background: #fafafa;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 18px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 20px;
+            box-shadow: 0 10px 20px rgba(118, 75, 162, 0.2);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(118, 75, 162, 0.3);
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .alert-success {
+            background: #f0fff4;
+            color: #2f855a;
+            border: 1px solid #c6f6d5;
+        }
+
+        .alert-error {
+            background: #fff5f5;
+            color: #c53030;
+            border: 1px solid #fed7d7;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 25px;
+            color: #777;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        .back-link:hover {
+            color: #667eea;
+        }
+
+        .info-box {
+            background: #f8faff;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid #edf2f7;
+            font-size: 14px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="form-container">
+        <h1>Request a Visit</h1>
+        <p class="subtitle">Enter the details of your guest to generate an access code.</p>
+
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+        <div class="info-box">
+            <i class="bi bi-person-check"></i>
+            <span>Logged in as: <strong th:text="${username}">Username</strong></span>
+        </div>
+
+        <form th:action="@{/requestVisit}" method="POST">
+            <div class="form-group">
+                <label>Your Full Name</label>
+                <input type="text" name="residentName" placeholder="As per hostel records" required>
+            </div>
+
+            <div class="form-group">
+                <label>Visitor Full Name</label>
+                <input type="text" name="visitorName" placeholder="Enter guest's name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Visitor Username (Access ID)</label>
+                <input type="text" name="visitorUsername" placeholder="Create an ID for your guest" required>
+            </div>
+
+            <div class="form-group">
+                <label>Visitor Access Pin</label>
+                <input type="password" name="visitorPassword" placeholder="Create a secure pin" required>
+            </div>
+
+            <button type="submit" class="submit-btn">Generate Request</button>
+            <a th:href="@{/residentsDashboard}" class="back-link"><i class="bi bi-grid-fill"></i> Return to
+                Dashboard</a>
+        </form>
+    </div>
+
+</body>
+
+</html>

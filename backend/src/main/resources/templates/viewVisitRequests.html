@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Active Visit Requests - APU Hostel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            color: #1c1e21;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: #65676b;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+
+        .back-btn:hover {
+            color: #667eea;
+        }
+
+        .request-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .request-info h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .request-info p {
+            color: #65676b;
+            font-size: 14px;
+        }
+
+        .meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #8a8d91;
+        }
+
+        .status-badge {
+            padding: 6px 15px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #f1f3f4;
+            color: #5f6368;
+        }
+
+        .status-submitted {
+            background: #e8f0fe;
+            color: #1967d2;
+        }
+
+        .status-verified {
+            background: #e6f4ea;
+            color: #137333;
+        }
+
+        .status-canceled {
+            background: #fce8e6;
+            color: #c5221f;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .update-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .btn-update {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-update:hover {
+            background: #764ba2;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #e6f4ea;
+            color: #137333;
+            border: 1px solid #ceead6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            background: white;
+            border-radius: 20px;
+            color: #65676b;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: block;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h2>Your Active Visit Requests</h2>
+            <a th:href="@{/residentsDashboard}" class="back-btn"><i class="bi bi-arrow-left"></i> Dashboard</a>
+        </div>
+
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+        <div th:each="request : ${visitRequests}" class="request-card">
+            <div class="request-info">
+                <h3 th:text="${request.visitorName}">Visitor Name</h3>
+                <p>Visitor Profile: <span th:text="${request.visitorUsername}" style="font-weight: 600;">ID</span></p>
+                <div class="meta">
+                    <span><i class="bi bi-calendar3"></i> <span
+                            th:text="${#temporals.format(request.requestDate, 'dd MMM yyyy HH:mm')}">Date</span></span>
+                    <span class="status-badge" th:classappend="'status-' + ${request.status.toLowerCase()}"
+                        th:text="${request.status}">Status</span>
+                </div>
+            </div>
+
+            <div class="actions">
+                <form th:action="@{/updateVisitStatus}" method="POST" class="update-form">
+                    <input type="hidden" name="id" th:value="${request.id}">
+                    <select name="status">
+                        <option value="Submitted" th:selected="${request.status == 'Submitted'}">Submitted</option>
+                        <option value="Canceled" th:selected="${request.status == 'Canceled'}">Canceled</option>
+                        <option value="Closed" th:selected="${request.status == 'Closed'}">Closed</option>
+                    </select>
+                    <button type="submit" class="btn-update">Update Status</button>
+                </form>
+            </div>
+        </div>
+
+        <div th:if="${visitRequests == null || visitRequests.isEmpty()}" class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>You have no active visit requests.</p>
+            <br>
+            <a th:href="@{/requestVisit}" style="color: #667eea; text-decoration: none; font-weight: 600;">Create a new
+                request</a>
+        </div>
+    </div>
+
+</body>
+
+</html>

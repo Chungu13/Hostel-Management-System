@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Residents - APU Hostel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f4f7fe;
+            color: #1a1a2e;
+            padding: 40px;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .search-container {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-container select,
+        .search-container input {
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        .search-container input {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-search {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .btn-search:hover {
+            background: #2a2a4e;
+        }
+
+        .btn-view-all {
+            background: #eef2ff;
+            color: #4338ca;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f9fafb;
+            padding: 18px 20px;
+            text-align: left;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6b7280;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        td {
+            padding: 18px 20px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #fcfdfe;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"] {
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            width: 100%;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-yes {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-no {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .update-btn {
+            background: #dbeafe;
+            color: #1e40af;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .delete-btn {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bef264;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .back-dashboard {
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: 0.3s;
+        }
+
+        .back-dashboard:hover {
+            color: #1a1a2e;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header-section">
+        <div>
+            <a th:href="@{/managingStaffDashboard}" class="back-dashboard"><i class="bi bi-arrow-left"></i> Back to
+                Dashboard</a>
+            <h2>Resident Management</h2>
+        </div>
+        <a th:href="@{/admin/viewResidents}" class="btn btn-view-all">View All Residents</a>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+    <form th:action="@{/admin/viewResidents}" method="GET" class="search-container">
+        <select name="searchType">
+            <option value="name">Name</option>
+            <option value="email">Email</option>
+            <option value="ic">IC Number</option>
+            <option value="status">Status (Yes/No)</option>
+        </select>
+        <input type="text" name="searchValue" placeholder="Search for residents..." required>
+        <button type="submit" class="btn btn-search"><i class="bi bi-search"></i> Search</button>
+    </form>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Resident</th>
+                    <th>Contact Info</th>
+                    <th>Physical Info</th>
+                    <th>Address</th>
+                    <th>Approved</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="resident : ${residentsList != null ? residentsList : searchResults}">
+                    <form th:action="@{/admin/updateResident}" method="POST">
+                        <input type="hidden" name="username" th:value="${resident.username}">
+                        <td>
+                            <div style="font-weight: 600;" th:text="${resident.username}">Username</div>
+                            <input type="text" name="name" th:value="${resident.name}" style="margin-top: 5px;">
+                        </td>
+                        <td>
+                            <input type="email" name="email" th:value="${resident.email}">
+                            <input type="tel" name="phone" th:value="${resident.phone}" style="margin-top: 5px;">
+                        </td>
+                        <td>
+                            <div th:text="${resident.ic}" style="font-size: 12px; color: #777;">IC</div>
+                            <input type="text" name="gender" th:value="${resident.gender}"
+                                style="margin-top: 5px; width: 80px;">
+                        </td>
+                        <td>
+                            <input type="text" name="address" th:value="${resident.address}">
+                        </td>
+                        <td>
+                            <select name="approved" style="padding: 5px; border-radius: 5px;">
+                                <option value="Yes" th:selected="${resident.approved}">Yes</option>
+                                <option value="No" th:selected="${!resident.approved}">No</option>
+                            </select>
+                        </td>
+                        <td class="action-btns">
+                            <button type="submit" class="update-btn">Update</button>
+                            <a th:href="@{/admin/deleteResident(username=${resident.username})}" class="delete-btn"
+                                onclick="return confirm('Are you sure you want to delete this resident?')">Delete</a>
+                        </td>
+                    </form>
+                </tr>
+                <tr
+                    th:if="${(residentsList == null || residentsList.isEmpty()) && (searchResults == null || searchResults.isEmpty())}">
+                    <td colspan="6" style="text-align: center; padding: 40px; color: #9ca3af;">No residents found in the
+                        system.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Resident Analytics - APU Hostel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f8fafc;
+            color: #1e293b;
+            padding: 40px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+
+        .back-link:hover {
+            color: #1e293b;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .report-card {
+            background: white;
+            padding: 35px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+            border: 1px solid #f1f5f9;
+        }
+
+        .card-title {
+            font-size: 14px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .total-number {
+            font-size: 48px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .data-list {
+            list-style: none;
+        }
+
+        .data-item {
+            margin-bottom: 20px;
+        }
+
+        .data-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s ease-in-out;
+        }
+
+        .blue {
+            background: #3b82f6;
+        }
+
+        .green {
+            background: #22c55e;
+        }
+
+        .purple {
+            background: #8b5cf6;
+        }
+
+        .orange {
+            background: #f59e0b;
+        }
+
+        .red {
+            background: #ef4444;
+        }
+
+        .summary-box {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: white;
+            padding: 40px;
+            border-radius: 24px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+
+        .summary-item h2 {
+            font-size: 36px;
+            margin-bottom: 5px;
+        }
+
+        .summary-item p {
+            opacity: 0.7;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Resident Reports</h1>
+        <a th:href="@{/managingStaffDashboard}" class="back-link"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    </div>
+
+    <div class="stats-grid">
+        <div class="summary-box report-card">
+            <div class="summary-item">
+                <h2 th:text="${totalResidents}">0</h2>
+                <p>Total Registered Residents</p>
+            </div>
+            <div class="summary-item">
+                <h2 th:text="${#lists.size(approvalReport)}">0</h2>
+                <p>Status Categories</p>
+            </div>
+        </div>
+
+        <div class="report-card">
+            <div class="card-title">
+                <span>Gender Distribution</span>
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <ul class="data-list">
+                <li th:each="row : ${genderReport}" class="data-item">
+                    <div class="data-label">
+                        <span th:text="${row[0]}">Gender</span>
+                        <span th:text="${row[1]}">Count</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill blue"
+                            th:style="'width: ' + (${row[1]} * 100.0 / ${totalResidents}) + '%'"></div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="report-card">
+            <div class="card-title">
+                <span>Approval Status</span>
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <ul class="data-list">
+                <li th:each="row : ${approvalReport}" class="data-item">
+                    <div class="data-label">
+                        <span th:text="${row[0] ? 'Approved' : 'Pending'}">Status</span>
+                        <span th:text="${row[1]}">Count</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill green"
+                            th:style="'width: ' + (${row[1]} * 100.0 / ${totalResidents}) + '%'"></div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+</body>
+
+</html>

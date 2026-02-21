@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Register Security Staff - APU Hostel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #fdfdfd;
+            background-image: radial-gradient(#dee1e6 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: #333;
+            padding: 60px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .form-container {
+            background: white;
+            padding: 60px;
+            border-radius: 32px;
+            box-shadow: 0 50px 100px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 650px;
+            position: relative;
+            border: 1px solid #eee;
+        }
+
+        .form-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 12px;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            border-radius: 32px 32px 0 0;
+        }
+
+        .header-icon {
+            width: 70px;
+            height: 70px;
+            background: #eef2ff;
+            color: #4338ca;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            margin: 0 auto 30px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1a1a2e;
+            text-align: center;
+        }
+
+        p.subtitle {
+            color: #777;
+            margin-bottom: 40px;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #f0f0f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: 0.3s;
+            background: #fafafa;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #3a7bd5;
+            background: white;
+            box-shadow: 0 5px 15px rgba(58, 123, 213, 0.1);
+        }
+
+        .row-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: #1a1a2e;
+            color: white;
+            padding: 18px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            background: #2a2a4e;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .alert-success {
+            background: #f0fff4;
+            color: #2f855a;
+            border: 1px solid #c6f6d5;
+        }
+
+        .alert-error {
+            background: #fff5f5;
+            color: #c53030;
+            border: 1px solid #fed7d7;
+        }
+
+        .dashboard-link {
+            display: block;
+            text-align: center;
+            margin-top: 25px;
+            color: #777;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        .dashboard-link:hover {
+            color: #3a7bd5;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="form-container">
+        <div class="header-icon"><i class="bi bi-shield-lock-fill"></i></div>
+        <h1>Staff Onboarding</h1>
+        <p class="subtitle">Complete the profile details for the newly registered security staff member.</p>
+
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+        <form th:action="@{/addStaff}" method="POST">
+            <div class="form-group">
+                <label>Select Staff Account</label>
+                <select name="selectedUser" required>
+                    <option value="">-- Choose Account --</option>
+                    <option th:each="user : ${availableSecurityStaff}" th:value="${user.userName}"
+                        th:text="${user.userName}"></option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="givenname" placeholder="Staff's Legal Name" required>
+            </div>
+
+            <div class="row-grid">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" placeholder="staff@apu.edu.my" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" name="phone" placeholder="+60 1x-xxxxxxx" required>
+                </div>
+            </div>
+
+            <div class="row-grid">
+                <div class="form-group">
+                    <label>IC / Identity Number</label>
+                    <input type="text" name="IC" placeholder="Identification Number" required>
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select name="gender" required>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Permanent Address</label>
+                <input type="text" name="addy" placeholder="Residential Address" required>
+            </div>
+
+            <button type="submit" class="submit-btn"><i class="bi bi-person-check-fill"></i> Finalize
+                Registration</button>
+            <a th:href="@{/managingStaffDashboard}" class="dashboard-link"><i class="bi bi-arrow-left"></i> Return to
+                Dashboard</a>
+        </form>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Visit History - APU Hostel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f8f9fa;
+            color: #333;
+            padding: 50px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #1a1a2e;
+        }
+
+        .dashboard-btn {
+            text-decoration: none;
+            color: #1a1a2e;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-radius: 12px;
+            transition: 0.3s;
+            border: 1px solid #ddd;
+        }
+
+        .dashboard-btn:hover {
+            background: #1a1a2e;
+            color: white;
+            border-color: #1a1a2e;
+        }
+
+        .history-table-container {
+            background: white;
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 15px 20px;
+            color: #6c757d;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #f8f9fa;
+        }
+
+        td {
+            padding: 20px;
+            border-bottom: 1px solid #f8f9fa;
+            font-size: 15px;
+        }
+
+        .visitor-avatar {
+            width: 40px;
+            height: 40px;
+            background: #eef2ff;
+            color: #4338ca;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .status-pill {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-verified {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-submitted {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-canceled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-closed {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 100px 0;
+            color: #adb5bd;
+        }
+
+        .empty-history i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Visit Request History</h1>
+            <a th:href="@{/residentsDashboard}" class="dashboard-btn"><i class="bi bi-house-door"></i> Back to
+                Dashboard</a>
+        </div>
+
+        <div class="history-table-container">
+            <table th:if="${visitRequests != null && !visitRequests.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th colspan="2">Visitor</th>
+                        <th>Profile ID</th>
+                        <th>Request Date</th>
+                        <th>Current Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="request : ${visitRequests}">
+                        <td style="width: 60px;">
+                            <div class="visitor-avatar"
+                                th:text="${#strings.substring(request.visitorName, 0, 1).toUpperCase()}">V</div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 600;" th:text="${request.visitorName}">Visitor Name</div>
+                        </td>
+                        <td th:text="${request.visitorUsername}">VisitorID</td>
+                        <td th:text="${#temporals.format(request.requestDate, 'dd MMM yyyy, HH:mm')}">Date</td>
+                        <td>
+                            <span class="status-pill" th:classappend="'status-' + ${request.status.toLowerCase()}"
+                                th:text="${request.status}">Status</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div th:if="${visitRequests == null || visitRequests.isEmpty()}" class="empty-history">
+                <i class="bi bi-clock-history"></i>
+                <p>No visit request history found.</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

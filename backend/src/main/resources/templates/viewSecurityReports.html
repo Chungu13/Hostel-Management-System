@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Security Analytics - APU Hostel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 40px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: #94a3b8;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+
+        .report-card {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .icon-box {
+            width: 50px;
+            height: 50px;
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .total-section {
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            border-radius: 32px;
+            margin-bottom: 30px;
+        }
+
+        .total-section h2 {
+            font-size: 64px;
+            font-weight: 600;
+        }
+
+        .total-section p {
+            opacity: 0.8;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        .data-item {
+            margin-bottom: 25px;
+        }
+
+        .data-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .progress-track {
+            height: 12px;
+            background: #334155;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #38bdf8;
+            border-radius: 6px;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Security Force Analytics</h1>
+        <a th:href="@{/managingStaffDashboard}" class="back-link"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    </div>
+
+    <div class="stats-grid">
+        <div class="total-section">
+            <h2 th:text="${totalSecurity}">0</h2>
+            <p>Active Security Personnel</p>
+        </div>
+
+        <div class="report-card">
+            <div class="card-header">
+                <div class="icon-box"><i class="bi bi-gender-ambiguous"></i></div>
+                <h3>Personnel Diversity</h3>
+            </div>
+
+            <div th:each="row : ${genderReport}" class="data-item">
+                <div class="data-meta">
+                    <span th:text="${row[0]}">Gender</span>
+                    <span th:text="${row[1]}">Count</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-bar" th:style="'width: ' + (${row[1]} * 100.0 / ${totalSecurity}) + '%'"></div>
+                </div>
+            </div>
+
+            <div th:if="${genderReport == null || genderReport.isEmpty()}"
+                style="text-align: center; color: #94a3b8; padding: 20px;">
+                No personnel data recorded yet.
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
