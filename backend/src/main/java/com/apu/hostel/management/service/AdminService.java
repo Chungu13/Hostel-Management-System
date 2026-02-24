@@ -49,9 +49,9 @@ public class AdminService {
     }
 
     @Transactional
-    public void updateResident(String username, String name, String email, String phone, String gender, String address,
+    public void updateResident(Long id, String name, String email, String phone, String gender, String address,
             boolean approved) {
-        Residents resident = residentRepository.findByUsername(username)
+        Residents resident = residentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Resident not found."));
         resident.setName(name);
         resident.setEmail(email);
@@ -60,12 +60,19 @@ public class AdminService {
         resident.setAddress(address);
         resident.setApproved(approved);
         residentRepository.save(resident);
+
+        // Also update the MyUsers entry for login permission
+        MyUsers user = resident.getMyUser();
+        if (user != null) {
+            user.setApproved(approved);
+            userRepository.save(user);
+        }
     }
 
     @Transactional
-    public void deleteResident(String username) {
-        residentRepository.findByUsername(username).ifPresent(r -> residentRepository.delete(r));
-        userRepository.findByUserName(username).ifPresent(user -> userRepository.delete(user));
+    public void deleteResident(Long id) {
+        residentRepository.findById(id).ifPresent(r -> residentRepository.delete(r));
+        userRepository.findById(id).ifPresent(user -> userRepository.delete(user));
     }
 
     // --- Staff Logic ---
@@ -86,9 +93,9 @@ public class AdminService {
     }
 
     @Transactional
-    public SecurityStaff registerStaff(String username, String name, String email, String phone, String ic,
+    public SecurityStaff registerStaff(Long userId, String name, String email, String phone, String ic,
             String gender, String address, Long propertyId) {
-        MyUsers user = userRepository.findByUserName(username)
+        MyUsers user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User account not found."));
 
         com.apu.hostel.management.model.Property property = propertyRepository.findById(propertyId)
@@ -99,8 +106,8 @@ public class AdminService {
     }
 
     @Transactional
-    public void updateStaff(String username, String name, String email, String phone, String gender, String address) {
-        SecurityStaff staff = staffRepository.findByUsername(username)
+    public void updateStaff(Long id, String name, String email, String phone, String gender, String address) {
+        SecurityStaff staff = staffRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Staff member not found."));
         staff.setName(name);
         staff.setEmail(email);
@@ -111,8 +118,8 @@ public class AdminService {
     }
 
     @Transactional
-    public void deleteStaff(String username) {
-        staffRepository.findByUsername(username).ifPresent(s -> staffRepository.delete(s));
-        userRepository.findByUserName(username).ifPresent(user -> userRepository.delete(user));
+    public void deleteStaff(Long id) {
+        staffRepository.findById(id).ifPresent(s -> staffRepository.delete(s));
+        userRepository.findById(id).ifPresent(user -> userRepository.delete(user));
     }
 }

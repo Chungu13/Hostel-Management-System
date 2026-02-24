@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface VerifiedVisitorsRepository extends JpaRepository<VerifiedVisitors, Long> {
-    List<VerifiedVisitors> findBySecurityStaffUsername(String username);
+    List<VerifiedVisitors> findBySecurityStaffId(Long staffId);
 
     List<VerifiedVisitors> findByOrderByIdDesc();
 }

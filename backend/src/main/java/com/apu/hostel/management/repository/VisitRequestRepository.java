@@ -16,7 +16,7 @@ public interface VisitRequestRepository extends JpaRepository<VisitRequest, Long
 
     List<VisitRequest> findByVisitorUsername(String visitorUsername);
 
-    List<VisitRequest> findByResidentUsername(String residentUsername);
+    List<VisitRequest> findByResidentId(Long residentId);
 
     @Query("SELECT v FROM VisitRequest v WHERE v.residentName = :residentName AND v.visitorUsername = :visitorUsername")
     Optional<VisitRequest> findByResidentNameAndVisitorUsername(@Param("residentName") String residentName,

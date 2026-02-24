@@ -18,7 +18,7 @@ public class VerifiedVisitors implements Serializable {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "securitystaff_username", referencedColumnName = "username", nullable = false)
+    @JoinColumn(name = "securitystaff_id", referencedColumnName = "id", nullable = false)
     private SecurityStaff securityStaff;
 
     @Column(name = "resident_name", nullable = false)

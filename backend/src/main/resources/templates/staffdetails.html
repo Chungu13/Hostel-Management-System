@@ -184,8 +184,8 @@
                 <label>Select Staff Account</label>
                 <select name="selectedUser" required>
                     <option value="">-- Choose Account --</option>
-                    <option th:each="user : ${availableSecurityStaff}" th:value="${user.userName}"
-                        th:text="${user.userName}"></option>
+                    <option th:each="user : ${availableSecurityStaff}" th:value="${user.id}" th:text="${user.email}">
+                    </option>
                 </select>
             </div>
 

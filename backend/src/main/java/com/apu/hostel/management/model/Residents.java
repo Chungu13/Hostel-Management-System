@@ -21,9 +21,6 @@ public class Residents implements Serializable {
     @MapsId
     private MyUsers myUser;
 
-    @Column(nullable = false, unique = true)
-    private String username;
-
     @Column(nullable = false)
     private String name;
 
@@ -55,7 +52,6 @@ public class Residents implements Serializable {
     public Residents(MyUsers myUser, String name, String email, String phone, String ic, String gender, String address,
             String room, Property property) {
         this.myUser = myUser;
-        this.username = myUser.getUserName();
         this.name = name;
         this.email = email;
         this.phone = phone;

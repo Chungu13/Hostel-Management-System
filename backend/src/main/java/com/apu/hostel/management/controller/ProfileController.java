@@ -1,110 +1,181 @@
 package com.apu.hostel.management.controller;
 
 import com.apu.hostel.management.model.MyUsers;
-import com.apu.hostel.management.model.Residents;
-import com.apu.hostel.management.model.SecurityStaff;
-import com.apu.hostel.management.repository.ResidentRepository;
-import com.apu.hostel.management.repository.SecurityStaffRepository;
-import jakarta.servlet.http.HttpSession;
+import com.apu.hostel.management.model.Property;
+import com.apu.hostel.management.repository.PropertyRepository;
+import com.apu.hostel.management.repository.UserRepository;
+import com.apu.hostel.management.security.JwtPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.Objects;
+import java.util.Map;
 import java.util.Optional;
 
-@Controller
+@RestController
+@RequestMapping("/api/profile")
+@Slf4j
 public class ProfileController {
 
     @Autowired
-    private ResidentRepository residentRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    private SecurityStaffRepository securityStaffRepository;
+    private PropertyRepository propertyRepository;
 
-    @GetMapping("/editProfile")
-    public String showEditProfile(HttpSession session, Model model) {
-        MyUsers user = (MyUsers) session.getAttribute("user");
-        if (user == null) {
-            return "redirect:/login";
+    private JwtPrincipal getPrincipal() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof JwtPrincipal jp) {
+            return jp;
         }
-
-        String role = user.getMyRole();
-        if ("Resident".equals(role)) {
-            Optional<Residents> resident = residentRepository
-                    .findByUsername(Objects.requireNonNull(user.getUserName()));
-            if (resident.isPresent()) {
-                model.addAttribute("profile", resident.get());
-                return "editProfileResident";
-            }
-        } else if ("Security Staff".equals(role) || "Managing Staff".equals(role)) {
-            Optional<SecurityStaff> staff = securityStaffRepository
-                    .findByUsername(Objects.requireNonNull(user.getUserName()));
-            if (staff.isPresent()) {
-                model.addAttribute("profile", staff.get());
-                return "editProfileStaff";
-            }
-        }
-
-        return "redirect:/";
+        return null;
     }
 
-    @PostMapping("/editProfileResident")
-    public String updateResidentProfile(
-            @RequestParam String name,
-            @RequestParam String email,
-            @RequestParam String phone,
-            @RequestParam String address,
-            HttpSession session,
-            RedirectAttributes redirectAttributes) {
+    /** GET /api/profile/me - Returns the logged in user's profile */
+    @GetMapping("/me")
+    public ResponseEntity<?> getMyProfile() {
+        JwtPrincipal principal = getPrincipal();
+        if (principal == null)
+            return ResponseEntity.status(401).body("Not authenticated");
 
-        MyUsers user = (MyUsers) session.getAttribute("user");
-        if (user == null)
-            return "redirect:/login";
+        return userRepository.findById(principal.getUserId())
+                .map(user -> {
+                    Map<String, Object> resp = new java.util.HashMap<>();
+                    resp.put("fullName", user.getFullName() != null ? user.getFullName() : "");
+                    resp.put("email", user.getEmail());
+                    resp.put("phone", user.getPhone() != null ? user.getPhone() : "");
+                    resp.put("address", user.getAddress() != null ? user.getAddress() : "");
+                    resp.put("myRole", user.getMyRole());
+                    resp.put("profileImage", user.getProfileImage());
 
-        Optional<Residents> residentOpt = residentRepository.findByUsername(Objects.requireNonNull(user.getUserName()));
-        if (residentOpt.isPresent()) {
-            Residents resident = residentOpt.get();
-            resident.setName(name);
-            resident.setEmail(email);
-            resident.setPhone(phone);
-            resident.setAddress(address);
-            residentRepository.save(resident);
-            redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully!");
-        }
-
-        return "redirect:/editProfile";
+                    if (user.getPropertyId() != null) {
+                        propertyRepository.findById(user.getPropertyId()).ifPresent(prop -> {
+                            resp.put("propertyName", prop.getName());
+                            resp.put("propertyAddress", prop.getAddress());
+                            resp.put("propertyType", prop.getPropertyType());
+                        });
+                    }
+                    return ResponseEntity.ok(resp);
+                })
+                .orElse(ResponseEntity.status(404).build());
     }
 
-    @PostMapping("/editProfileStaff")
-    public String updateStaffProfile(
-            @RequestParam String name,
-            @RequestParam String email,
-            @RequestParam String phone,
-            @RequestParam String address,
-            HttpSession session,
-            RedirectAttributes redirectAttributes) {
-
-        MyUsers user = (MyUsers) session.getAttribute("user");
-        if (user == null)
-            return "redirect:/login";
-
-        Optional<SecurityStaff> staffOpt = securityStaffRepository
-                .findByUsername(Objects.requireNonNull(user.getUserName()));
-        if (staffOpt.isPresent()) {
-            SecurityStaff staff = staffOpt.get();
-            staff.setName(name);
-            staff.setEmail(email);
-            staff.setPhone(phone);
-            staff.setAddress(address);
-            securityStaffRepository.save(staff);
-            redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully!");
+    /** PUT /api/profile/me - Updates the logged in user's profile */
+    @PutMapping("/me")
+    public ResponseEntity<?> updateMyProfile(@RequestBody Map<String, String> data) {
+        log.info("Received profile update request for user");
+        JwtPrincipal principal = getPrincipal();
+        if (principal == null) {
+            log.warn("Profile update failed: No authenticated principal found");
+            return ResponseEntity.status(401).body("Not authenticated");
         }
 
-        return "redirect:/editProfile";
+        Optional<MyUsers> userOpt = userRepository.findById(principal.getUserId());
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(404).build();
+
+        MyUsers user = userOpt.get();
+        if (data.containsKey("fullName"))
+            user.setFullName(data.get("fullName"));
+        if (data.containsKey("phone"))
+            user.setPhone(data.get("phone"));
+        if (data.containsKey("address"))
+            user.setAddress(data.get("address"));
+        if (data.containsKey("profileImage")) {
+            user.setProfileImage(data.get("profileImage"));
+        }
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "Profile updated successfully"));
+    }
+
+    /**
+     * GET /api/profile/manager - Returns the property manager's info for a resident
+     */
+    @GetMapping("/manager")
+    public ResponseEntity<?> getManagerInfo() {
+        JwtPrincipal principal = getPrincipal();
+        if (principal == null)
+            return ResponseEntity.status(401).body("Not authenticated");
+
+        Optional<MyUsers> userOpt = userRepository.findById(principal.getUserId());
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(404).build();
+
+        MyUsers residentUser = userOpt.get();
+        if (residentUser.getPropertyId() == null) {
+            return ResponseEntity.status(400).body(Map.of("message", "User not linked to any property"));
+        }
+
+        Optional<Property> propertyOpt = propertyRepository.findById(residentUser.getPropertyId());
+        if (propertyOpt.isEmpty())
+            return ResponseEntity.status(404).body(Map.of("message", "Property not found"));
+
+        MyUsers admin = propertyOpt.get().getAdmin();
+        if (admin == null)
+            return ResponseEntity.status(404).body(Map.of("message", "Manager not found"));
+
+        return ResponseEntity.ok(Map.of(
+                "name", admin.getFullName() != null ? admin.getFullName() : "Admin",
+                "email", admin.getEmail(),
+                "phone", admin.getPhone() != null ? admin.getPhone() : "N/A",
+                "address", admin.getAddress() != null ? admin.getAddress() : "N/A",
+                "profileImage", admin.getProfileImage() != null ? admin.getProfileImage() : "",
+                "propertyName", propertyOpt.get().getName()));
+    }
+
+    /**
+     * GET /api/profile/{id} - Returns a profile by id (Resident or
+     * Security)
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getProfileById(@PathVariable Long id) {
+        Optional<MyUsers> userOpt = userRepository.findById(id);
+        if (userOpt.isPresent()) {
+            MyUsers user = userOpt.get();
+            Map<String, Object> resp = new java.util.HashMap<>();
+            resp.put("fullName", user.getFullName() != null ? user.getFullName() : "");
+            resp.put("email", user.getEmail());
+            resp.put("phone", user.getPhone() != null ? user.getPhone() : "");
+            resp.put("address", user.getAddress() != null ? user.getAddress() : "");
+            resp.put("myRole", user.getMyRole());
+            resp.put("profileImage", user.getProfileImage());
+
+            if (user.getPropertyId() != null) {
+                propertyRepository.findById(user.getPropertyId()).ifPresent(prop -> {
+                    resp.put("propertyName", prop.getName());
+                    resp.put("propertyAddress", prop.getAddress());
+                    resp.put("propertyType", prop.getPropertyType());
+                });
+            }
+            return ResponseEntity.ok(resp);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * PUT /api/profile/{id} - Updates a profile by id
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateProfileById(@PathVariable Long id,
+            @RequestBody Map<String, String> data) {
+        Optional<MyUsers> userOpt = userRepository.findById(id);
+        if (userOpt.isEmpty())
+            return ResponseEntity.notFound().build();
+
+        MyUsers user = userOpt.get();
+        if (data.containsKey("fullName"))
+            user.setFullName(data.get("fullName"));
+        if (data.containsKey("phone"))
+            user.setPhone(data.get("phone"));
+        if (data.containsKey("address"))
+            user.setAddress(data.get("address"));
+        if (data.containsKey("profileImage"))
+            user.setProfileImage(data.get("profileImage"));
+
+        userRepository.save(user);
+        return ResponseEntity.ok(Map.of("message", "Profile updated successfully"));
     }
 }

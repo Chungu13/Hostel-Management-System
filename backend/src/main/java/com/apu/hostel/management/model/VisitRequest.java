@@ -19,7 +19,7 @@ public class VisitRequest implements Serializable {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "resident_username", referencedColumnName = "username", nullable = false)
+    @JoinColumn(name = "resident_id", referencedColumnName = "id", nullable = false)
     private Residents resident;
 
     @Column(name = "resident_name", nullable = false)

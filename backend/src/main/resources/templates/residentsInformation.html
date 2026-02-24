@@ -156,9 +156,9 @@
             <div class="form-group">
                 <label>Select Your Account</label>
                 <select name="selectedUser" required>
-                    <option value="">-- Choose your Username --</option>
-                    <option th:each="user : ${availableResidents}" th:value="${user.userName}"
-                        th:text="${user.userName}"></option>
+                    <option value="">-- Choose your Account --</option>
+                    <option th:each="user : ${availableResidents}" th:value="${user.id}"
+                        th:text="${user.email}"></option>
                 </select>
             </div>
 

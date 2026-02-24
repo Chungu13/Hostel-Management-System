@@ -21,9 +21,6 @@ public class SecurityStaff implements Serializable {
     @MapsId
     private MyUsers myUser;
 
-    @Column(nullable = false, unique = true)
-    private String username;
-
     @Column(nullable = false)
     private String name;
 
@@ -52,7 +49,6 @@ public class SecurityStaff implements Serializable {
     public SecurityStaff(MyUsers myUser, String name, String email, String phone, String ic, String gender,
             String address, Property property) {
         this.myUser = myUser;
-        this.username = myUser.getUserName();
         this.name = name;
         this.email = email;
         this.phone = phone;

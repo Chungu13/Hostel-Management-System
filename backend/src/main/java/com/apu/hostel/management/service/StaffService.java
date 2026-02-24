@@ -24,14 +24,13 @@ public class StaffService {
     }
 
     @Transactional
-    public SecurityStaff registerSecurityStaff(String username, String name, String email, String phone, String ic,
+    public SecurityStaff registerSecurityStaff(Long userId, String name, String email, String phone, String ic,
             String gender, String address) {
-        MyUsers user = userRepository.findByUserName(username)
+        MyUsers user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Selected user not found."));
 
         SecurityStaff staff = new SecurityStaff();
         staff.setMyUser(user);
-        staff.setUsername(user.getUserName());
         staff.setName(name);
         staff.setEmail(email);
         staff.setPhone(phone);

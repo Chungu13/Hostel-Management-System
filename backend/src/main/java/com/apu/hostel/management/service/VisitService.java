@@ -20,14 +20,14 @@ public class VisitService {
     @Autowired
     private ResidentRepository residentRepository;
 
-    public List<VisitRequest> getRequestsByResident(String username) {
-        return visitRequestRepository.findByResidentUsername(username);
+    public List<VisitRequest> getRequestsByResident(Long residentId) {
+        return visitRequestRepository.findByResidentId(residentId);
     }
 
     @Transactional
-    public VisitRequest createVisitRequest(String residentUsername, String residentName, String visitorName,
+    public VisitRequest createVisitRequest(Long residentId, String residentName, String visitorName,
             String visitorUsername, String visitorPassword) {
-        Residents resident = residentRepository.findByUsername(residentUsername)
+        Residents resident = residentRepository.findById(residentId)
                 .orElseThrow(() -> new IllegalArgumentException("Resident profile not found."));
 
         VisitRequest visitRequest = new VisitRequest();

@@ -31,6 +31,8 @@ services:
       SERVER_PORT: 8080
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       FRONTEND_URL: ${FRONTEND_URL}
+      ADMIN_URL: ${ADMIN_URL:-http://localhost:5174}
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       - db
     networks:

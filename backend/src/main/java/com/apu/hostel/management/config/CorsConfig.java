@@ -12,13 +12,16 @@ public class CorsConfig {
     @Value("${frontend.url}")
     private String frontendUrl;
 
+    @Value("${admin.url}")
+    private String adminUrl;
+
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins(frontendUrl)
+                        .allowedOrigins(frontendUrl, adminUrl)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

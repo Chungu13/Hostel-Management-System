@@ -12,14 +12,12 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<MyUsers, Long> {
 
-    Optional<MyUsers> findByUserName(String userName);
-
     Optional<MyUsers> findByEmail(String email);
 
-    @Query("SELECT u FROM MyUsers u WHERE u.myRole = :myRole AND u.userName NOT IN (SELECT s.username FROM SecurityStaff s)")
+    @Query("SELECT u FROM MyUsers u WHERE u.myRole = :myRole AND u.id NOT IN (SELECT s.id FROM SecurityStaff s)")
     List<MyUsers> findAvailableSecurityStaff(@Param("myRole") String myRole);
 
-    @Query("SELECT u FROM MyUsers u WHERE u.myRole = :myRole AND u.userName NOT IN (SELECT r.username FROM Residents r)")
+    @Query("SELECT u FROM MyUsers u WHERE u.myRole = :myRole AND u.id NOT IN (SELECT r.id FROM Residents r)")
     List<MyUsers> findAvailableResidents(@Param("myRole") String myRole);
 
     @Query("SELECT u FROM MyUsers u WHERE u.myRole = :myRole ORDER BY u.createdAt DESC")
@@ -27,8 +25,6 @@ public interface UserRepository extends JpaRepository<MyUsers, Long> {
 
     Optional<MyUsers> findByEmailAndPassword(String email, String password);
 
-    Optional<MyUsers> findByUserNameAndPassword(String username, String password);
-
-    @Query("SELECT u FROM MyUsers u WHERE u.userName = :username AND u.password = :password AND EXISTS (SELECT r FROM Residents r WHERE r.username = u.userName AND r.approved = TRUE)")
-    Optional<MyUsers> validateResidentLogin(@Param("username") String username, @Param("password") String password);
+    @Query("SELECT u FROM MyUsers u WHERE u.email = :email AND u.password = :password AND EXISTS (SELECT r FROM Residents r WHERE r.id = u.id AND r.approved = TRUE)")
+    Optional<MyUsers> validateResidentLogin(@Param("email") String email, @Param("password") String password);
 }

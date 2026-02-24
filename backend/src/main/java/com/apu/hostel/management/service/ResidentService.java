@@ -27,9 +27,9 @@ public class ResidentService {
     }
 
     @Transactional
-    public Residents registerResident(String username, String name, String email, String phone, String ic,
+    public Residents registerResident(Long residentId, String name, String email, String phone, String ic,
             String gender, String address, String room, Long propertyId) {
-        MyUsers user = userRepository.findByUserName(username)
+        MyUsers user = userRepository.findById(residentId)
                 .orElseThrow(() -> new IllegalArgumentException("User account not found."));
 
         com.apu.hostel.management.model.Property property = propertyRepository.findById(propertyId)

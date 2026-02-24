@@ -11,8 +11,6 @@ import java.util.Optional;
 @Repository
 public interface ResidentRepository extends JpaRepository<Residents, Long> {
 
-    Optional<Residents> findByUsername(String username);
-
     List<Residents> findByNameContaining(String name);
 
     Optional<Residents> findByEmail(String email);

@@ -17,8 +17,6 @@ public interface SecurityStaffRepository extends JpaRepository<SecurityStaff, Lo
 
     Optional<SecurityStaff> findByIc(String ic);
 
-    Optional<SecurityStaff> findByUsername(String username);
-
     long count();
 
     @Query("SELECT s.gender, COUNT(s) FROM SecurityStaff s GROUP BY s.gender")

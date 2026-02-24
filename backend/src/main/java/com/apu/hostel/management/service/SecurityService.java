@@ -25,7 +25,7 @@ public class SecurityService {
     private VisitorDetailsRepository visitorDetailsRepository;
 
     @Transactional
-    public boolean verifyVisitor(String staffUsername, String residentName, String visitorUsername, String password) {
+    public boolean verifyVisitor(Long staffId, String residentName, String visitorUsername, String password) {
         Optional<VisitRequest> requestOpt = visitRequestRepository.findByResidentNameAndVisitorUsername(residentName,
                 visitorUsername);
 
@@ -33,7 +33,7 @@ public class SecurityService {
             VisitRequest visitRequest = requestOpt.get();
             if (visitRequest.getVisitorPassword().equals(password)) {
 
-                SecurityStaff staff = securityStaffRepository.findByUsername(staffUsername)
+                SecurityStaff staff = securityStaffRepository.findById(staffId)
                         .orElseThrow(() -> new IllegalArgumentException("Staff member not found."));
 
                 // Log verification
