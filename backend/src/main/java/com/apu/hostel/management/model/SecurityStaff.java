@@ -36,7 +36,7 @@ public class SecurityStaff implements Serializable {
     @Column(nullable = false)
     private String gender;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String address;
 
     @Column(nullable = false)

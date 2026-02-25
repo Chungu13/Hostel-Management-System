@@ -36,6 +36,9 @@ public class ResidentService {
                 .orElseThrow(() -> new IllegalArgumentException("Property not found."));
 
         Residents resident = new Residents(user, name, email, phone, ic, gender, address, room, property);
+        if (resident.getAddress() == null || resident.getAddress().isBlank()) {
+            resident.setAddress("Property Resident");
+        }
         return residentRepository.save(resident);
     }
 

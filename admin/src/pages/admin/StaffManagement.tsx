@@ -16,8 +16,11 @@ import {
 } from "lucide-react";
 import api from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
+import ConfirmModal from "../../components/ConfirmModal";
 
 type Staff = {
+    id: number;
     username: string;
     name: string;
     email: string;
@@ -59,6 +62,24 @@ const StaffManagement: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
     const [formData, setFormData] = useState<FormData>(emptyForm);
+    const { showToast } = useToast();
+
+    // Confirmation Modal State
+    const [confirmConfig, setConfirmConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant: "danger" | "primary";
+    }>({
+        isOpen: false,
+        title: "",
+        message: "",
+        onConfirm: () => { },
+        variant: "primary",
+    });
+
+    const closeConfirm = () => setConfirmConfig((p) => ({ ...p, isOpen: false }));
 
     useEffect(() => {
         if (user?.propertyId) void fetchStaff();
@@ -80,16 +101,25 @@ const StaffManagement: React.FC = () => {
         }
     };
 
-    const handleDelete = async (username: string): Promise<void> => {
+    const handleDelete = async (id: number): Promise<void> => {
         if (!user?.propertyId) return;
-        if (!window.confirm("Delete this security personnel account?")) return;
 
-        try {
-            await api.delete(`/api/admin/staff/${username}?propertyId=${user.propertyId}`);
-            void fetchStaff();
-        } catch {
-            alert("Failed to delete staff");
-        }
+        setConfirmConfig({
+            isOpen: true,
+            title: "Remove Staff Member?",
+            message: "Are you sure you want to remove this security personnel? They will lose access to the system immediately.",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    await api.delete(`/api/admin/staff/${id}?propertyId=${user.propertyId}`);
+                    showToast("Staff record removed", "success");
+                    void fetchStaff();
+                } catch (err: any) {
+                    const msg = err?.response?.data?.message || "Check backend logs.";
+                    showToast("Failed to remove staff: " + msg, "error");
+                }
+            },
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
@@ -99,11 +129,13 @@ const StaffManagement: React.FC = () => {
         try {
             if (editingStaff) {
                 await api.put(
-                    `/api/admin/staff/${editingStaff.username}?propertyId=${user.propertyId}`,
+                    `/api/admin/staff/${editingStaff.id}?propertyId=${user.propertyId}`,
                     formData
                 );
+                showToast("Staff information updated", "success");
             } else {
                 await api.post("/api/admin/staff", { ...formData, propertyId: user.propertyId });
+                showToast("New staff member added", "success");
             }
             setIsModalOpen(false);
             setEditingStaff(null);
@@ -116,7 +148,7 @@ const StaffManagement: React.FC = () => {
     const openEditModal = (s: Staff) => {
         setEditingStaff(s);
         setFormData({
-            username: s.username ?? "",
+            username: s.username || s.email || "",
             name: s.name ?? "",
             email: s.email ?? "",
             phone: s.phone ?? "",
@@ -239,7 +271,7 @@ const StaffManagement: React.FC = () => {
                                                         {person.name}
                                                     </div>
                                                     <div className="text-xs text-zinc-400 mt-0.5">
-                                                        Badge ID: {person.username}
+                                                        ID: {person.username || person.email?.split("@")[0] || person.id}
                                                     </div>
                                                 </div>
                                             </div>
@@ -253,7 +285,7 @@ const StaffManagement: React.FC = () => {
                                                     <Edit2 size={14} className="text-sky-500" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(person.username)}
+                                                    onClick={() => handleDelete(person.id)}
                                                     className="h-8 w-8 rounded-lg border border-zinc-200 bg-zinc-50 flex items-center justify-center transition hover:scale-105 hover:bg-rose-500/10 hover:border-rose-500/30"
                                                     title="Delete"
                                                 >
@@ -496,6 +528,16 @@ const StaffManagement: React.FC = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <ConfirmModal
+                isOpen={confirmConfig.isOpen}
+                onClose={closeConfirm}
+                onConfirm={confirmConfig.onConfirm}
+                title={confirmConfig.title}
+                message={confirmConfig.message}
+                variant={confirmConfig.variant}
+                confirmText="Remove Personnel"
+            />
         </div>
     );
 };

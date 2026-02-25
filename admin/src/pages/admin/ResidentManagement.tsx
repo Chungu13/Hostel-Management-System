@@ -17,15 +17,17 @@ import {
 } from "lucide-react";
 import api from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
+import ConfirmModal from "../../components/ConfirmModal";
 
 type Resident = {
+    id: number;
     username: string;
     name: string;
     email: string;
     phone: string;
     ic: string;
     gender: "Male" | "Female" | string;
-    address: string;
     room: string;
     approved: boolean;
 };
@@ -39,7 +41,6 @@ type FormData = {
     phone: string;
     ic: string;
     gender: "Male" | "Female";
-    address: string;
     room: string;
     approved: boolean;
 };
@@ -51,7 +52,6 @@ const emptyForm: FormData = {
     phone: "",
     ic: "",
     gender: "Male",
-    address: "",
     room: "",
     approved: false,
 };
@@ -66,6 +66,24 @@ const ResidentManagement: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [editingResident, setEditingResident] = useState<Resident | null>(null);
     const [formData, setFormData] = useState<FormData>(emptyForm);
+    const { showToast } = useToast();
+
+    // Confirmation Modal State
+    const [confirmConfig, setConfirmConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant: "danger" | "primary";
+    }>({
+        isOpen: false,
+        title: "",
+        message: "",
+        onConfirm: () => { },
+        variant: "primary",
+    });
+
+    const closeConfirm = () => setConfirmConfig((p) => ({ ...p, isOpen: false }));
 
     useEffect(() => {
         if (user?.propertyId) void fetchResidents();
@@ -87,26 +105,37 @@ const ResidentManagement: React.FC = () => {
         }
     };
 
-    const handleApprove = async (username: string): Promise<void> => {
+    const handleApprove = async (id: number): Promise<void> => {
         if (!user?.propertyId) return;
         try {
-            await api.post(`/api/admin/approve-resident/${username}?propertyId=${user.propertyId}`);
+            await api.post(`/api/admin/approve-resident/${id}?propertyId=${user.propertyId}`);
+            showToast("Resident application approved successfully!", "success");
             void fetchResidents();
-        } catch {
-            alert("Failed to approve resident");
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || "Check backend logs.";
+            showToast("Approval failed: " + msg, "error");
         }
     };
 
-    const handleDelete = async (username: string): Promise<void> => {
+    const handleDelete = async (id: number): Promise<void> => {
         if (!user?.propertyId) return;
-        if (!window.confirm("Are you sure you want to delete this resident?")) return;
 
-        try {
-            await api.delete(`/api/admin/residents/${username}?propertyId=${user.propertyId}`);
-            void fetchResidents();
-        } catch {
-            alert("Failed to delete resident");
-        }
+        setConfirmConfig({
+            isOpen: true,
+            title: "Delete Resident?",
+            message: "This action cannot be undone. The resident's account will be permanently removed.",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    await api.delete(`/api/admin/residents/${id}?propertyId=${user.propertyId}`);
+                    showToast("Resident record deleted", "success");
+                    void fetchResidents();
+                } catch (err: any) {
+                    const msg = err?.response?.data?.message || "Check backend logs.";
+                    showToast("Deletion failed: " + msg, "error");
+                }
+            },
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
@@ -116,11 +145,16 @@ const ResidentManagement: React.FC = () => {
         try {
             if (editingResident) {
                 await api.put(
-                    `/api/admin/residents/${editingResident.username}?propertyId=${user.propertyId}`,
-                    formData
+                    `/api/admin/residents/${editingResident.id}?propertyId=${user.propertyId}`,
+                    { ...formData, address: "Property Resident" }
                 );
+                showToast("Resident information updated", "success");
             } else {
-                await api.post(`/api/admin/residents?propertyId=${user.propertyId}`, formData);
+                await api.post(`/api/admin/residents?propertyId=${user.propertyId}`, {
+                    ...formData,
+                    address: "Property Resident",
+                });
+                showToast("New resident added successfully", "success");
             }
 
             setIsModalOpen(false);
@@ -135,13 +169,12 @@ const ResidentManagement: React.FC = () => {
     const openEditModal = (resident: Resident) => {
         setEditingResident(resident);
         setFormData({
-            username: resident.username ?? "",
+            username: resident.username || resident.email || "",
             name: resident.name ?? "",
             email: resident.email ?? "",
             phone: resident.phone ?? "",
             ic: resident.ic ?? "",
             gender: (resident.gender === "Female" ? "Female" : "Male") as "Male" | "Female",
-            address: resident.address ?? "",
             room: resident.room ?? "",
             approved: !!resident.approved,
         });
@@ -278,14 +311,16 @@ const ResidentManagement: React.FC = () => {
                                                     <div className="text-sm font-bold text-zinc-900 leading-tight">
                                                         {resident.name}
                                                     </div>
-                                                    <div className="text-xs text-zinc-400 mt-0.5">@{resident.username}</div>
+                                                    <div className="text-xs text-zinc-400 mt-0.5">
+                                                        @{resident.username || resident.email?.split("@")[0] || "resident"}
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             <div className="flex gap-2">
                                                 {!resident.approved && (
                                                     <button
-                                                        onClick={() => handleApprove(resident.username)}
+                                                        onClick={() => handleApprove(resident.id)}
                                                         className="h-8 w-8 rounded-lg border border-zinc-200 bg-zinc-50 flex items-center justify-center transition hover:scale-105 hover:bg-emerald-500/10 hover:border-emerald-500/30"
                                                         title="Approve"
                                                     >
@@ -302,7 +337,7 @@ const ResidentManagement: React.FC = () => {
                                                 </button>
 
                                                 <button
-                                                    onClick={() => handleDelete(resident.username)}
+                                                    onClick={() => handleDelete(resident.id)}
                                                     className="h-8 w-8 rounded-lg border border-zinc-200 bg-zinc-50 flex items-center justify-center transition hover:scale-105 hover:bg-rose-500/10 hover:border-rose-500/30"
                                                     title="Delete"
                                                 >
@@ -327,10 +362,6 @@ const ResidentManagement: React.FC = () => {
                                             <div className="flex items-center gap-2 text-xs text-zinc-600 overflow-hidden">
                                                 <Home size={13} className="text-emerald-600 shrink-0" />
                                                 <span className="truncate">Room {resident.room}</span>
-                                            </div>
-                                            <div className="col-span-2 flex items-center gap-2 text-xs text-zinc-600 overflow-hidden">
-                                                <MapPin size={13} className="text-emerald-600 shrink-0" />
-                                                <span className="truncate">{resident.address}</span>
                                             </div>
                                         </div>
 
@@ -539,20 +570,6 @@ const ResidentManagement: React.FC = () => {
                                             </select>
                                         </div>
 
-                                        <div className="space-y-2 sm:col-span-2">
-                                            <label className="text-[0.75rem] font-medium tracking-[0.06em] uppercase text-zinc-600">
-                                                Home Address
-                                            </label>
-                                            <textarea
-                                                className="w-full min-h-[96px] resize-y rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
-                                                placeholder="Full permanent address"
-                                                value={formData.address}
-                                                onChange={(e) =>
-                                                    setFormData((p) => ({ ...p, address: e.target.value }))
-                                                }
-                                                required
-                                            />
-                                        </div>
                                     </div>
                                 </div>
 
@@ -577,6 +594,16 @@ const ResidentManagement: React.FC = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <ConfirmModal
+                isOpen={confirmConfig.isOpen}
+                onClose={closeConfirm}
+                onConfirm={confirmConfig.onConfirm}
+                title={confirmConfig.title}
+                message={confirmConfig.message}
+                variant={confirmConfig.variant}
+                confirmText="Delete Resident"
+            />
         </div>
     );
 };

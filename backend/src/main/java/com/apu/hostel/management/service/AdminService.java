@@ -53,11 +53,21 @@ public class AdminService {
             boolean approved) {
         Residents resident = residentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Resident not found."));
-        resident.setName(name);
-        resident.setEmail(email);
-        resident.setPhone(phone);
-        resident.setGender(gender);
-        resident.setAddress(address);
+
+        if (name != null)
+            resident.setName(name);
+        if (email != null)
+            resident.setEmail(email);
+        if (phone != null)
+            resident.setPhone(phone);
+        if (gender != null)
+            resident.setGender(gender);
+        if (address != null) {
+            resident.setAddress(address);
+        } else if (resident.getAddress() == null) {
+            resident.setAddress("Property Resident");
+        }
+
         resident.setApproved(approved);
         residentRepository.save(resident);
 
@@ -102,6 +112,9 @@ public class AdminService {
                 .orElseThrow(() -> new IllegalArgumentException("Property not found."));
 
         SecurityStaff staff = new SecurityStaff(user, name, email, phone, ic, gender, address, property);
+        if (staff.getAddress() == null || staff.getAddress().isBlank()) {
+            staff.setAddress("Property Resident");
+        }
         return staffRepository.save(staff);
     }
 
@@ -113,7 +126,11 @@ public class AdminService {
         staff.setEmail(email);
         staff.setPhone(phone);
         staff.setGender(gender);
-        staff.setAddress(address);
+        if (address != null) {
+            staff.setAddress(address);
+        } else if (staff.getAddress() == null) {
+            staff.setAddress("Property Resident");
+        }
         staffRepository.save(staff);
     }
 

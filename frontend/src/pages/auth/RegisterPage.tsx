@@ -29,13 +29,17 @@ const RegisterPage: React.FC = () => {
         setError('');
 
         try {
-            await api.post('/api/auth/register', {
+            const response = await api.post('/api/auth/register', {
                 email: formData.email,
                 password: formData.password,
                 role: 'Resident'
             });
-            setSuccess(true);
-            setTimeout(() => navigate('/login'), 2500);
+
+            if (response.data) {
+                login(response.data);
+                setSuccess(true);
+                setTimeout(() => navigate('/onboarding'), 2500);
+            }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Enrollment failed. This email may already be registered.');
         } finally {
@@ -211,7 +215,7 @@ const RegisterPage: React.FC = () => {
                             </div>
                             <h2 className="text-3xl font-black text-slate-900 mb-4">Registration Successful</h2>
                             <p className="text-slate-400 font-medium max-w-[280px]">
-                                Your account has been established. Redirecting you to login for onboarding...
+                                Your account has been established. Redirecting you to onboarding...
                             </p>
                             <div className="mt-8 flex gap-1 justify-center">
                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" />

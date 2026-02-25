@@ -56,53 +56,57 @@ const ProtectedRoute = ({
     return <>{children}</>;
 };
 
+import { ToastProvider } from './context/ToastContext';
+
 function App() {
     return (
         <AuthProvider>
-            <Router>
-                <Routes>
-                    {/* Public routes */}
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
+            <ToastProvider>
+                <Router>
+                    <Routes>
+                        {/* Public routes */}
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/register" element={<RegisterPage />} />
 
-                    {/* Onboarding — only for authenticated users who haven't onboarded yet */}
-                    <Route path="/onboarding" element={
-                        <ProtectedRoute requireOnboarded={false}>
-                            <AdminOnboarding />
-                        </ProtectedRoute>
-                    } />
+                        {/* Onboarding — only for authenticated users who haven't onboarded yet */}
+                        <Route path="/onboarding" element={
+                            <ProtectedRoute requireOnboarded={false}>
+                                <AdminOnboarding />
+                            </ProtectedRoute>
+                        } />
 
-                    {/* Dashboard and sub-pages — require full onboarding */}
-                    <Route path="/dashboard" element={
-                        <ProtectedRoute>
-                            <AdminDashboard />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/residents" element={
-                        <ProtectedRoute>
-                            <ResidentManagement />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/staff" element={
-                        <ProtectedRoute>
-                            <StaffManagement />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/reports" element={
-                        <ProtectedRoute>
-                            <ReportsPage />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/profile" element={
-                        <ProtectedRoute>
-                            <ProfilePage />
-                        </ProtectedRoute>
-                    } />
+                        {/* Dashboard and sub-pages — require full onboarding */}
+                        <Route path="/dashboard" element={
+                            <ProtectedRoute>
+                                <AdminDashboard />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/residents" element={
+                            <ProtectedRoute>
+                                <ResidentManagement />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/staff" element={
+                            <ProtectedRoute>
+                                <StaffManagement />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/reports" element={
+                            <ProtectedRoute>
+                                <ReportsPage />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/profile" element={
+                            <ProtectedRoute>
+                                <ProfilePage />
+                            </ProtectedRoute>
+                        } />
 
-                    {/* Root redirect */}
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                </Routes>
-            </Router>
+                        {/* Root redirect */}
+                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    </Routes>
+                </Router>
+            </ToastProvider>
         </AuthProvider>
     );
 }

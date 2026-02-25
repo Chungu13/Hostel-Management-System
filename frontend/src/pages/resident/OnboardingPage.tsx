@@ -18,7 +18,6 @@ const OnboardingPage: React.FC = () => {
         phone: '',
         ic: '',
         gender: 'Male',
-        address: '',
         room: '',
         propertyId: ''
     });
@@ -48,7 +47,8 @@ const OnboardingPage: React.FC = () => {
         try {
             await api.post('/api/auth/onboarding', {
                 userId: user?.id,
-                ...formData
+                ...formData,
+                address: 'Property Resident' // Default value since they reside at the property
             });
 
             const updatedUser = {
@@ -264,27 +264,7 @@ const OnboardingPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Section 3: Permanent Address */}
-                    <div>
-                        <div className="flex items-center gap-4 mb-8">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Permanent Contact</span>
-                            <div className="h-px bg-slate-100 w-full" />
-                        </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Home Address</label>
-                            <div className="relative">
-                                <MapPin className="absolute left-4 top-4 text-slate-400 w-4 h-4" />
-                                <textarea
-                                    className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 outline-none transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 placeholder:text-slate-300 font-medium min-h-[100px]"
-                                    placeholder="Enter your complete permanent address..."
-                                    value={formData.address}
-                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    required
-                                />
-                            </div>
-                        </div>
-                    </div>
 
                     {error && (
                         <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm font-medium flex items-center gap-3">
