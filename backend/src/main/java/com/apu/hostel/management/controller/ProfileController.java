@@ -72,6 +72,24 @@ public class ProfileController {
         return updateProfileLogic(principal.getUserId(), data, false);
     }
 
+    /** POST /api/profile/clear-history - Clears history from user's view */
+    @PostMapping("/clear-history")
+    public ResponseEntity<?> clearHistory() {
+        JwtPrincipal principal = getPrincipal();
+        if (principal == null)
+            return ResponseEntity.status(401).body("Not authenticated");
+
+        Optional<MyUsers> userOpt = userRepository.findById(principal.getUserId());
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(404).build();
+
+        MyUsers user = userOpt.get();
+        user.setHistoryClearedAt(java.time.LocalDateTime.now());
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "History cleared from view successfully"));
+    }
+
     /**
      * GET /api/profile/manager - Returns the property manager's info for a resident
      */

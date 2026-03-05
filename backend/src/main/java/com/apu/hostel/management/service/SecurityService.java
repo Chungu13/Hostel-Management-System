@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Service
 public class SecurityService {
@@ -87,8 +88,12 @@ public class SecurityService {
         visitorDetailsRepository.save(details);
     }
 
-    public List<VerifiedVisitors> getVerificationHistory() {
-        return verifiedVisitorsRepository.findAll();
+    public List<VerifiedVisitors> getVerificationHistory(LocalDateTime clearedAt) {
+        if (clearedAt == null)
+            return verifiedVisitorsRepository.findAll();
+        return verifiedVisitorsRepository.findAll().stream()
+                .filter(v -> v.getVerifiedAt() != null && v.getVerifiedAt().isAfter(clearedAt))
+                .toList();
     }
 
     public Optional<VerifiedVisitors> findLastVerifiedByCode(String visitCode) {
@@ -127,13 +132,24 @@ public class SecurityService {
         return securityStaffRepository.findById(staffId).orElse(null);
     }
 
-    public Map<String, Object> getDashboardStats() {
+    public Map<String, Object> getDashboardStats(LocalDateTime clearedAt) {
         // Use a 24-hour window to be safer with timezones
         java.time.LocalDateTime twentyFourHoursAgo = java.time.LocalDateTime.now().minusHours(24);
 
-        long todayVerified = verifiedVisitorsRepository.countByVerifiedAtAfter(twentyFourHoursAgo);
+        // If history was cleared recently, we only count after that
+        java.time.LocalDateTime filterStart = twentyFourHoursAgo;
+        if (clearedAt != null && clearedAt.isAfter(twentyFourHoursAgo)) {
+            filterStart = clearedAt;
+        }
+
+        long todayVerified = verifiedVisitorsRepository.countByVerifiedAtAfter(filterStart);
 
         List<VerifiedVisitors> recentLogs = verifiedVisitorsRepository.findFirst5ByOrderByIdDesc();
+        if (clearedAt != null) {
+            recentLogs = recentLogs.stream()
+                    .filter(v -> v.getVerifiedAt() != null && v.getVerifiedAt().isAfter(clearedAt))
+                    .toList();
+        }
 
         System.out.println("Stats Fetch - Today count: " + todayVerified + " | Total logs found: " + recentLogs.size());
 

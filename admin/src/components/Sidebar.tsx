@@ -11,7 +11,8 @@ import {
     Menu,
     X,
     ChevronRight,
-    Megaphone
+    Megaphone,
+    History
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
@@ -32,6 +33,7 @@ const Sidebar: React.FC = () => {
         { path: '/notices', icon: Megaphone, label: 'Notices' },
         { path: '/residents', icon: Users, label: 'Residents' },
         { path: '/staff', icon: ShieldCheck, label: 'Security Staff' },
+        { path: '/history', icon: History, label: 'Visitor History' },
         { path: '/reports', icon: BarChart, label: 'Reports' },
     ];
 

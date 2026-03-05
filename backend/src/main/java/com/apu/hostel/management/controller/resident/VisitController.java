@@ -20,14 +20,41 @@ public class VisitController {
     @Autowired
     private VisitRequestRepository visitRequestRepository;
 
+    @Autowired
+    private com.apu.hostel.management.repository.UserRepository userRepository;
+
+    private com.apu.hostel.management.security.JwtPrincipal getPrincipal() {
+        Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        if (principal instanceof com.apu.hostel.management.security.JwtPrincipal jp) {
+            return jp;
+        }
+        return null;
+    }
+
+    private java.time.LocalDateTime getUserClearedAt(Long userId) {
+        return userRepository.findById(userId)
+                .map(com.apu.hostel.management.model.MyUsers::getHistoryClearedAt)
+                .orElse(null);
+    }
+
     @GetMapping("/history")
     public List<VisitRequest> getAllVisits() {
-        return visitRequestRepository.findAll();
+        com.apu.hostel.management.security.JwtPrincipal principal = getPrincipal();
+        java.time.LocalDateTime clearedAt = principal != null ? getUserClearedAt(principal.getUserId()) : null;
+        return visitService.getHistory(clearedAt);
     }
 
     @GetMapping("/resident/{id}")
     public List<VisitRequest> getResidentVisits(@PathVariable Long id) {
-        return visitRequestRepository.findByResidentId(id);
+        com.apu.hostel.management.security.JwtPrincipal principal = getPrincipal();
+        java.time.LocalDateTime clearedAt = principal != null ? getUserClearedAt(principal.getUserId()) : null;
+        return visitService.getRequestsByResident(id, clearedAt);
+    }
+
+    @GetMapping("/admin/history")
+    public List<VisitRequest> getAdminHistory() {
+        return visitService.getAllHistoryAdmin();
     }
 
     @GetMapping("/public/pass/{visitCode}")

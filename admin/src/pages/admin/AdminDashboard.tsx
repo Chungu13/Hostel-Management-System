@@ -30,7 +30,7 @@ interface GenderDistribution {
 }
 
 const AdminDashboard: React.FC = () => {
-    const { user } = useAuth();
+    const { user, login } = useAuth();
     const [stats, setStats] = useState<DashboardStats>({
         totalResidents: 0,
         totalStaff: 0
@@ -45,14 +45,23 @@ const AdminDashboard: React.FC = () => {
             if (!user?.propertyId) return;
             try {
                 setLoading(true);
-                const [statsRes, genderRes, securityRes] = await Promise.all([
+                const [statsRes, genderRes, securityRes, profileRes] = await Promise.all([
                     api.get(`/api/dashboard/stats?propertyId=${user.propertyId}`),
                     api.get(`/api/dashboard/gender-distribution?propertyId=${user.propertyId}`),
-                    api.get(`/api/security/on-duty/${user.propertyId}`)
+                    api.get(`/api/security/on-duty/${user.propertyId}`),
+                    api.get(`/api/profile/me`)
                 ]);
                 setStats(statsRes.data);
                 setGenderData(genderRes.data);
                 setSecurityOnDuty(securityRes.data);
+
+                // Sync name with AuthContext if it's more accurate
+                if (profileRes.data.fullName && profileRes.data.fullName !== user.name) {
+                    login({
+                        ...user,
+                        name: profileRes.data.fullName
+                    });
+                }
             } catch (err) {
                 console.error("Error fetching data:", err);
             } finally {
@@ -67,7 +76,6 @@ const AdminDashboard: React.FC = () => {
     const cards = [
         { label: 'Total Residents', value: stats.totalResidents, icon: Users, accent: '#4caf6e', accentBg: 'rgba(76,175,110,0.1)' },
         { label: 'Security Staff', value: stats.totalStaff, icon: ShieldCheck, accent: '#60a5fa', accentBg: 'rgba(96,165,250,0.1)' },
-        { label: 'System Status', value: 'Active', icon: CheckCircle2, accent: '#4caf6e', accentBg: 'rgba(76,175,110,0.1)' },
     ];
 
     const tooltipStyle = {
@@ -551,7 +559,7 @@ const AdminDashboard: React.FC = () => {
 
                             <h1 className="ad2-heading">Executive Overview</h1>
                             <p className="ad2-subtext">
-                                Welcome back, {user?.name}
+                                Welcome back, {user?.name || 'Admin'}
                             </p>
                         </div>
                         <div className="ad2-date-badge">

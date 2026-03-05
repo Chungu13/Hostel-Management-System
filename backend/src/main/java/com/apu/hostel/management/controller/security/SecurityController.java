@@ -18,14 +18,27 @@ public class SecurityController {
     @Autowired
     private SecurityService securityService;
 
+    @Autowired
+    private com.apu.hostel.management.repository.UserRepository userRepository;
+
+    private java.time.LocalDateTime getUserClearedAt(Long userId) {
+        return userRepository.findById(userId)
+                .map(com.apu.hostel.management.model.MyUsers::getHistoryClearedAt)
+                .orElse(null);
+    }
+
     @GetMapping("/history")
     public ResponseEntity<?> getVerificationHistory() {
-        return ResponseEntity.ok(securityService.getVerificationHistory());
+        JwtPrincipal principal = getAuthenticatedPrincipal();
+        java.time.LocalDateTime clearedAt = principal != null ? getUserClearedAt(principal.getUserId()) : null;
+        return ResponseEntity.ok(securityService.getVerificationHistory(clearedAt));
     }
 
     @GetMapping("/stats")
     public ResponseEntity<?> getStats() {
-        return ResponseEntity.ok(securityService.getDashboardStats());
+        JwtPrincipal principal = getAuthenticatedPrincipal();
+        java.time.LocalDateTime clearedAt = principal != null ? getUserClearedAt(principal.getUserId()) : null;
+        return ResponseEntity.ok(securityService.getDashboardStats(clearedAt));
     }
 
     @PostMapping("/verify")

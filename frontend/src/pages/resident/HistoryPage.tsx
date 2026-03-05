@@ -102,6 +102,17 @@ const VisitHistory: React.FC = () => {
         }
     };
 
+    const handleClearHistory = async () => {
+        if (!window.confirm("Are you sure you want to clear your visit history from view? This action cannot be undone.")) return;
+        try {
+            await api.post("/api/profile/clear-history");
+            await fetchHistory();
+        } catch (err) {
+            console.error("Error clearing history:", err);
+            alert("Failed to clear history.");
+        }
+    };
+
     const fetchResidentProfile = async (visit: Visit) => {
         const resId = visit.resident?.id;
         if (!resId) return;
@@ -195,10 +206,20 @@ const VisitHistory: React.FC = () => {
                         </p>
                     </div>
 
-                    <div className="mt-1 rounded-xl border border-gray-200 bg-white px-4 py-2 text-[0.8rem] font-medium text-gray-500 whitespace-nowrap"
-                        style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                        <span className="font-bold" style={{ color: '#4caf6e' }}>{filteredVisits.length}</span>{" "}
-                        {countLabel.replace(/^\d+\s/, "")}
+                    <div className="flex items-center gap-3 mt-1">
+                        <button
+                            onClick={handleClearHistory}
+                            className="rounded-xl border border-red-200 bg-red-50/50 px-4 py-2 text-[0.8rem] font-bold text-red-500 transition hover:bg-red-50 active:scale-95"
+                            style={{ boxShadow: '0 1px 3px rgba(220,38,38,0.04)' }}
+                        >
+                            Clear History
+                        </button>
+
+                        <div className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-[0.8rem] font-medium text-gray-500 whitespace-nowrap"
+                            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                            <span className="font-bold" style={{ color: '#4caf6e' }}>{filteredVisits.length}</span>{" "}
+                            {countLabel.replace(/^\d+\s/, "")}
+                        </div>
                     </div>
                 </motion.div>
 

@@ -10,6 +10,7 @@ import StaffManagement from './pages/admin/StaffManagement';
 import ReportsPage from './pages/admin/ReportsPage';
 import ProfilePage from './pages/admin/ProfilePage';
 import NoticesPage from './pages/admin/NoticesPage';
+import VisitorHistoryPage from './pages/admin/VisitorHistoryPage';
 
 /**
  * ProtectedRoute — guards routes that require authentication.
@@ -105,6 +106,11 @@ function App() {
                         <Route path="/notices" element={
                             <ProtectedRoute>
                                 <NoticesPage />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/history" element={
+                            <ProtectedRoute>
+                                <VisitorHistoryPage />
                             </ProtectedRoute>
                         } />
 

@@ -181,6 +181,7 @@ public class AuthController {
         property.setAdmin(user);
         property = propertyRepository.save(property);
 
+        user.setFullName(data.get("fullName") != null ? data.get("fullName").toString() : "Admin Manager");
         user.setMyRole("Managing Staff");
         user.setOnboarded(true);
         user.setApproved(true);
@@ -191,6 +192,7 @@ public class AuthController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Onboarding complete");
+        response.put("name", user.getFullName());
         response.put("propertyId", property.getId());
         response.put("isOnboarded", true);
         response.put("token", newToken);
@@ -305,12 +307,13 @@ public class AuthController {
 
         if (user.isOnboarded()) {
             response.put("propertyId", user.getPropertyId());
-            String displayName = user.getFullName();
-            if (displayName == null || displayName.isBlank() || "Admin".equalsIgnoreCase(displayName)) {
-                displayName = user.getEmail().split("@")[0];
-            }
-            response.put("name", displayName);
         }
+
+        String displayName = user.getFullName();
+        if (displayName == null || displayName.isBlank()) {
+            displayName = user.getEmail().split("@")[0];
+        }
+        response.put("name", displayName);
 
         return response;
     }

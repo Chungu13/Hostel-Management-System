@@ -12,6 +12,7 @@ const AdminOnboarding: React.FC = () => {
     const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({
+        fullName: '',
         propertyName: '',
         propertyAddress: '',
         propertyType: 'Hostel'
@@ -23,17 +24,15 @@ const AdminOnboarding: React.FC = () => {
         setError('');
 
         try {
-            // ✅ No userId in the body — the backend reads it from the JWT header
             const response = await api.post('/api/auth/admin/onboarding', formData);
 
-            // Update local user state: mark onboarded, store propertyId and the
-            // refreshed token (backend re-issues with updated "Managing Staff" role claim)
             const updatedUser = {
                 ...user!,
                 myRole: 'Managing Staff',
                 isOnboarded: true,
+                name: formData.fullName,
                 propertyId: response.data.propertyId,
-                token: response.data.token  // ← always use the freshest token
+                token: response.data.token
             };
 
             login(updatedUser);
@@ -74,7 +73,7 @@ const AdminOnboarding: React.FC = () => {
                 `
             }}
         >
-            {/* ── Left Panel ── */}
+
             <div className="hidden lg:flex w-[400px] flex-shrink-0 bg-white border-r border-gray-100 flex-col justify-between p-12 overflow-hidden relative">
                 {/* glow */}
                 <div className="absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none"
@@ -153,9 +152,29 @@ const AdminOnboarding: React.FC = () => {
                         Initialize your property's management unit on the Malo platform.
                     </p>
 
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-
-
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-6">                        {/* Admin Details */}
+                        <div>
+                            <div className="flex items-center gap-3 mb-4">
+                                <span className="text-[0.65rem] font-semibold uppercase tracking-widest text-gray-400 whitespace-nowrap">Admin Profile</span>
+                                <div className="flex-1 h-px bg-gray-100" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[0.72rem] font-medium text-gray-500 uppercase tracking-wider px-0.5">
+                                    Your Full Name
+                                </label>
+                                <div className="relative">
+                                    <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
+                                    <input
+                                        type="text"
+                                        className={inputClass}
+                                        placeholder="Chungu Muloshi"
+                                        value={formData.fullName}
+                                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        </div>
 
                         {/* Property Details */}
                         <div>

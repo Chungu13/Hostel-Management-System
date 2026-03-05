@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Service
 public class VisitService {
@@ -25,8 +26,13 @@ public class VisitService {
     @Autowired
     private VisitorDetailsRepository visitorDetailsRepository;
 
-    public List<VisitRequest> getRequestsByResident(Long residentId) {
-        return visitRequestRepository.findByResidentId(residentId);
+    public List<VisitRequest> getRequestsByResident(Long residentId, java.time.LocalDateTime clearedAt) {
+        List<VisitRequest> requests = visitRequestRepository.findByResidentId(residentId);
+        if (clearedAt == null)
+            return requests;
+        return requests.stream()
+                .filter(r -> r.getRequestDate() != null && r.getRequestDate().isAfter(clearedAt))
+                .toList();
     }
 
     @Transactional
@@ -78,7 +84,16 @@ public class VisitService {
         return visitRequestRepository.findByResidentNameAndVisitCode(residentName, visitCode);
     }
 
-    public List<VisitRequest> getHistory() {
+    public List<VisitRequest> getHistory(LocalDateTime clearedAt) {
+        List<VisitRequest> all = visitRequestRepository.findAll();
+        if (clearedAt == null)
+            return all;
+        return all.stream()
+                .filter(r -> r.getRequestDate() != null && r.getRequestDate().isAfter(clearedAt))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public List<VisitRequest> getAllHistoryAdmin() {
         return visitRequestRepository.findAll();
     }
 }
