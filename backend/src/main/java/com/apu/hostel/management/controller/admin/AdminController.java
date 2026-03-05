@@ -1,9 +1,13 @@
 package com.apu.hostel.management.controller.admin;
 
+import com.apu.hostel.management.model.MyUsers;
 import com.apu.hostel.management.model.Residents;
 import com.apu.hostel.management.model.SecurityStaff;
+import com.apu.hostel.management.security.JwtPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,28 +20,50 @@ public class AdminController {
     @Autowired
     private com.apu.hostel.management.service.AdminService adminService;
 
+    @Autowired
+    private com.apu.hostel.management.repository.UserRepository userRepository;
+
+    private Long getAdminPropertyId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof JwtPrincipal principal) {
+            MyUsers user = userRepository.findById(principal.getUserId()).orElse(null);
+            if (user != null) {
+                return user.getPropertyId();
+            }
+        }
+        throw new IllegalStateException("Authentication context missing or invalid admin profile.");
+    }
+
     @GetMapping("/residents")
-    public List<Residents> getAllResidents(@RequestParam Long propertyId) {
-        return adminService.searchResidents(propertyId, null, null);
+    public List<Residents> getAllResidents() {
+        return adminService.searchResidents(getAdminPropertyId(), null, null);
     }
 
     @GetMapping("/staff")
-    public List<SecurityStaff> getAllStaff(@RequestParam Long propertyId) {
-        return adminService.searchStaff(propertyId, null, null);
+    public List<SecurityStaff> getAllStaff() {
+        return adminService.searchStaff(getAdminPropertyId(), null, null);
     }
 
     @PostMapping("/residents")
     public ResponseEntity<?> createResident(@RequestBody Map<String, Object> data) {
         try {
-            adminService.updateResident(
-                    Long.valueOf(data.get("userId").toString()),
-                    data.get("name").toString(),
-                    data.get("email").toString(),
-                    data.get("phone").toString(),
-                    data.get("gender").toString(),
-                    data.get("address").toString(),
-                    (Boolean) data.get("approved"));
-            return ResponseEntity.ok(Map.of("message", "Resident created/updated"));
+            String email = safeGet(data, "email");
+            if (email.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Email is required"));
+            }
+
+            adminService.handleAdminResidentRegistration(
+                    email,
+                    safeGet(data, "name"),
+                    safeGet(data, "phone"),
+                    safeGet(data, "ic"),
+                    safeGet(data, "gender"),
+                    "Property Resident",
+                    safeGet(data, "room"),
+                    getAdminPropertyId(),
+                    true, // Auto-approved when created by admin
+                    safeGet(data, "password"));
+            return ResponseEntity.ok(Map.of("message", "Resident created successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
@@ -48,12 +74,13 @@ public class AdminController {
         try {
             adminService.updateResident(
                     id,
-                    data.get("name").toString(),
-                    data.get("email").toString(),
-                    data.get("phone").toString(),
-                    data.get("gender").toString(),
-                    data.get("address").toString(),
-                    (Boolean) data.get("approved"));
+                    safeGet(data, "name"),
+                    safeGet(data, "email"),
+                    safeGet(data, "phone"),
+                    safeGet(data, "ic"),
+                    safeGet(data, "gender"),
+                    safeGet(data, "address"),
+                    data.get("approved") != null ? (Boolean) data.get("approved") : true);
             return ResponseEntity.ok(Map.of("message", "Resident updated"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
@@ -63,7 +90,7 @@ public class AdminController {
     @PostMapping("/approve-resident/{id}")
     public ResponseEntity<?> approveResident(@PathVariable Long id) {
         try {
-            adminService.updateResident(id, null, null, null, null, null, true);
+            adminService.updateResident(id, null, null, null, null, null, null, true);
             return ResponseEntity.ok(Map.of("message", "Resident approved"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
@@ -79,15 +106,20 @@ public class AdminController {
     @PostMapping("/staff")
     public ResponseEntity<?> createStaff(@RequestBody Map<String, Object> data) {
         try {
-            SecurityStaff staff = adminService.registerStaff(
-                    Long.valueOf(data.get("userId").toString()),
-                    data.get("name").toString(),
-                    data.get("email").toString(),
-                    data.get("phone").toString(),
-                    data.get("ic").toString(),
-                    data.get("gender").toString(),
-                    data.get("address").toString(),
-                    Long.valueOf(data.get("propertyId").toString()));
+            String email = safeGet(data, "email");
+            if (email.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Email is required"));
+            }
+
+            SecurityStaff staff = adminService.handleAdminStaffRegistration(
+                    email,
+                    safeGet(data, "name"),
+                    safeGet(data, "phone"),
+                    safeGet(data, "ic"),
+                    safeGet(data, "gender"),
+                    safeGet(data, "address"),
+                    getAdminPropertyId(),
+                    safeGet(data, "password"));
             return ResponseEntity.ok(staff);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
@@ -99,11 +131,12 @@ public class AdminController {
         try {
             adminService.updateStaff(
                     id,
-                    data.get("name").toString(),
-                    data.get("email").toString(),
-                    data.get("phone").toString(),
-                    data.get("gender").toString(),
-                    data.get("address").toString());
+                    safeGet(data, "name"),
+                    safeGet(data, "email"),
+                    safeGet(data, "phone"),
+                    safeGet(data, "ic"),
+                    safeGet(data, "gender"),
+                    safeGet(data, "address"));
             return ResponseEntity.ok(Map.of("message", "Staff updated"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
@@ -114,5 +147,10 @@ public class AdminController {
     public ResponseEntity<?> deleteStaff(@PathVariable Long id) {
         adminService.deleteStaff(id);
         return ResponseEntity.ok(Map.of("message", "Staff deleted"));
+    }
+
+    private String safeGet(Map<String, Object> data, String key) {
+        Object val = data.get(key);
+        return val != null ? val.toString() : "";
     }
 }

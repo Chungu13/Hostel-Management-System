@@ -10,7 +10,8 @@ const RegisterPage: React.FC = () => {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        role: 'Resident' as 'Resident' | 'Security Staff'
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -24,21 +25,24 @@ const RegisterPage: React.FC = () => {
             setError("Security PINs do not match.");
             return;
         }
-
         setLoading(true);
         setError('');
-
         try {
             const response = await api.post('/api/auth/register', {
                 email: formData.email,
                 password: formData.password,
-                role: 'Resident'
+                role: formData.role
             });
-
             if (response.data) {
                 login(response.data);
                 setSuccess(true);
-                setTimeout(() => navigate('/onboarding'), 2500);
+                setTimeout(() => {
+                    if (formData.role === 'Resident') {
+                        navigate('/onboarding');
+                    } else {
+                        navigate('/security');
+                    }
+                }, 2500);
             }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Enrollment failed. This email may already be registered.');
@@ -51,18 +55,18 @@ const RegisterPage: React.FC = () => {
         try {
             setLoading(true);
             const response = await api.post('/api/auth/google', {
-                token: credentialResponse.credential
+                token: credentialResponse.credential,
+                role: formData.role // Pass the selected role for new signups
             });
-
             if (response.data) {
                 login(response.data);
-                if (response.data.needsOnboarding) {
+                if (response.data.needsOnboarding && response.data.myRole === 'Resident') {
                     navigate('/onboarding');
                 } else {
                     const role = response.data.myRole;
                     if (role === 'Resident') {
-                        navigate('/');
-                    } else if (role === 'Security Staff') {
+                        navigate('/resident');
+                    } else if (role === 'Security Staff' || role === 'Security') {
                         navigate('/security');
                     } else {
                         setError('Access denied. Please use the appropriate portal for your role.');
@@ -77,162 +81,248 @@ const RegisterPage: React.FC = () => {
         }
     };
 
-    return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 relative overflow-hidden">
-            {/* Ambient Background */}
-            <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-emerald-500/5 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/10 rounded-full blur-[120px]" />
-            </div>
+    const inputClass = `
+        w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl
+        text-gray-900 text-sm font-medium outline-none transition-all
+        placeholder:text-gray-300
+        focus:bg-white focus:border-green-400 focus:ring-4 focus:ring-green-400/10
+    `;
 
+    return (
+        <div
+            className="min-h-screen flex items-center justify-center p-6 font-['Plus_Jakarta_Sans',sans-serif]"
+            style={{
+                backgroundColor: '#f7f7f5',
+                backgroundImage: `
+                    radial-gradient(circle at 10% 20%, rgba(134,197,152,0.12) 0%, transparent 50%),
+                    radial-gradient(circle at 90% 80%, rgba(134,197,152,0.08) 0%, transparent 50%)
+                `
+            }}
+        >
             <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
-                className="w-full max-w-[500px] bg-white rounded-[2.5rem] p-12 shadow-2xl shadow-slate-200/60 border border-slate-100 relative z-10"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                className="w-full max-w-[460px] bg-white rounded-[1.5rem] relative overflow-hidden"
+                style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}
             >
-                {/* Back Link */}
-                <Link to="/login" className="absolute top-12 right-12 text-slate-400 hover:text-primary transition-colors">
-                    <ArrowLeft size={24} />
+                {/* Green top bar */}
+                <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[1.5rem]"
+                    style={{ background: 'linear-gradient(90deg, #4caf6e, #81c995)' }} />
+
+                {/* Back arrow */}
+                <Link
+                    to="/login"
+                    className="absolute top-8 right-8 w-8 h-8 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors z-10"
+                >
+                    <ArrowLeft size={15} />
                 </Link>
 
-                {/* Brand */}
-                <div className="flex items-center gap-3 mb-10">
-                    <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30">
-                        M
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="font-bold text-slate-900 text-xl leading-none tracking-tight">Malo</span>
-                        <span className="text-[10px] text-primary uppercase tracking-widest font-extrabold">Resident Enrollment</span>
-                    </div>
-                </div>
+                <div className="p-10 pt-11">
 
-                <AnimatePresence mode="wait">
-                    {!success ? (
-                        <motion.div
-                            key="registration-form"
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 20 }}
-                        >
-                            <div className="mb-10">
-                                <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Create Account</h1>
-                                <p className="text-slate-400 font-medium">Join our secure residency community today.</p>
-                            </div>
+                    {/* Brand */}
+                    <div className="flex items-center gap-2.5 mb-8">
+                        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center text-white font-bold text-base flex-shrink-0"
+                            style={{ background: 'linear-gradient(135deg, #4caf6e, #81c995)', boxShadow: '0 2px 8px rgba(76,175,110,0.28)' }}>
+                            M
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-[1.15rem] leading-none tracking-tight">Malo</span>
+                            <span className="text-[0.58rem] text-green-500 uppercase tracking-[0.15em] font-semibold">User Enrollment</span>
+                        </div>
+                    </div>
 
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="space-y-1.5">
-                                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Email Address</label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                                        <input
-                                            type="email"
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 outline-none transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 placeholder:text-slate-300 font-medium"
-                                            placeholder="you@residence.com"
-                                            required
-                                        />
-                                    </div>
+                    <AnimatePresence mode="wait">
+                        {!success ? (
+                            <motion.div
+                                key="form"
+                                initial={{ opacity: 0, x: -12 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 12 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                {/* Badge + heading */}
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[0.68rem] font-semibold uppercase tracking-widest mb-3"
+                                    style={{ background: 'rgba(76,175,110,0.08)', border: '1px solid rgba(76,175,110,0.2)', color: '#4caf6e' }}>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                                    New Account
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Security PIN</label>
+                                <h1 className="text-[1.85rem] font-bold text-gray-900 tracking-tight leading-snug mb-1.5">
+                                    Create Account
+                                </h1>
+                                <p className="text-sm text-gray-400 mb-8 font-normal leading-relaxed">
+                                    {formData.role === 'Resident' ? 'Join our secure residency community today.' : 'Join our professional security network today.'}
+                                </p>
+
+                                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+
+                                    {/* Role Selector */}
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[0.72rem] font-medium text-gray-500 uppercase tracking-wider">
+                                            Your Role
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, role: 'Resident' })}
+                                                className={`py-2 text-[0.7rem] font-bold rounded-lg border transition-all ${formData.role === 'Resident' ? 'bg-green-50 border-green-200 text-green-600 shadow-sm shadow-green-100' : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-white'}`}
+                                            >
+                                                Resident
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, role: 'Security Staff' })}
+                                                className={`py-2 text-[0.7rem] font-bold rounded-lg border transition-all ${formData.role === 'Security Staff' ? 'bg-green-50 border-green-200 text-green-600 shadow-sm shadow-green-100' : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-white'}`}
+                                            >
+                                                Security
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Email */}
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[0.72rem] font-medium text-gray-500 uppercase tracking-wider">
+                                            Email Address
+                                        </label>
                                         <div className="relative">
-                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
                                             <input
-                                                type="password"
-                                                value={formData.password}
-                                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                                className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 outline-none transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 placeholder:text-slate-300 font-bold tracking-widest"
-                                                placeholder="••••"
+                                                type="email"
+                                                className={inputClass}
+                                                placeholder="you@email.com"
+                                                value={formData.email}
+                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                                 required
                                             />
                                         </div>
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Confirm PIN</label>
-                                        <input
-                                            type="password"
-                                            value={formData.confirmPassword}
-                                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                            className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 outline-none transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 placeholder:text-slate-300 font-bold tracking-widest"
-                                            placeholder="••••"
-                                            required
-                                        />
+
+                                    {/* Password row */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[0.72rem] font-medium text-gray-500 uppercase tracking-wider">
+                                                Password
+                                            </label>
+                                            <div className="relative">
+                                                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
+                                                <input
+                                                    type="password"
+                                                    className={inputClass}
+                                                    placeholder="••••••••"
+                                                    value={formData.password}
+                                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[0.72rem] font-medium text-gray-500 uppercase tracking-wider">
+                                                Confirm
+                                            </label>
+                                            <div className="relative">
+                                                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
+                                                <input
+                                                    type="password"
+                                                    className={inputClass}
+                                                    placeholder="••••••••"
+                                                    value={formData.confirmPassword}
+                                                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
+
+                                    {/* Error */}
+                                    {error && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -4 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="p-3.5 bg-red-50 border border-red-100 rounded-xl text-red-500 text-sm font-medium flex items-center gap-2"
+                                        >
+                                            <span>✕</span> {error}
+                                        </motion.div>
+                                    )}
+
+                                    {/* Submit */}
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full py-3.5 text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0 mt-1"
+                                        style={{
+                                            background: 'linear-gradient(135deg, #4caf6e, #5ec47f)',
+                                            boxShadow: '0 4px 16px rgba(76,175,110,0.28)'
+                                        }}
+                                    >
+                                        {loading
+                                            ? <Loader2 size={17} className="animate-spin" />
+                                            : <UserPlus size={17} />
+                                        }
+                                        {loading ? 'Processing Enrollment…' : (formData.role === 'Resident' ? 'Register as Resident' : 'Register as Security')}
+                                    </button>
+                                </form>
+
+                                {/* Divider */}
+                                <div className="flex items-center gap-3 my-6">
+                                    <div className="flex-1 h-px bg-gray-100" />
+                                    <span className="text-[0.68rem] text-gray-300 font-medium uppercase tracking-widest">or continue with</span>
+                                    <div className="flex-1 h-px bg-gray-100" />
                                 </div>
 
-                                {error && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-[13px] font-medium flex items-center gap-2"
-                                    >
-                                        <span className="text-lg">✕</span>
-                                        {error}
-                                    </motion.div>
-                                )}
+                                <div className="flex justify-center">
+                                    <GoogleLogin
+                                        onSuccess={handleGoogleSuccess}
+                                        onError={() => setError('Google enrollment failed.')}
+                                        theme="outline"
+                                        shape="pill"
+                                        size="large"
+                                        text="signup_with"
+                                    />
+                                </div>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="success"
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                                className="flex flex-col items-center text-center py-10"
+                            >
+                                <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+                                    style={{
+                                        background: 'rgba(76,175,110,0.08)',
+                                        border: '2px solid rgba(76,175,110,0.2)'
+                                    }}>
+                                    <Check size={34} color="#4caf6e" strokeWidth={2.5} />
+                                </div>
+                                <h2 className="text-[1.5rem] font-bold text-gray-900 tracking-tight mb-2">
+                                    Registration Successful
+                                </h2>
+                                <p className="text-sm text-gray-400 max-w-[260px] leading-relaxed">
+                                    Your account has been established. Redirecting to onboarding…
+                                </p>
+                                <div className="mt-8 flex gap-1.5 justify-center">
+                                    {[0, 150, 300].map((delay) => (
+                                        <div
+                                            key={delay}
+                                            className="w-1.5 h-1.5 rounded-full bg-green-400 animate-bounce"
+                                            style={{ animationDelay: `${delay}ms` }}
+                                        />
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full py-4 bg-slate-900 text-white font-extrabold rounded-2xl shadow-xl shadow-slate-200 hover:bg-slate-800 hover:-translate-y-1 active:translate-y-0 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                >
-                                    {loading ? <Loader2 className="animate-spin" size={18} /> : <UserPlus size={18} />}
-                                    {loading ? 'Processing Enrollment...' : 'Register as Resident'}
-                                </button>
-                            </form>
-
-                            <div className="my-10 flex items-center gap-4">
-                                <div className="h-px bg-slate-100 flex-1" />
-                                <span className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.2em]">Fast Track</span>
-                                <div className="h-px bg-slate-100 flex-1" />
-                            </div>
-
-                            <div className="flex justify-center">
-                                <GoogleLogin
-                                    onSuccess={handleGoogleSuccess}
-                                    onError={() => setError('Google enrollment failed.')}
-                                    theme="outline"
-                                    shape="circle"
-                                    size="large"
-                                    width="100%"
-                                    text="signup_with"
-                                />
-                            </div>
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key="success-message"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="flex flex-col items-center text-center py-10"
-                        >
-                            <div className="w-24 h-24 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center text-emerald-500 mb-8 border-4 border-emerald-100 shadow-inner">
-                                <Check size={48} strokeWidth={3} />
-                            </div>
-                            <h2 className="text-3xl font-black text-slate-900 mb-4">Registration Successful</h2>
-                            <p className="text-slate-400 font-medium max-w-[280px]">
-                                Your account has been established. Redirecting you to onboarding...
-                            </p>
-                            <div className="mt-8 flex gap-1 justify-center">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce" />
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:-0.15s]" />
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:-0.3s]" />
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                <div className="mt-12 text-center">
-                    <p className="text-slate-400 text-sm font-medium">
+                    {/* Footer */}
+                    <p className="text-center text-sm text-gray-400 mt-8">
                         Returning resident?{' '}
-                        <Link to="/login" className="text-primary font-bold hover:underline">
+                        <Link to="/login" className="text-green-500 font-semibold hover:text-green-600 hover:underline transition-colors">
                             Sign in to your account
                         </Link>
                     </p>
+
                 </div>
             </motion.div>
         </div>

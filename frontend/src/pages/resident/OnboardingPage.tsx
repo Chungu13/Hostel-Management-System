@@ -120,37 +120,58 @@ const OnboardingPage: React.FC = () => {
                                         className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 outline-none transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 placeholder:text-slate-300 font-medium"
                                         placeholder="Full Legal Name"
                                         value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            const formatted = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                                            setFormData({ ...formData, name: formatted });
+                                        }}
                                         required
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">IC / Passport</label>
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">NRC Number (Zambia)</label>
                                 <div className="relative">
                                     <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                                     <input
                                         type="text"
                                         className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 outline-none transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 placeholder:text-slate-300 font-medium"
-                                        placeholder="Identification Number"
+                                        placeholder="123456/11/1"
                                         value={formData.ic}
-                                        onChange={(e) => setFormData({ ...formData, ic: e.target.value })}
+                                        onChange={(e) => {
+                                            let val = e.target.value.replace(/\D/g, ''); // Digits only
+                                            if (val.length > 9) val = val.slice(0, 9);
+
+                                            let formatted = val;
+                                            if (val.length > 6) {
+                                                formatted = val.slice(0, 6) + '/' + val.slice(6);
+                                            }
+                                            if (val.length > 8) {
+                                                formatted = formatted.slice(0, 9) + '/' + formatted.slice(9);
+                                            }
+                                            setFormData({ ...formData, ic: formatted });
+                                        }}
                                         required
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Mobile Phone</label>
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Mobile Phone (+260)</label>
                                 <div className="relative">
                                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                                     <input
                                         type="tel"
                                         className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 outline-none transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 placeholder:text-slate-300 font-medium"
-                                        placeholder="+60 12 345 6789"
+                                        placeholder="+260 9xx xxx xxx"
                                         value={formData.phone}
-                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                        onChange={(e) => {
+                                            let val = e.target.value;
+                                            if (!val.startsWith('+260')) val = '+260';
+                                            const rest = val.slice(4).replace(/\D/g, '');
+                                            setFormData({ ...formData, phone: '+260' + rest.slice(0, 9) });
+                                        }}
                                         required
                                     />
                                 </div>

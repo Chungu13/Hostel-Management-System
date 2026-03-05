@@ -11,14 +11,26 @@ import java.util.Optional;
 @Repository
 public interface SecurityStaffRepository extends JpaRepository<SecurityStaff, Long> {
 
+    List<SecurityStaff> findByPropertyId(Long propertyId);
+
+    List<SecurityStaff> findByPropertyIdAndOnDuty(Long propertyId, boolean onDuty);
+
+    long countByPropertyId(Long propertyId);
+
     List<SecurityStaff> findByNameContaining(String name);
 
     Optional<SecurityStaff> findByEmail(String email);
 
     Optional<SecurityStaff> findByIc(String ic);
 
-    long count();
+    Optional<SecurityStaff> findByPhone(String phone);
 
-    @Query("SELECT s.gender, COUNT(s) FROM SecurityStaff s GROUP BY s.gender")
-    List<Object[]> countByGender();
+    boolean existsByIc(String ic);
+
+    boolean existsByPhone(String phone);
+
+    boolean existsByEmail(String email);
+
+    @Query("SELECT s.gender, COUNT(s) FROM SecurityStaff s WHERE s.property.id = :propertyId GROUP BY s.gender")
+    List<Object[]> countByGenderAndPropertyId(Long propertyId);
 }

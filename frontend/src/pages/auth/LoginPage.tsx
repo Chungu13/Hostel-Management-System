@@ -43,7 +43,7 @@ const LoginPage: React.FC = () => {
                 const role = response.data.myRole;
                 if (role === 'Resident') {
                     navigate('/resident');
-                } else if (role === 'Security Staff') {
+                } else if (role === 'Security Staff' || role === 'Security') {
                     navigate('/security');
                 } else {
                     setError('Access denied. Please use the appropriate portal for your role.');
@@ -81,7 +81,7 @@ const LoginPage: React.FC = () => {
                     const role = response.data.myRole;
                     if (role === 'Resident') {
                         navigate('/resident');
-                    } else if (role === 'Security Staff') {
+                    } else if (role === 'Security Staff' || role === 'Security') {
                         navigate('/security');
                     } else {
                         setError('Access denied. Please use the appropriate portal for your role.');
@@ -137,7 +137,7 @@ const LoginPage: React.FC = () => {
                     Sign in
                 </h1>
                 <p className="text-[0.875rem] text-[#888] font-normal tracking-[0.01em] m-0 mb-8">
-                    Manage your hostel profile
+                    Manage your hostel or security profile
                 </p>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">

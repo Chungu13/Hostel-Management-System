@@ -22,7 +22,6 @@ import ConfirmModal from "../../components/ConfirmModal";
 
 type Resident = {
     id: number;
-    username: string;
     name: string;
     email: string;
     phone: string;
@@ -35,7 +34,6 @@ type Resident = {
 type Filter = "all" | "pending" | "approved";
 
 type FormData = {
-    username: string;
     name: string;
     email: string;
     phone: string;
@@ -43,10 +41,10 @@ type FormData = {
     gender: "Male" | "Female";
     room: string;
     approved: boolean;
+    password?: string;
 };
 
 const emptyForm: FormData = {
-    username: "",
     name: "",
     email: "",
     phone: "",
@@ -54,6 +52,7 @@ const emptyForm: FormData = {
     gender: "Male",
     room: "",
     approved: false,
+    password: "",
 };
 
 const ResidentManagement: React.FC = () => {
@@ -94,7 +93,7 @@ const ResidentManagement: React.FC = () => {
         setLoading(true);
         try {
             const response = await api.get<Resident[]>(
-                `/api/admin/residents?propertyId=${user?.propertyId}`
+                `/api/admin/residents`
             );
             setResidents(response.data ?? []);
         } catch (err) {
@@ -108,7 +107,7 @@ const ResidentManagement: React.FC = () => {
     const handleApprove = async (id: number): Promise<void> => {
         if (!user?.propertyId) return;
         try {
-            await api.post(`/api/admin/approve-resident/${id}?propertyId=${user.propertyId}`);
+            await api.post(`/api/admin/approve-resident/${id}`);
             showToast("Resident application approved successfully!", "success");
             void fetchResidents();
         } catch (err: any) {
@@ -127,7 +126,7 @@ const ResidentManagement: React.FC = () => {
             variant: "danger",
             onConfirm: async () => {
                 try {
-                    await api.delete(`/api/admin/residents/${id}?propertyId=${user.propertyId}`);
+                    await api.delete(`/api/admin/residents/${id}`);
                     showToast("Resident record deleted", "success");
                     void fetchResidents();
                 } catch (err: any) {
@@ -145,12 +144,12 @@ const ResidentManagement: React.FC = () => {
         try {
             if (editingResident) {
                 await api.put(
-                    `/api/admin/residents/${editingResident.id}?propertyId=${user.propertyId}`,
+                    `/api/admin/residents/${editingResident.id}`,
                     { ...formData, address: "Property Resident" }
                 );
                 showToast("Resident information updated", "success");
             } else {
-                await api.post(`/api/admin/residents?propertyId=${user.propertyId}`, {
+                await api.post(`/api/admin/residents`, {
                     ...formData,
                     address: "Property Resident",
                 });
@@ -169,7 +168,6 @@ const ResidentManagement: React.FC = () => {
     const openEditModal = (resident: Resident) => {
         setEditingResident(resident);
         setFormData({
-            username: resident.username || resident.email || "",
             name: resident.name ?? "",
             email: resident.email ?? "",
             phone: resident.phone ?? "",
@@ -192,7 +190,7 @@ const ResidentManagement: React.FC = () => {
 
         return residents.filter((r) => {
             const matchesSearch =
-                (r.name ?? "").toLowerCase().includes(q) || (r.username ?? "").toLowerCase().includes(q);
+                (r.name ?? "").toLowerCase().includes(q) || (r.email ?? "").toLowerCase().includes(q);
 
             const matchesFilter =
                 filter === "all" ||
@@ -217,11 +215,6 @@ const ResidentManagement: React.FC = () => {
                         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                     >
                         <div>
-                            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[0.72rem] font-semibold tracking-[0.08em] uppercase text-emerald-600 mb-2">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
-                                Residents
-                            </div>
-
                             <h1 className="text-2xl md:text-[1.85rem] font-bold tracking-tight text-zinc-900 leading-tight">
                                 Resident Management
                             </h1>
@@ -251,7 +244,7 @@ const ResidentManagement: React.FC = () => {
                             <input
                                 type="text"
                                 className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-3 py-2.5 text-sm text-zinc-900 outline-none transition focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
-                                placeholder="Search by name or username…"
+                                placeholder="Search by name or email…"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -294,7 +287,7 @@ const ResidentManagement: React.FC = () => {
                             ) : (
                                 filteredResidents.map((resident, index) => (
                                     <motion.div
-                                        key={resident.username}
+                                        key={resident.email}
                                         className="rounded-2xl border border-black/5 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)] transition hover:shadow-[0_4px_24px_rgba(0,0,0,0.08)] hover:-translate-y-[2px]"
                                         layout
                                         initial={{ opacity: 0, y: 12 }}
@@ -312,7 +305,7 @@ const ResidentManagement: React.FC = () => {
                                                         {resident.name}
                                                     </div>
                                                     <div className="text-xs text-zinc-400 mt-0.5">
-                                                        @{resident.username || resident.email?.split("@")[0] || "resident"}
+                                                        Property Resident
                                                     </div>
                                                 </div>
                                             </div>
@@ -374,7 +367,7 @@ const ResidentManagement: React.FC = () => {
                                                         : "border-amber-500/20 bg-amber-500/10 text-amber-600",
                                                 ].join(" ")}
                                             >
-                                                ● {resident.approved ? "Approved" : "Pending"}
+                                                ● {resident.approved ? "Approved" : "Awaiting Verification"}
                                             </span>
 
                                             <span className="text-xs text-zinc-300">{resident.gender}</span>
@@ -432,21 +425,6 @@ const ResidentManagement: React.FC = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[0.75rem] font-medium tracking-[0.06em] uppercase text-zinc-600">
-                                                Username
-                                            </label>
-                                            <input
-                                                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 disabled:bg-zinc-100 disabled:text-zinc-400 disabled:cursor-not-allowed"
-                                                placeholder="username"
-                                                disabled={!!editingResident}
-                                                value={formData.username}
-                                                onChange={(e) =>
-                                                    setFormData((p) => ({ ...p, username: e.target.value }))
-                                                }
-                                                required
-                                            />
-                                        </div>
 
                                         <div className="space-y-2">
                                             <label className="text-[0.75rem] font-medium tracking-[0.06em] uppercase text-zinc-600">
@@ -456,7 +434,11 @@ const ResidentManagement: React.FC = () => {
                                                 className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
                                                 placeholder="Full name"
                                                 value={formData.name}
-                                                onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    const formatted = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                                                    setFormData((p) => ({ ...p, name: formatted }));
+                                                }}
                                                 required
                                             />
                                         </div>
@@ -493,14 +475,48 @@ const ResidentManagement: React.FC = () => {
                                             </label>
                                             <input
                                                 className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
-                                                placeholder="+260 97 000 0000"
                                                 value={formData.phone}
-                                                onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
+                                                onChange={(e) => {
+                                                    let val = e.target.value;
+                                                    if (!val.startsWith('+260')) val = '+260';
+                                                    const rest = val.slice(4).replace(/\D/g, '');
+                                                    setFormData((p) => ({ ...p, phone: '+260' + rest.slice(0, 9) }));
+                                                }}
+                                                placeholder="+260 9xx xxx xxx"
                                                 required
                                             />
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Login Credentials */}
+                                {!editingResident && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <span className="text-[0.68rem] font-semibold tracking-[0.1em] uppercase text-zinc-300">
+                                                Login Credentials
+                                            </span>
+                                            <div className="h-px flex-1 bg-zinc-200" />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[0.75rem] font-medium tracking-[0.06em] uppercase text-zinc-600">
+                                                Login Password
+                                            </label>
+                                            <input
+                                                type="password"
+                                                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
+                                                placeholder="Set account password"
+                                                value={formData.password}
+                                                onChange={(e) =>
+                                                    setFormData((p) => ({ ...p, password: e.target.value }))
+                                                }
+                                                required={!editingResident}
+                                            />
+                                            <p className="text-[10px] text-zinc-400 italic">This password will be required for the resident to log in.</p>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Details */}
                                 <div>
@@ -514,13 +530,26 @@ const ResidentManagement: React.FC = () => {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <label className="text-[0.75rem] font-medium tracking-[0.06em] uppercase text-zinc-600">
-                                                IC / Passport
+                                                Zambian NRC
                                             </label>
                                             <input
                                                 className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
-                                                placeholder="IC or passport no."
                                                 value={formData.ic}
-                                                onChange={(e) => setFormData((p) => ({ ...p, ic: e.target.value }))}
+                                                onChange={(e) => {
+                                                    let val = e.target.value.replace(/\D/g, ''); // Digits only
+                                                    if (val.length > 9) val = val.slice(0, 9);
+
+                                                    // Format: ######/##/#
+                                                    let formatted = val;
+                                                    if (val.length > 6) {
+                                                        formatted = val.slice(0, 6) + '/' + val.slice(6);
+                                                    }
+                                                    if (val.length > 8) {
+                                                        formatted = formatted.slice(0, 9) + '/' + formatted.slice(9);
+                                                    }
+                                                    setFormData((p) => ({ ...p, ic: formatted }));
+                                                }}
+                                                placeholder="123456/11/1"
                                                 required
                                             />
                                         </div>
@@ -566,13 +595,11 @@ const ResidentManagement: React.FC = () => {
                                                 }
                                             >
                                                 <option value="true">Approved</option>
-                                                <option value="false">Pending</option>
+                                                <option value="false">Awaiting Verification</option>
                                             </select>
                                         </div>
-
                                     </div>
                                 </div>
-
                                 {/* Footer */}
                                 <div className="flex justify-end gap-2 pt-1">
                                     <button

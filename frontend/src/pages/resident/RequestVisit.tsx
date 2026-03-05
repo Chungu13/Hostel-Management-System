@@ -1,32 +1,106 @@
-import React, { useState } from 'react';
-import Sidebar from '../../components/Sidebar';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Send, User, Calendar, MessageSquare, Key, ShieldCheck, Loader2, CheckCircle2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import api from '../../utils/api';
+import React, { useState } from "react";
+import Sidebar from "../../components/Sidebar";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+    Send,
+    User,
+    Calendar,
+    MessageSquare,
+    Key,
+    ShieldCheck,
+    Loader2,
+    CheckCircle2,
+    Share2,
+    Copy,
+    Link as LinkIcon,
+} from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import api from "../../utils/api";
+
+import QRCodePass from "../../components/QRCodePass";
+
+type UserShape = {
+    id?: string;
+    email?: string;
+    name?: string;
+};
+
+type VisitRequestForm = {
+    visitorName: string;
+    visitDate: string; // yyyy-mm-dd
+    visitTime: string; // hh:mm
+    purpose: string;
+};
+
+const INITIAL_FORM: VisitRequestForm = {
+    visitorName: "",
+    visitDate: "",
+    visitTime: "",
+    purpose: "",
+};
 
 const RequestVisit: React.FC = () => {
-    const { user } = useAuth();
-    const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
-    const [formData, setFormData] = useState({
-        visitorName: '',
-        visitorUsername: '',
-        visitorPassword: '',
-        visitDate: '',
-        purpose: ''
-    });
+    const { user } = useAuth() as { user: UserShape };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const [loading, setLoading] = useState<boolean>(false);
+    const [success, setSuccess] = useState<string | null>(null); // Stores visitCode
+    const [formData, setFormData] = useState<VisitRequestForm>(INITIAL_FORM);
+
+    const handleShare = async () => {
+        if (!success) return;
+        const passUrl = `${window.location.origin}/guest-pass/${success}`;
+        const text = `Guest Access Pass for ${user.name || "Resident"}\n\nAccess Code: ${success}\n\nView Digital Pass: ${passUrl}\n\nPlease present this code/QR at the security gate.`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: "Guest Access Pass",
+                    text: text,
+                    url: passUrl
+                });
+            } catch (err) {
+                console.log("Error sharing", err);
+            }
+        } else {
+            try {
+                await navigator.clipboard.writeText(text);
+                alert("Pass details and URL copied to clipboard!");
+            } catch (err) {
+                console.error("Failed to copy!", err);
+            }
+        }
+    };
+
+    const handleCopyUrl = async () => {
+        if (!success) return;
+        const passUrl = `${window.location.origin}/guest-pass/${success}`;
+        try {
+            await navigator.clipboard.writeText(passUrl);
+            alert("Digital pass link copied!");
+        } catch (err) {
+            console.error("Failed to copy!", err);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (!user?.id) return;
+
         setLoading(true);
         try {
-            await api.post('/api/visits/request', {
+            const response = await api.post("/api/visits/request", {
                 ...formData,
-                residentId: user?.id
+                residentId: user.id,
+                residentName: user.name || user.email,
             });
-            setSuccess(true);
-            setFormData({ visitorName: '', visitorUsername: '', visitorPassword: '', visitDate: '', purpose: '' });
+
+            // The backend now returns the full created object
+            if (response.data && response.data.visitCode) {
+                setSuccess(response.data.visitCode);
+                setFormData(INITIAL_FORM);
+            } else {
+                throw new Error("Missing visit code in response");
+            }
         } catch (err) {
             console.error("Error submitting visit request:", err);
         } finally {
@@ -35,175 +109,230 @@ const RequestVisit: React.FC = () => {
     };
 
     return (
-        <div className="flex bg-slate-50 min-h-screen">
+        <div
+            className="flex min-h-screen bg-[#f7f7f5] font-sans"
+            style={{
+                backgroundImage:
+                    "radial-gradient(circle at 5% 10%, rgba(134, 197, 152, 0.10) 0%, transparent 45%), radial-gradient(circle at 95% 90%, rgba(134, 197, 152, 0.07) 0%, transparent 45%)",
+            }}
+        >
             <Sidebar />
-            <main className="flex-1 p-10 ml-0 lg:ml-0 overflow-y-auto">
+
+            <main className="w-full box-border px-5 py-6 md:py-10 md:pl-20 md:pr-10 sm:pl-[70px]">
                 {/* Header */}
                 <motion.header
-                    className="mb-10"
+                    className="mb-8"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-primary text-[10px] font-bold uppercase tracking-widest mb-4">
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                    <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-emerald-600/20 bg-emerald-600/10 px-2.5 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-emerald-600">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
                         Visit Management
                     </div>
-                    <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Request a Visit</h1>
-                    <p className="text-slate-400 font-medium mt-1">Generate credentials for your guest to access the hostel</p>
+
+                    <h1 className="m-0 text-[1.85rem] font-bold tracking-[-0.03em] text-zinc-900 leading-tight">
+                        Request a Visit
+                    </h1>
+                    <p className="m-0 text-sm font-normal text-zinc-400">
+                        Generate a secure QR Access Pass for your guest
+                    </p>
                 </motion.header>
 
-                {/* Form Card */}
+                {/* Card */}
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    className="relative w-full max-w-[640px] overflow-hidden rounded-[20px] bg-white p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.04)] md:p-9"
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="max-w-3xl bg-white rounded-3xl p-10 shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden"
+                    transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
                 >
-                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary to-emerald-400" />
+                    <div className="absolute left-0 right-0 top-0 h-[3px] bg-gradient-to-r from-emerald-600 to-emerald-300" />
 
                     <AnimatePresence mode="wait">
                         {!success ? (
-                            <motion.form
+                            <motion.div
                                 key="form"
-                                onSubmit={handleSubmit}
-                                className="space-y-10"
-                                exit={{ opacity: 0, x: 20 }}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0, x: 16 }}
                             >
-                                {/* Section 1: Visitor Identity */}
-                                <div>
-                                    <div className="flex items-center gap-4 mb-6">
-                                        <div className="h-px bg-slate-100 flex-1" />
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Visitor Identity</span>
-                                        <div className="h-px bg-slate-100 flex-1" />
+                                <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                                    {/* Visitor Info */}
+                                    <div className="flex items-center gap-3">
+                                        <span className="whitespace-nowrap text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-zinc-400">
+                                            Visitor Info
+                                        </span>
+                                        <div className="h-px flex-1 bg-zinc-200" />
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Full Name</label>
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        {/* Visitor Full Name */}
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[0.78rem] font-medium uppercase tracking-[0.06em] text-zinc-600">
+                                                Visitor Full Name
+                                            </label>
                                             <div className="relative">
-                                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                                <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                                                 <input
                                                     type="text"
-                                                    className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 outline-none transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 placeholder:text-slate-300 font-medium"
-                                                    placeholder="e.g. Jane Smith"
+                                                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-3 pl-10 pr-3.5 text-[0.9rem] text-zinc-900 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-600/10"
+                                                    placeholder="e.g. Jane Doe"
                                                     value={formData.visitorName}
-                                                    onChange={(e) => setFormData({ ...formData, visitorName: e.target.value })}
+                                                    onChange={(e) =>
+                                                        setFormData((p) => ({
+                                                            ...p,
+                                                            visitorName: e.target.value,
+                                                        }))
+                                                    }
                                                     required
                                                 />
                                             </div>
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Planned Date</label>
+
+                                        {/* Visit Date */}
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[0.78rem] font-medium uppercase tracking-[0.06em] text-zinc-600">
+                                                Visit Date
+                                            </label>
                                             <div className="relative">
-                                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                                <Calendar className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                                                 <input
                                                     type="date"
-                                                    className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 outline-none transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 font-medium"
+                                                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-3 pl-10 pr-3.5 text-[0.9rem] text-zinc-900 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-600/10"
                                                     value={formData.visitDate}
-                                                    onChange={(e) => setFormData({ ...formData, visitDate: e.target.value })}
+                                                    onChange={(e) =>
+                                                        setFormData((p) => ({
+                                                            ...p,
+                                                            visitDate: e.target.value,
+                                                        }))
+                                                    }
                                                     required
                                                 />
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
 
-                                {/* Section 2: Guest Credentials */}
-                                <div>
-                                    <div className="flex items-center gap-4 mb-6">
-                                        <div className="h-px bg-slate-100 flex-1" />
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Security Credentials</span>
-                                        <div className="h-px bg-slate-100 flex-1" />
-                                    </div>
-
-                                    <div className="bg-slate-50 border border-slate-100 rounded-3xl p-8 space-y-6">
-                                        <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm mb-2">
-                                            <ShieldCheck size={18} />
-                                            Guest Self-Verification Profile
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-1.5">
-                                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Guest Username</label>
+                                        {/* Visit Time */}
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[0.78rem] font-medium uppercase tracking-[0.06em] text-zinc-600">
+                                                Arrival Time
+                                            </label>
+                                            <div className="relative">
+                                                <Key className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                                                 <input
-                                                    type="text"
-                                                    className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-900 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/5 font-bold"
-                                                    placeholder="Create a guest ID"
-                                                    value={formData.visitorUsername}
-                                                    onChange={(e) => setFormData({ ...formData, visitorUsername: e.target.value })}
+                                                    type="time"
+                                                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-3 pl-10 pr-3.5 text-[0.9rem] text-zinc-900 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-600/10"
+                                                    value={formData.visitTime}
+                                                    onChange={(e) =>
+                                                        setFormData((p) => ({
+                                                            ...p,
+                                                            visitTime: e.target.value,
+                                                        }))
+                                                    }
                                                     required
                                                 />
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Access PIN</label>
-                                                <div className="relative">
-                                                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                                                    <input
-                                                        type="password"
-                                                        className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-900 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/5 font-bold tracking-widest"
-                                                        placeholder="••••"
-                                                        value={formData.visitorPassword}
-                                                        onChange={(e) => setFormData({ ...formData, visitorPassword: e.target.value })}
-                                                        required
-                                                    />
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Section 3: Visit Details */}
-                                <div>
-                                    <div className="flex items-center gap-4 mb-6">
-                                        <div className="h-px bg-slate-100 flex-1" />
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Additional Details</span>
-                                        <div className="h-px bg-slate-100 flex-1" />
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Purpose of Visit</label>
+                                    {/* Purpose */}
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[0.78rem] font-medium uppercase tracking-[0.06em] text-zinc-600">
+                                            Purpose of Visit
+                                        </label>
                                         <div className="relative">
-                                            <MessageSquare className="absolute left-4 top-4 text-slate-400 w-4 h-4" />
+                                            <MessageSquare className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-zinc-400" />
                                             <textarea
-                                                className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 outline-none transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 placeholder:text-slate-300 font-medium min-h-[120px]"
-                                                placeholder="Please briefly describe the reason for the visit..."
+                                                className="min-h-[100px] w-full resize-y rounded-xl border border-zinc-200 bg-zinc-50 py-3 pl-10 pr-3.5 text-[0.9rem] leading-relaxed text-zinc-900 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-600/10"
+                                                placeholder="Briefly describe the reason for the visit..."
                                                 value={formData.purpose}
-                                                onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                                                onChange={(e) =>
+                                                    setFormData((p) => ({ ...p, purpose: e.target.value }))
+                                                }
                                                 required
                                             />
                                         </div>
                                     </div>
-                                </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full py-4.5 bg-primary text-white font-extrabold rounded-2xl shadow-xl shadow-primary/25 hover:bg-primary-hover hover:-translate-y-1 active:translate-y-0 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-lg"
-                                >
-                                    {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
-                                    {loading ? 'Submitting Request...' : 'Issue Access Pass'}
-                                </button>
-                            </motion.form>
+                                    <div className="rounded-2xl border border-emerald-600/10 bg-emerald-600/5 p-4 text-[0.8rem] leading-relaxed text-emerald-800">
+                                        <p className="m-0 flex items-center gap-2 font-semibold">
+                                            <ShieldCheck size={16} /> Instant Access Pass
+                                        </p>
+                                        <p className="mt-1 opacity-80">
+                                            A secure QR code will be generated immediately for your guest to use at the security gate.
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-500 px-4 py-3.5 text-[0.92rem] font-semibold text-white shadow-[0_4px_16px_rgba(16,185,129,0.25)] transition hover:-translate-y-[1px] hover:opacity-95 hover:shadow-[0_6px_20px_rgba(16,185,129,0.30)] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+                                    >
+                                        {loading ? (
+                                            <Loader2 size={17} className="animate-spin" />
+                                        ) : (
+                                            <Send size={17} />
+                                        )}
+                                        {loading ? "Generating Pass…" : "Generate QR Access Pass"}
+                                    </button>
+                                </form>
+                            </motion.div>
                         ) : (
                             <motion.div
                                 key="success"
-                                initial={{ opacity: 0, scale: 0.9 }}
+                                initial={{ opacity: 0, scale: 0.92 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="flex flex-col items-center text-center py-12"
+                                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                                className="flex flex-col items-center gap-4 py-4 text-center"
                             >
-                                <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center border-4 border-emerald-100 mb-8">
-                                    <CheckCircle2 size={48} className="text-emerald-500" />
+                                <div className="flex h-[64px] w-[64px] items-center justify-center rounded-full border-2 border-emerald-600/20 bg-gradient-to-br from-emerald-600/10 to-emerald-300/20">
+                                    <CheckCircle2 size={32} className="text-emerald-600" />
                                 </div>
-                                <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Request Successful!</h2>
-                                <p className="text-slate-400 font-medium max-w-sm mx-auto mb-10 leading-relaxed">
-                                    Your visit request has been logged. Please share the <span className="text-slate-900 font-bold">username and PIN</span> with your guest for entry.
-                                </p>
-                                <button
-                                    className="px-8 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
-                                    onClick={() => setSuccess(false)}
-                                >
-                                    Submit Another Request
-                                </button>
+
+                                <div className="space-y-1">
+                                    <h2 className="m-0 text-[1.5rem] font-bold tracking-[-0.02em] text-zinc-900">
+                                        Access Pass Ready!
+                                    </h2>
+                                    <p className="m-0 text-sm text-zinc-400">
+                                        Share this QR code with your visitor.
+                                    </p>
+                                </div>
+
+                                <div className="mt-4 flex flex-col items-center gap-4 rounded-[24px] border border-zinc-200 bg-white p-6 shadow-xl shadow-zinc-200/50">
+                                    <QRCodePass
+                                        value={success}
+                                        size={200}
+                                    />
+                                    <div className="space-y-1.5">
+                                        <p className="text-[0.65rem] font-bold uppercase tracking-widest text-zinc-400">Access Code</p>
+                                        <div className="rounded-lg bg-zinc-100 px-4 py-1.5 font-mono text-lg font-bold tracking-widest text-zinc-800">
+                                            {success}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex w-full flex-col gap-3 px-4 sm:flex-row">
+                                    <button
+                                        type="button"
+                                        onClick={handleShare}
+                                        className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-zinc-900 py-3 text-sm font-bold text-white transition hover:bg-zinc-800"
+                                    >
+                                        <Share2 size={18} /> Share
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleCopyUrl}
+                                        className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
+                                    >
+                                        <LinkIcon size={18} /> Copy Link
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSuccess(null)}
+                                        className="flex-1 rounded-xl border border-zinc-200 bg-white py-3 text-sm font-bold text-zinc-600 transition hover:bg-zinc-50"
+                                    >
+                                        New Request
+                                    </button>
+                                </div>
                             </motion.div>
                         )}
                     </AnimatePresence>

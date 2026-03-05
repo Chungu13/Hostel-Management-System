@@ -10,6 +10,7 @@ interface ProfileData {
     email: string;
     phone: string;
     address: string;
+    ic: string;
     myRole: string;
     profileImage?: string;
     propertyName?: string;
@@ -25,6 +26,7 @@ const ProfilePage: React.FC = () => {
         email: '',
         phone: '',
         address: '',
+        ic: '',
         myRole: '',
         profileImage: ''
     });
@@ -72,6 +74,7 @@ const ProfilePage: React.FC = () => {
             await api.put('/api/profile/me', {
                 fullName: profile.fullName,
                 phone: profile.phone,
+                ic: profile.ic,
                 address: profile.address,
                 profileImage: profile.profileImage
             });
@@ -109,10 +112,6 @@ const ProfilePage: React.FC = () => {
                     >
                         {/* Header */}
                         <div className="mb-8">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[0.72rem] font-semibold tracking-[0.08em] uppercase text-emerald-600 mb-2">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
-                                My Account
-                            </div>
                             <h1 className="text-[1.85rem] font-bold tracking-tight text-zinc-900 leading-tight">Admin Profile</h1>
                             <p className="text-sm text-zinc-400 mt-1">Manage your professional information and contact details</p>
                         </div>
@@ -181,7 +180,11 @@ const ProfilePage: React.FC = () => {
                                                             className={inputClass}
                                                             placeholder="John Doe"
                                                             value={profile.fullName}
-                                                            onChange={e => setProfile({ ...profile, fullName: e.target.value })}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                const formatted = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                                                                setProfile({ ...profile, fullName: formatted });
+                                                            }}
                                                             required
                                                         />
                                                     </div>
@@ -214,7 +217,41 @@ const ProfilePage: React.FC = () => {
                                                             className={inputClass}
                                                             placeholder="+60 12 345 6789"
                                                             value={profile.phone}
-                                                            onChange={e => setProfile({ ...profile, phone: e.target.value })}
+                                                            onChange={(e) => {
+                                                                let val = e.target.value;
+                                                                if (!val.startsWith('+260')) val = '+260';
+                                                                const rest = val.slice(4).replace(/\D/g, '');
+                                                                setProfile({ ...profile, phone: '+260' + rest.slice(0, 9) });
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[0.72rem] font-medium text-gray-500 uppercase tracking-wider px-0.5 flex items-center gap-2">
+                                                        <ShieldCheck size={12} /> NRC Number
+                                                    </label>
+                                                    <div className="relative">
+                                                        <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
+                                                        <input
+                                                            className={inputClass}
+                                                            placeholder="123456/11/1"
+                                                            value={profile.ic}
+                                                            onChange={(e) => {
+                                                                let val = e.target.value.replace(/\D/g, ''); // Digits only
+                                                                if (val.length > 9) val = val.slice(0, 9);
+
+                                                                // Format: ######/##/#
+                                                                let formatted = val;
+                                                                if (val.length > 6) {
+                                                                    formatted = val.slice(0, 6) + '/' + val.slice(6);
+                                                                }
+                                                                if (val.length > 8) {
+                                                                    formatted = formatted.slice(0, 9) + '/' + formatted.slice(9);
+                                                                }
+                                                                setProfile({ ...profile, ic: formatted });
+                                                            }}
+                                                            required
                                                         />
                                                     </div>
                                                 </div>

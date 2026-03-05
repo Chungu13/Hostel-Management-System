@@ -21,7 +21,6 @@ import ConfirmModal from "../../components/ConfirmModal";
 
 type Staff = {
     id: number;
-    username: string;
     name: string;
     email: string;
     phone: string;
@@ -32,7 +31,6 @@ type Staff = {
 };
 
 type FormData = {
-    username: string;
     name: string;
     email: string;
     phone: string;
@@ -40,10 +38,10 @@ type FormData = {
     gender: "Male" | "Female";
     address: string;
     approved: boolean;
+    password?: string;
 };
 
 const emptyForm: FormData = {
-    username: "",
     name: "",
     email: "",
     phone: "",
@@ -51,6 +49,7 @@ const emptyForm: FormData = {
     gender: "Male",
     address: "",
     approved: true,
+    password: "",
 };
 
 const StaffManagement: React.FC = () => {
@@ -90,7 +89,7 @@ const StaffManagement: React.FC = () => {
         setLoading(true);
         try {
             const response = await api.get<Staff[]>(
-                `/api/admin/staff?propertyId=${user?.propertyId}`
+                `/api/admin/staff`
             );
             setStaff(response.data ?? []);
         } catch (err) {
@@ -111,7 +110,7 @@ const StaffManagement: React.FC = () => {
             variant: "danger",
             onConfirm: async () => {
                 try {
-                    await api.delete(`/api/admin/staff/${id}?propertyId=${user.propertyId}`);
+                    await api.delete(`/api/admin/staff/${id}`);
                     showToast("Staff record removed", "success");
                     void fetchStaff();
                 } catch (err: any) {
@@ -129,12 +128,12 @@ const StaffManagement: React.FC = () => {
         try {
             if (editingStaff) {
                 await api.put(
-                    `/api/admin/staff/${editingStaff.id}?propertyId=${user.propertyId}`,
+                    `/api/admin/staff/${editingStaff.id}`,
                     formData
                 );
                 showToast("Staff information updated", "success");
             } else {
-                await api.post("/api/admin/staff", { ...formData, propertyId: user.propertyId });
+                await api.post("/api/admin/staff", { ...formData });
                 showToast("New staff member added", "success");
             }
             setIsModalOpen(false);
@@ -148,14 +147,13 @@ const StaffManagement: React.FC = () => {
     const openEditModal = (s: Staff) => {
         setEditingStaff(s);
         setFormData({
-            username: s.username || s.email || "",
-            name: s.name ?? "",
-            email: s.email ?? "",
-            phone: s.phone ?? "",
-            ic: s.ic ?? "",
+            name: s.name,
+            email: s.email,
+            phone: s.phone,
+            ic: s.ic,
             gender: (s.gender === "Female" ? "Female" : "Male") as "Male" | "Female",
-            address: s.address ?? "",
-            approved: s.approved ?? true,
+            address: s.address,
+            approved: !!s.approved,
         });
         setIsModalOpen(true);
     };
@@ -172,8 +170,8 @@ const StaffManagement: React.FC = () => {
 
         return staff.filter((s) => {
             const name = (s.name ?? "").toLowerCase();
-            const username = (s.username ?? "").toLowerCase();
-            return name.includes(q) || username.includes(q);
+            const email = (s.email ?? "").toLowerCase();
+            return name.includes(q) || email.includes(q);
         });
     }, [searchTerm, staff]);
 
@@ -191,10 +189,7 @@ const StaffManagement: React.FC = () => {
                         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                     >
                         <div>
-                            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[0.72rem] font-semibold tracking-[0.08em] uppercase text-emerald-600 mb-2">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
-                                Security
-                            </div>
+
 
                             <h1 className="flex items-center gap-2 text-2xl md:text-[1.85rem] font-bold tracking-tight text-zinc-900 leading-tight">
                                 <ShieldAlert className="text-sky-500" size={26} strokeWidth={2.2} />
@@ -226,7 +221,7 @@ const StaffManagement: React.FC = () => {
                             <input
                                 type="text"
                                 className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-3 py-2.5 text-sm text-zinc-900 outline-none transition focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
-                                placeholder="Search by name or badge ID…"
+                                placeholder="Search by name or email…"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -254,7 +249,7 @@ const StaffManagement: React.FC = () => {
                             ) : (
                                 filteredStaff.map((person, index) => (
                                     <motion.div
-                                        key={person.username}
+                                        key={person.email}
                                         className="rounded-2xl border border-black/5 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)] transition hover:shadow-[0_4px_24px_rgba(0,0,0,0.08)] hover:-translate-y-[2px]"
                                         initial={{ opacity: 0, y: 12 }}
                                         animate={{ opacity: 1, y: 0 }}
@@ -271,7 +266,7 @@ const StaffManagement: React.FC = () => {
                                                         {person.name}
                                                     </div>
                                                     <div className="text-xs text-zinc-400 mt-0.5">
-                                                        ID: {person.username || person.email?.split("@")[0] || person.id}
+                                                        Officer Profile
                                                     </div>
                                                 </div>
                                             </div>
@@ -377,31 +372,20 @@ const StaffManagement: React.FC = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[0.75rem] font-medium tracking-[0.06em] uppercase text-zinc-600">
-                                                Username (Badge ID)
-                                            </label>
-                                            <input
-                                                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-400/10 disabled:bg-zinc-100 disabled:text-zinc-400 disabled:cursor-not-allowed"
-                                                placeholder="Badge ID"
-                                                disabled={!!editingStaff}
-                                                value={formData.username}
-                                                onChange={(e) =>
-                                                    setFormData((p) => ({ ...p, username: e.target.value }))
-                                                }
-                                                required
-                                            />
-                                        </div>
 
                                         <div className="space-y-2">
                                             <label className="text-[0.75rem] font-medium tracking-[0.06em] uppercase text-zinc-600">
-                                                Full Name
+                                                Full Name (As shown on ID)
                                             </label>
                                             <input
                                                 className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-400/10"
                                                 placeholder="Full name"
                                                 value={formData.name}
-                                                onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    const formatted = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                                                    setFormData((p) => ({ ...p, name: formatted }));
+                                                }}
                                                 required
                                             />
                                         </div>
@@ -440,16 +424,48 @@ const StaffManagement: React.FC = () => {
                                             </label>
                                             <input
                                                 className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-400/10"
-                                                placeholder="+260 97 000 0000"
                                                 value={formData.phone}
-                                                onChange={(e) =>
-                                                    setFormData((p) => ({ ...p, phone: e.target.value }))
-                                                }
+                                                onChange={(e) => {
+                                                    let val = e.target.value;
+                                                    if (!val.startsWith('+260')) val = '+260';
+                                                    const rest = val.slice(4).replace(/\D/g, '');
+                                                    setFormData((p) => ({ ...p, phone: '+260' + rest.slice(0, 9) }));
+                                                }}
+                                                placeholder="+260 9xx xxx xxx"
                                                 required
                                             />
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Security Credentials */}
+                                {!editingStaff && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <span className="text-[0.68rem] font-semibold tracking-[0.1em] uppercase text-zinc-300">
+                                                Security Credentials
+                                            </span>
+                                            <div className="h-px flex-1 bg-zinc-200" />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[0.75rem] font-medium tracking-[0.06em] uppercase text-zinc-600">
+                                                Login Password
+                                            </label>
+                                            <input
+                                                type="password"
+                                                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-400/10"
+                                                placeholder="Set account password"
+                                                value={formData.password}
+                                                onChange={(e) =>
+                                                    setFormData((p) => ({ ...p, password: e.target.value }))
+                                                }
+                                                required={!editingStaff}
+                                            />
+                                            <p className="text-[10px] text-zinc-400 italic">This password will be required for the guard to log in.</p>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Personnel Details */}
                                 <div>
@@ -463,13 +479,26 @@ const StaffManagement: React.FC = () => {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <label className="text-[0.75rem] font-medium tracking-[0.06em] uppercase text-zinc-600">
-                                                IC / Passport
+                                                Zambian NRC
                                             </label>
                                             <input
                                                 className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-400/10"
-                                                placeholder="IC or passport no."
                                                 value={formData.ic}
-                                                onChange={(e) => setFormData((p) => ({ ...p, ic: e.target.value }))}
+                                                onChange={(e) => {
+                                                    let val = e.target.value.replace(/\D/g, ''); // Digits only
+                                                    if (val.length > 9) val = val.slice(0, 9);
+
+                                                    // Format: ######/##/#
+                                                    let formatted = val;
+                                                    if (val.length > 6) {
+                                                        formatted = val.slice(0, 6) + '/' + val.slice(6);
+                                                    }
+                                                    if (val.length > 8) {
+                                                        formatted = formatted.slice(0, 9) + '/' + formatted.slice(9);
+                                                    }
+                                                    setFormData((p) => ({ ...p, ic: formatted }));
+                                                }}
+                                                placeholder="123456/11/1"
                                                 required
                                             />
                                         </div>

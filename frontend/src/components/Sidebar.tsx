@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import React, { useMemo, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
     LayoutDashboard,
+    Users,
+    ShieldCheck,
     LogOut,
     UserCircle,
     History,
@@ -9,174 +11,209 @@ import {
     Menu,
     X,
     ChevronRight,
-    Home,
-    Settings,
-    Bell,
-    ShieldCheck
-} from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
+    type LucideIcon,
+} from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { motion, AnimatePresence } from "framer-motion";
+
+type Role = "Managing Staff" | "Resident" | "Security Staff" | string;
+
+type MenuItem = {
+    path: string;
+    icon: LucideIcon;
+    label: string;
+};
+
+type UserShape = {
+    name?: string;
+    email?: string;
+    myRole?: Role;
+};
 
 const Sidebar: React.FC = () => {
-    const { user, logout } = useAuth();
+    const { user, logout } = useAuth() as { user?: UserShape; logout: () => void };
     const navigate = useNavigate();
-    const location = useLocation();
-    const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState<boolean>(false);
 
     const handleLogout = () => {
         logout();
-        navigate('/login');
+        navigate("/login");
     };
 
-    const residentMenu = [
-        { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-        { path: '/resident/visit-request', icon: FileText, label: 'Resident Pass' },
-        { path: '/resident/history', icon: History, label: 'Access History' },
-    ];
+    const menuItems: Record<string, MenuItem[]> = useMemo(
+        () => ({
+            "Managing Staff": [
+                { path: "/admin", icon: LayoutDashboard, label: "Overview" },
+                { path: "/admin/residents", icon: Users, label: "Residents" },
+                { path: "/admin/staff", icon: ShieldCheck, label: "Staff" },
+                { path: "/admin/reports", icon: FileText, label: "Reports" },
+            ],
+            Resident: [
+                { path: "/resident", icon: LayoutDashboard, label: "Overview" },
+                { path: "/resident/visit-request", icon: FileText, label: "Request Visit" },
+                { path: "/resident/history", icon: History, label: "Visit History" },
+            ],
+            "Security Staff": [
+                { path: "/security", icon: LayoutDashboard, label: "Dashboard" },
+                { path: "/security/verify", icon: ShieldCheck, label: "Verify Visitor" },
+                { path: "/security/history", icon: History, label: "Records" },
+            ],
+        }),
+        []
+    );
 
-    const securityMenu = [
-        { path: '/security', icon: LayoutDashboard, label: 'Control Hub' },
-        { path: '/security/verify', icon: ShieldCheck, label: 'Verify Entry' },
-        { path: '/security/history', icon: History, label: 'Visit Logs' },
-    ];
+    const currentMenu: MenuItem[] = useMemo(() => {
+        const role = user?.myRole || "";
+        if (role === "Security Staff" || role === "Security") {
+            return menuItems["Security Staff"];
+        }
+        return menuItems[role] || [];
+    }, [user?.myRole, menuItems]);
 
-    const activeMenu = user?.myRole === 'Security Staff' ? securityMenu : residentMenu;
-
-    const checkIsActive = (path: string) => {
-        if (path === '/' && location.pathname === '/') return true;
-        if (path !== '/' && location.pathname.startsWith(path)) return true;
-        return false;
-    };
+    const initials = (user?.name || user?.email || "U")[0]?.toUpperCase();
 
     return (
         <>
-            {/* Mobile Header/Toggle */}
-            <div className={`fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md z-40 lg:hidden flex items-center justify-between px-6 border-b border-slate-100 transition-all ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-sm">M</div>
-                    <span className="font-bold text-slate-800 tracking-tight">Malo Resident</span>
-                </div>
-                <button
-                    onClick={() => setIsOpen(true)}
-                    className="p-2.5 bg-slate-50 text-slate-600 rounded-xl active:scale-95 transition-all"
-                >
-                    <Menu size={20} />
-                </button>
-            </div>
+            {/* Toggle Button — always visible */}
+            <button
+                type="button"
+                onClick={() => setIsOpen(true)}
+                aria-label="Open menu"
+                className="fixed left-5 top-5 z-[300] flex h-[42px] w-[42px] items-center justify-center rounded-xl border border-zinc-200 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition hover:-translate-y-[1px] hover:bg-zinc-50 hover:shadow-[0_4px_14px_rgba(0,0,0,0.10)]"
+            >
+                <Menu size={18} className="text-zinc-700" />
+            </button>
 
-            {/* Desktop Sidebar + Mobile Panel */}
             <AnimatePresence>
-                {(isOpen || window.innerWidth >= 1024) && (
+                {isOpen && (
                     <>
-                        {/* Backdrop for mobile */}
+                        {/* Overlay */}
                         <motion.div
+                            className="fixed inset-0 z-[400] bg-black/15 backdrop-blur-[2px]"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
                             onClick={() => setIsOpen(false)}
-                            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] lg:hidden"
                         />
 
                         {/* Sidebar Panel */}
                         <motion.aside
-                            initial={{ x: -300 }}
+                            className="fixed left-0 top-0 z-[500] flex h-screen w-[260px] flex-col border-r border-zinc-200 bg-white px-4 py-6 shadow-[4px_0_32px_rgba(0,0,0,0.08)]"
+                            initial={{ x: -280 }}
                             animate={{ x: 0 }}
-                            exit={{ x: -300 }}
-                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="fixed left-0 top-0 bottom-0 w-[280px] bg-white z-[101] border-r border-slate-100 flex flex-col p-8 lg:z-30 lg:translate-x-0"
+                            exit={{ x: -280 }}
+                            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                         >
                             {/* Brand */}
-                            <div className="flex items-center justify-between mb-12">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/20">
-                                        M
+                            <div className="mb-8 flex items-center justify-between px-2">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="flex h-[34px] w-[34px] items-center justify-center rounded-[9px] bg-gradient-to-br from-emerald-600 to-emerald-300 shadow-[0_2px_8px_rgba(16,185,129,0.28)]">
+                                        <span className="text-[1rem] font-bold tracking-[-0.02em] text-white">
+                                            M
+                                        </span>
                                     </div>
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-slate-900 text-lg leading-none">Malo</span>
-                                        <span className="text-[10px] text-primary uppercase tracking-widest font-bold">Residency</span>
+
+                                    <div className="flex flex-col gap-[1px]">
+                                        <span className="text-[1.15rem] font-bold tracking-[-0.02em] text-zinc-900 leading-none">
+                                            Malo
+                                        </span>
+
                                     </div>
                                 </div>
-                                <button onClick={() => setIsOpen(false)} className="lg:hidden p-2 text-slate-400 hover:text-slate-900">
-                                    <X size={20} />
+
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    aria-label="Close menu"
+                                    className="flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 transition hover:bg-zinc-100"
+                                >
+                                    <X size={14} className="text-zinc-600" />
                                 </button>
                             </div>
 
-                            {/* User Profile */}
-                            <div className="mb-10 p-5 bg-slate-50 rounded-[2rem] border border-slate-100 group cursor-pointer hover:bg-white hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-primary font-bold text-lg group-hover:scale-110 transition-transform">
-                                        {user?.name?.[0]?.toUpperCase() || 'U'}
+                            {/* User Card */}
+                            <div className="mb-6 flex items-center gap-2.5 rounded-[14px] border border-zinc-200 bg-zinc-50 px-3.5 py-3">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-emerald-600/15 to-emerald-300/25 text-[0.85rem] font-bold text-emerald-600">
+                                    {initials}
+                                </div>
+
+                                <div>
+                                    <div className="text-[0.85rem] font-semibold leading-tight text-zinc-900">
+                                        {user?.name || user?.email || "User"}
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-slate-900 truncate group-hover:text-primary transition-colors">
-                                            {user?.name}
-                                        </p>
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">
-                                            Tenant Access
-                                        </p>
+                                    <div className="text-[0.7rem] font-normal text-zinc-400">
+                                        {user?.myRole || "—"}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Navigation */}
-                            <nav className="flex-1 space-y-2">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 px-4">Management</p>
-                                {activeMenu.map((item) => (
-                                    <NavLink
-                                        key={item.path}
-                                        to={item.path}
-                                        onClick={() => setIsOpen(false)}
-                                        className={({ isActive }) => `
-                                            flex items-center gap-4 px-5 py-4 rounded-2xl transition-all relative group
-                                            ${isActive
-                                                ? 'bg-primary text-white shadow-xl shadow-primary/25 font-bold'
-                                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}
-                                        `}
-                                    >
-                                        {({ isActive }) => (
-                                            <>
-                                                <item.icon size={20} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-primary transition-colors'} />
-                                                <span className="text-sm">{item.label}</span>
-                                                {isActive && (
-                                                    <motion.div
-                                                        layoutId="active-pill"
-                                                        className="ml-auto"
-                                                    >
-                                                        <ChevronRight size={16} className="text-white/50" />
-                                                    </motion.div>
-                                                )}
-                                            </>
-                                        )}
-                                    </NavLink>
-                                ))}
+                            {/* Nav */}
+                            <div className="mb-1.5 px-2 text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-zinc-400">
+                                Menu
+                            </div>
+
+                            <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
+                                {currentMenu.map((item) => {
+                                    const Icon = item.icon;
+                                    return (
+                                        <NavLink
+                                            key={item.path}
+                                            to={item.path}
+                                            end
+                                            onClick={() => setIsOpen(false)}
+                                            className={({ isActive }) =>
+                                                [
+                                                    "group flex items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-[0.875rem] font-medium transition",
+                                                    isActive
+                                                        ? "bg-emerald-600/10 text-emerald-600 font-semibold"
+                                                        : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900",
+                                                ].join(" ")
+                                            }
+                                        >
+                                            <Icon
+                                                className={[
+                                                    "h-[18px] w-[18px] shrink-0 transition",
+                                                    "group-hover:text-zinc-700",
+                                                ].join(" ")}
+                                            />
+
+                                            <span>{item.label}</span>
+
+                                            <ChevronRight
+                                                size={14}
+                                                className="ml-auto text-emerald-600 opacity-0 transition group-[.active]:opacity-100"
+                                            />
+                                        </NavLink>
+                                    );
+                                })}
                             </nav>
 
-                            {/* Footer Functions */}
-                            <div className="mt-auto space-y-2 pt-8 border-t border-slate-50">
+                            {/* Footer */}
+                            <div className="mt-2 border-t border-zinc-200 pt-4">
                                 <NavLink
-                                    to="/resident/profile"
+                                    to={user?.myRole === 'Resident' ? "/resident/profile" : "/security/profile"}
                                     onClick={() => setIsOpen(false)}
-                                    className={({ isActive }) => `
-                                        flex items-center gap-4 px-5 py-4 rounded-2xl transition-all group
-                                        ${isActive ? 'bg-slate-900 text-white font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}
-                                    `}
+                                    className={({ isActive }) =>
+                                        [
+                                            "flex w-full items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-[0.875rem] font-medium transition",
+                                            isActive
+                                                ? "bg-emerald-600/10 text-emerald-600 font-semibold"
+                                                : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900",
+                                        ].join(" ")
+                                    }
                                 >
-                                    {({ isActive }) => (
-                                        <>
-                                            <UserCircle size={20} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-900'} />
-                                            <span className="text-sm">Account Settings</span>
-                                        </>
-                                    )}
+                                    <UserCircle size={18} className="text-zinc-400" />
+                                    <span>My Profile</span>
                                 </NavLink>
 
                                 <button
+                                    type="button"
                                     onClick={handleLogout}
-                                    className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-red-500 hover:bg-red-50 transition-all group"
+                                    className="mt-1 flex w-full items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-[0.875rem] font-medium text-rose-500 transition hover:bg-rose-50 hover:text-rose-600"
                                 >
-                                    <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-all">
-                                        <LogOut size={16} />
-                                    </div>
-                                    <span className="text-sm font-bold">Terminate Session</span>
+                                    <LogOut size={18} />
+                                    <span>Sign Out</span>
                                 </button>
                             </div>
                         </motion.aside>

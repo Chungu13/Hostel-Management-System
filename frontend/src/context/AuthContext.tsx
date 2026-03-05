@@ -9,6 +9,7 @@ interface User {
     propertyId?: string;
     name?: string;
     email?: string;
+    token?: string;
 }
 
 interface AuthContextType {

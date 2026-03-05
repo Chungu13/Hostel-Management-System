@@ -14,13 +14,13 @@ public interface VisitRequestRepository extends JpaRepository<VisitRequest, Long
 
     List<VisitRequest> findByVisitorName(String visitorName);
 
-    List<VisitRequest> findByVisitorUsername(String visitorUsername);
+    Optional<VisitRequest> findByVisitCode(String visitCode);
 
     List<VisitRequest> findByResidentId(Long residentId);
 
-    @Query("SELECT v FROM VisitRequest v WHERE v.residentName = :residentName AND v.visitorUsername = :visitorUsername")
-    Optional<VisitRequest> findByResidentNameAndVisitorUsername(@Param("residentName") String residentName,
-            @Param("visitorUsername") String visitorUsername);
+    @Query("SELECT v FROM VisitRequest v WHERE v.residentName = :residentName AND v.visitCode = :visitCode")
+    Optional<VisitRequest> findByResidentNameAndVisitCode(@Param("residentName") String residentName,
+            @Param("visitCode") String visitCode);
 
     long countByStatus(String status);
 }

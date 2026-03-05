@@ -1,174 +1,327 @@
-import React, { useState, useEffect } from 'react';
-import Sidebar from '../../components/Sidebar';
-import { motion } from 'framer-motion';
+import React, { useEffect, useMemo, useState } from "react";
+import Sidebar from "../../components/Sidebar";
+import { motion } from "framer-motion";
 import {
     Clock,
     CheckCircle2,
     AlertCircle,
     Calendar,
     PlusCircle,
-    History as HistoryIcon,
-    ArrowRight
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import api from '../../utils/api';
+    History,
+    ArrowRight,
+    ShieldCheck,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import api from "../../utils/api";
 
-interface Visit {
-    status: string;
-    visitDate: string;
-}
+type VisitStatus = "Approved" | "Rejected" | string;
+
+type Visit = {
+    id?: number | string;
+    status: VisitStatus;
+    visitDate: string; // ISO or parseable date string
+};
+
+type Stats = {
+    approved: number;
+    upcoming: Visit | null;
+};
+
+type Notice = {
+    title: string;
+    content: string;
+    importance: string;
+    updatedAt: string;
+};
+
+type UserShape = {
+    id?: string;
+    name?: string;
+    email?: string;
+};
 
 const ResidentDashboard: React.FC = () => {
-    const { user } = useAuth();
-    const [stats, setStats] = useState({
-        pending: 0,
+    const { user } = useAuth() as { user: UserShape };
+
+    const [stats, setStats] = useState<Stats>({
         approved: 0,
-        upcoming: null as Visit | null
+        upcoming: null,
     });
+    const [notice, setNotice] = useState<Notice | null>(null);
+    const [securityOnDuty, setSecurityOnDuty] = useState<any[]>([]);
+
+    const todayLabel = useMemo(
+        () =>
+            new Date().toLocaleDateString("en-US", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+            }),
+        []
+    );
 
     useEffect(() => {
         const fetchResidentStats = async () => {
             if (!user?.id) return;
+
             try {
-                const response = await api.get(`/api/visits/history/${user.id}`);
-                const visits: Visit[] = response.data;
+                const response = await api.get<Visit[]>(
+                    `/api/visits/resident/${user.id}`
+                );
+
+                const visits = response.data ?? [];
+                const approvedVisits = visits.filter((v) => v.status === "Approved");
+
+                // Choose the nearest FUTURE approved visit
+                const now = new Date();
+                const upcoming =
+                    approvedVisits
+                        .map((v) => ({ ...v, _d: new Date(v.visitDate) }))
+                        .filter((v) => !Number.isNaN(v._d.getTime()))
+                        .filter((v) => v._d >= now)
+                        .sort((a, b) => a._d.getTime() - b._d.getTime())[0] ?? null;
+
                 setStats({
-                    pending: visits.filter(v => v.status === 'Pending').length,
-                    approved: visits.filter(v => v.status === 'Approved').length,
-                    upcoming: visits.find(v => v.status === 'Approved') || null
+                    approved: approvedVisits.length,
+                    upcoming: upcoming
+                        ? { id: upcoming.id, status: upcoming.status, visitDate: upcoming.visitDate }
+                        : null,
                 });
             } catch (err) {
                 console.error("Error fetching resident stats:", err);
             }
         };
+
+        const fetchNotice = async () => {
+            try {
+                const res = await api.get<Notice>("/api/notices/latest");
+                if (res.data) setNotice(res.data);
+            } catch (err) {
+                console.error("Error fetching notice:", err);
+            }
+        };
+
+        const fetchSecurityOnDuty = async () => {
+            // In a real scenario, the resident has a propertyId in their token/user object
+            // Let's assume the backend handles the mapping if we hit /api/security/on-duty/{propertyId}
+            // or we can add a generic endpoint for "my property security"
+            // For now, let's use the propertyId from user if available.
+            const propertyId = (user as any)?.propertyId;
+            if (propertyId) {
+                try {
+                    const res = await api.get(`/api/security/on-duty/${propertyId}`);
+                    setSecurityOnDuty(res.data);
+                } catch (err) {
+                    console.error("Error fetching security status:", err);
+                }
+            }
+        };
+
         fetchResidentStats();
-    }, [user?.id]);
+        fetchNotice();
+        fetchSecurityOnDuty();
+    }, [user?.id, (user as any)?.propertyId]);
 
     return (
-        <div className="flex bg-bg-light min-h-screen">
+        <div
+            className="flex min-h-screen bg-[#f7f7f5] font-sans"
+            style={{
+                backgroundImage:
+                    "radial-gradient(circle at 5% 10%, rgba(134, 197, 152, 0.10) 0%, transparent 45%), radial-gradient(circle at 95% 90%, rgba(134, 197, 152, 0.07) 0%, transparent 45%)",
+            }}
+        >
             <Sidebar />
-            <main className="flex-1 p-10 ml-0 lg:ml-0">
+
+            <main className="w-full box-border px-5 py-6 md:py-10 md:pl-20 md:pr-10">
                 {/* Header */}
                 <motion.header
-                    className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10"
+                    className="mb-9 flex flex-wrap items-start justify-between gap-3"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
                     <div>
-                        <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">
-                            Hello, <span className="text-primary">{user?.name}</span>!
+                        <h1 className="m-0 text-[1.9rem] font-bold tracking-[-0.03em] text-zinc-900 leading-tight">
+                            Hello,{" "}
+                            <span className="text-emerald-600">
+                                {user?.name || user?.email || "Resident"}
+                            </span>
+                            !
                         </h1>
-                        <p className="text-slate-400 font-medium mt-1">Ready to manage your visitor access today?</p>
+                        <p className="m-0 text-sm font-normal text-zinc-400">
+                            Manage your visitor passes and stay updated.
+                        </p>
                     </div>
-                    <div className="bg-white border border-slate-100 rounded-2xl px-5 py-2.5 flex items-center gap-3 shadow-sm self-start">
-                        <Calendar size={18} className="text-primary" />
-                        <span className="text-sm font-bold text-slate-600">
-                            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                        </span>
+
+                    <div className="mt-1 inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-[0.8rem] font-medium text-zinc-500 shadow-sm">
+                        <Calendar size={14} />
+                        {todayLabel}
                     </div>
                 </motion.header>
 
                 {/* Stat Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm relative overflow-hidden group"
-                    >
-                        <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <Clock size={24} className="text-amber-500" />
+                <motion.div
+                    className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+                >
+                    {/* Approved */}
+                    <div className="relative overflow-hidden rounded-[18px] border border-black/5 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)]">
+                        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[10px] bg-emerald-600/10">
+                            <CheckCircle2 size={20} className="text-emerald-600" />
                         </div>
-                        <div className="text-4xl font-extrabold text-slate-900 mb-1">{stats.pending}</div>
-                        <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">Pending Requests</div>
-                        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-amber-500 rounded-b-3xl opacity-20" />
-                    </motion.div>
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm relative overflow-hidden group"
-                    >
-                        <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <CheckCircle2 size={24} className="text-emerald-500" />
+                        <div className="mb-1 text-[2rem] font-bold tracking-[-0.03em] leading-none text-zinc-900">
+                            {stats.approved}
                         </div>
-                        <div className="text-4xl font-extrabold text-slate-900 mb-1">{stats.approved}</div>
-                        <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">Active Passes</div>
-                        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-emerald-500 rounded-b-3xl opacity-20" />
-                    </motion.div>
+                        <div className="text-[0.8rem] font-normal text-zinc-400">
+                            Active Passes
+                        </div>
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm relative overflow-hidden group"
-                    >
-                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <Calendar size={24} className="text-blue-500" />
+                        <div className="absolute bottom-0 left-0 right-0 h-[3px] rounded-b-[18px] bg-gradient-to-r from-emerald-600 to-emerald-300" />
+                    </div>
+
+                    {/* Upcoming */}
+                    <div className="relative overflow-hidden rounded-[18px] border border-black/5 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)]">
+                        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[10px] bg-sky-500/10">
+                            <Calendar size={20} className="text-sky-400" />
                         </div>
-                        <div className="text-xl font-extrabold text-slate-900 mb-1 h-10 flex items-center">
-                            {stats.upcoming ? stats.upcoming.visitDate : 'No Upcoming'}
+
+                        <div className="mb-1 text-[1.1rem] font-bold tracking-[-0.02em] leading-snug text-zinc-900">
+                            {stats.upcoming ? stats.upcoming.visitDate : "No Upcoming"}
                         </div>
-                        <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">Next Guest Visit</div>
-                        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-blue-500 rounded-b-3xl opacity-20" />
-                    </motion.div>
-                </div>
+                        <div className="text-[0.8rem] font-normal text-zinc-400">
+                            Next Guest Visit
+                        </div>
+
+                        <div className="absolute bottom-0 left-0 right-0 h-[3px] rounded-b-[18px] bg-gradient-to-r from-sky-400 to-sky-200" />
+                    </div>
+                </motion.div>
 
                 {/* Bottom Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <motion.div
+                    className="grid grid-cols-1 gap-5 md:grid-cols-3"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+                >
+                    {/* Security on Duty */}
+                    <section className="rounded-[18px] border border-black/5 bg-white p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)]">
+                        <h2 className="mb-5 flex items-center gap-2 text-base font-bold tracking-[-0.01em] text-zinc-900">
+                            <ShieldCheck size={17} className="text-emerald-600" />
+                            Security on Duty
+                        </h2>
+                        <div className="space-y-3">
+                            {securityOnDuty.length > 0 ? (
+                                securityOnDuty.map((staff, idx) => (
+                                    <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
+                                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-bold text-xs">
+                                            {staff.name ? staff.name[0] : 'S'}
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-semibold text-zinc-900">{staff.name}</div>
+                                            <div className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Active Patrol</div>
+                                        </div>
+                                        <div className="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 flex flex-col items-center text-center">
+                                    <AlertCircle size={20} className="text-amber-500 mb-2" />
+                                    <p className="text-xs font-bold text-amber-900">Reduced Presence</p>
+                                    <p className="text-[10px] text-amber-700 font-medium">Remote monitoring active</p>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
                     {/* Quick Tools */}
-                    <section className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
-                        <h2 className="text-xl font-extrabold text-slate-900 mb-8 flex items-center gap-2">
-                            Quick Operations
+                    <section className="rounded-[18px] border border-black/5 bg-white p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)]">
+                        <h2 className="mb-5 text-base font-bold tracking-[-0.01em] text-zinc-900">
+                            Quick Tools
                         </h2>
 
-                        <div className="space-y-4">
-                            <Link to="/resident/visit-request" className="flex items-center gap-5 p-5 bg-primary rounded-2xl text-white shadow-lg shadow-primary/20 hover:-translate-y-1 transition-all group">
-                                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                                    <PlusCircle size={24} />
-                                </div>
-                                <div className="flex-1">
-                                    <div className="font-extrabold text-lg">New Visit Pass</div>
-                                    <div className="text-sm text-white/80">Register a guest for entry</div>
-                                </div>
-                                <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
-                            </Link>
+                        <Link
+                            to="/resident/visit-request"
+                            className="group mb-2.5 flex items-center gap-3.5 rounded-[14px] border border-transparent bg-gradient-to-br from-emerald-600 to-emerald-500 px-4.5 py-4 text-white shadow-[0_4px_14px_rgba(16,185,129,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(16,185,129,0.32)]"
+                        >
+                            <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-white/20">
+                                <PlusCircle size={20} className="text-white" />
+                            </div>
 
-                            <Link to="/resident/history" className="flex items-center gap-5 p-5 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 hover:bg-slate-100 transition-all group">
-                                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                                    <HistoryIcon size={24} />
+                            <div className="flex-1">
+                                <div className="text-[0.9rem] font-semibold leading-none">
+                                    New Visit Pass
                                 </div>
-                                <div className="flex-1">
-                                    <div className="font-extrabold text-lg">Past Records</div>
-                                    <div className="text-sm text-slate-400 font-medium">Review your visitor logs</div>
+                                <div className="mt-1 text-xs opacity-80">
+                                    Register a guest for entry
                                 </div>
-                                <ArrowRight size={20} className="text-slate-300 group-hover:translate-x-2 transition-transform" />
-                            </Link>
-                        </div>
+                            </div>
+
+                            <ArrowRight
+                                size={18}
+                                className="transition group-hover:translate-x-1"
+                            />
+                        </Link>
+
+                        <Link
+                            to="/resident/history"
+                            className="group flex items-center gap-3.5 rounded-[14px] border border-zinc-200 bg-zinc-50 px-4.5 py-4 text-zinc-800 transition hover:-translate-y-0.5 hover:bg-zinc-100 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
+                        >
+                            <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-emerald-600/10">
+                                <History size={20} className="text-emerald-600" />
+                            </div>
+
+                            <div className="flex-1">
+                                <div className="text-[0.9rem] font-semibold leading-none">
+                                    Past Records
+                                </div>
+                                <div className="mt-1 text-xs text-zinc-500">
+                                    Review your visitor logs
+                                </div>
+                            </div>
+
+                            <ArrowRight
+                                size={18}
+                                className="text-zinc-400 transition group-hover:translate-x-1"
+                            />
+                        </Link>
                     </section>
 
                     {/* Notice */}
-                    <section className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm flex flex-col">
-                        <h2 className="text-xl font-extrabold text-slate-900 mb-8 flex items-center gap-3">
-                            <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
-                                <AlertCircle size={18} className="text-amber-500" />
-                            </div>
+                    <section className="rounded-[18px] border border-black/5 bg-white p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)]">
+                        <h2 className="mb-5 flex items-center gap-2 text-base font-bold tracking-[-0.01em] text-zinc-900">
+                            <AlertCircle size={17} className={notice?.importance === "High" ? "text-rose-500" : "text-emerald-600"} />
                             Resident Notice
                         </h2>
 
-                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 flex-1">
-                            <p className="text-slate-600 leading-relaxed font-medium">
-                                Please ensure your guests have their <strong className="text-slate-900">Access PIN</strong> ready for the security staff upon arrival.
-                                Unverified visitors will not be permitted entry into the residential area.
+                        <div className="rounded-[14px] border border-zinc-200 bg-zinc-50 p-4.5">
+                            {notice && (
+                                <div className="flex items-center gap-2 mb-2.5">
+                                    <span className="text-[0.9rem] font-bold text-zinc-900 leading-none">
+                                        {notice.title}
+                                    </span>
+                                    {notice.importance !== "Low" && (
+                                        <span className={`px-2 py-0.5 rounded-md text-[0.6rem] font-bold uppercase tracking-tight ${notice.importance === 'High' ? 'bg-rose-50 text-rose-500' : 'bg-amber-50 text-amber-500'
+                                            }`}>
+                                            {notice.importance}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            <p className="mb-3 text-[0.855rem] leading-relaxed text-zinc-600">
+                                {notice ? notice.content : "Please ensure your guests have their QR Access Code ready for the security staff upon arrival."}
                             </p>
-                            <div className="mt-8 pt-6 border-t border-slate-200 flex items-center gap-3 text-sm font-bold text-slate-300 uppercase tracking-widest">
-                                <Clock size={16} /> Updated today at 9:00 AM
+
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                                <Clock size={12} /> {notice ? `Updated ${new Date(notice.updatedAt).toLocaleDateString()}` : "Updated 2 hours ago"}
                             </div>
                         </div>
                     </section>
-                </div>
+                </motion.div>
             </main>
         </div>
     );

@@ -256,6 +256,34 @@ public class AuthController {
         return propertyRepository.findAll();
     }
 
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> data) {
+        JwtPrincipal principal = getAuthenticatedPrincipal();
+        if (principal == null)
+            return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
+
+        String oldPass = data.get("oldPassword");
+        String newPass = data.get("newPassword");
+
+        if (newPass == null || newPass.length() < 6) {
+            return ResponseEntity.badRequest().body(Map.of("message", "New password must be at least 6 characters"));
+        }
+
+        Optional<MyUsers> userOpt = userRepository.findById(principal.getUserId());
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(404).build();
+
+        MyUsers user = userOpt.get();
+        if (!user.getPassword().equals(oldPass)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Current password is incorrect"));
+        }
+
+        user.setPassword(newPass);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+    }
+
     private JwtPrincipal getAuthenticatedPrincipal() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getPrincipal() instanceof JwtPrincipal principal) {
@@ -277,7 +305,11 @@ public class AuthController {
 
         if (user.isOnboarded()) {
             response.put("propertyId", user.getPropertyId());
-            response.put("name", "Admin");
+            String displayName = user.getFullName();
+            if (displayName == null || displayName.isBlank() || "Admin".equalsIgnoreCase(displayName)) {
+                displayName = user.getEmail().split("@")[0];
+            }
+            response.put("name", displayName);
         }
 
         return response;

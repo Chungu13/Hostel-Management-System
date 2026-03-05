@@ -42,6 +42,9 @@ public class SecurityStaff implements Serializable {
     @Column(nullable = false)
     private boolean approved;
 
+    @Column(nullable = false)
+    private boolean onDuty = false;
+
     @ManyToOne
     @JoinColumn(name = "property_id")
     private Property property;

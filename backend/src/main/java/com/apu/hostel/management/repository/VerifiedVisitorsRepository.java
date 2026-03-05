@@ -4,6 +4,7 @@ import com.apu.hostel.management.model.VerifiedVisitors;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -11,4 +12,8 @@ public interface VerifiedVisitorsRepository extends JpaRepository<VerifiedVisito
     List<VerifiedVisitors> findBySecurityStaffId(Long staffId);
 
     List<VerifiedVisitors> findByOrderByIdDesc();
+
+    long countByVerifiedAtAfter(LocalDateTime startOfDay);
+
+    List<VerifiedVisitors> findFirst5ByOrderByIdDesc();
 }

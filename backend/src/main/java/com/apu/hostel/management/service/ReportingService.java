@@ -16,23 +16,23 @@ public class ReportingService {
     @Autowired
     private SecurityStaffRepository securityStaffRepository;
 
-    public List<Object[]> getResidentGenderReport() {
-        return residentRepository.countByGender();
+    public List<Object[]> getResidentGenderReport(Long propertyId) {
+        return residentRepository.countByGenderAndPropertyId(propertyId);
     }
 
-    public List<Object[]> getResidentApprovalReport() {
-        return residentRepository.countByApprovalStatus();
+    public List<Object[]> getResidentApprovalReport(Long propertyId) {
+        return residentRepository.countByApprovalStatusAndPropertyId(propertyId);
     }
 
-    public long getTotalResidents() {
-        return residentRepository.count();
+    public long getTotalResidents(Long propertyId) {
+        return residentRepository.countByPropertyId(propertyId);
     }
 
-    public List<Object[]> getSecurityGenderReport() {
-        return securityStaffRepository.countByGender();
+    public List<Object[]> getSecurityGenderReport(Long propertyId) {
+        return securityStaffRepository.countByGenderAndPropertyId(propertyId);
     }
 
-    public long getTotalSecurityStaff() {
-        return securityStaffRepository.count();
+    public long getTotalSecurityStaff(Long propertyId) {
+        return securityStaffRepository.countByPropertyId(propertyId);
     }
 }

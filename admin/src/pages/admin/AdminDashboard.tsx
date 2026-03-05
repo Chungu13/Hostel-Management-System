@@ -21,7 +21,7 @@ import {
 interface DashboardStats {
     totalResidents: number;
     totalStaff: number;
-    pendingVisits: number;
+    recentActivity?: any[];
 }
 
 interface GenderDistribution {
@@ -33,11 +33,11 @@ const AdminDashboard: React.FC = () => {
     const { user } = useAuth();
     const [stats, setStats] = useState<DashboardStats>({
         totalResidents: 0,
-        totalStaff: 0,
-        pendingVisits: 0
+        totalStaff: 0
     });
 
     const [genderData, setGenderData] = useState<GenderDistribution[]>([]);
+    const [securityOnDuty, setSecurityOnDuty] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -45,12 +45,14 @@ const AdminDashboard: React.FC = () => {
             if (!user?.propertyId) return;
             try {
                 setLoading(true);
-                const [statsRes, genderRes] = await Promise.all([
+                const [statsRes, genderRes, securityRes] = await Promise.all([
                     api.get(`/api/dashboard/stats?propertyId=${user.propertyId}`),
-                    api.get(`/api/dashboard/gender-distribution?propertyId=${user.propertyId}`)
+                    api.get(`/api/dashboard/gender-distribution?propertyId=${user.propertyId}`),
+                    api.get(`/api/security/on-duty/${user.propertyId}`)
                 ]);
                 setStats(statsRes.data);
                 setGenderData(genderRes.data);
+                setSecurityOnDuty(securityRes.data);
             } catch (err) {
                 console.error("Error fetching data:", err);
             } finally {
@@ -65,7 +67,6 @@ const AdminDashboard: React.FC = () => {
     const cards = [
         { label: 'Total Residents', value: stats.totalResidents, icon: Users, accent: '#4caf6e', accentBg: 'rgba(76,175,110,0.1)' },
         { label: 'Security Staff', value: stats.totalStaff, icon: ShieldCheck, accent: '#60a5fa', accentBg: 'rgba(96,165,250,0.1)' },
-        { label: 'Pending Visits', value: stats.pendingVisits, icon: Clock, accent: '#f59e0b', accentBg: 'rgba(245,158,11,0.1)' },
         { label: 'System Status', value: 'Active', icon: CheckCircle2, accent: '#4caf6e', accentBg: 'rgba(76,175,110,0.1)' },
     ];
 
@@ -114,6 +115,7 @@ const AdminDashboard: React.FC = () => {
                     .ad2-stats   { grid-template-columns: 1fr 1fr !important; }
                     .ad2-charts  { grid-template-columns: 1fr !important; }
                     .ad2-bottom  { grid-template-columns: 1fr !important; }
+                    .ad2-notice-grid { grid-template-columns: 1fr !important; }
                 }
 
                 /* Header */
@@ -197,7 +199,7 @@ const AdminDashboard: React.FC = () => {
                 /* Stats */
                 .ad2-stats {
                     display: grid;
-                    grid-template-columns: repeat(4, 1fr);
+                    grid-template-columns: repeat(3, 1fr);
                     gap: 16px;
                     margin-bottom: 24px;
                 }
@@ -453,6 +455,84 @@ const AdminDashboard: React.FC = () => {
                     color: #bbb;
                     margin-top: 2px;
                 }
+
+                /* Notice Publisher */
+                .ad2-notice-section {
+                    margin-top: 24px;
+                }
+
+                .ad2-form-group {
+                    margin-bottom: 20px;
+                }
+
+                .ad2-label {
+                    display: block;
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    color: #555;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    margin-bottom: 8px;
+                }
+
+                .ad2-input, .ad2-select, .ad2-textarea {
+                    width: 100%;
+                    padding: 12px 16px;
+                    border-radius: 12px;
+                    border: 1.5px solid #e8e8e6;
+                    background: #fcfcfb;
+                    font-family: inherit;
+                    font-size: 0.9rem;
+                    color: #111;
+                    outline: none;
+                    transition: border-color 0.2s, background 0.2s;
+                }
+
+                .ad2-input:focus, .ad2-select:focus, .ad2-textarea:focus {
+                    border-color: #4caf6e;
+                    background: #fff;
+                }
+
+                .ad2-textarea {
+                    min-height: 100px;
+                    resize: vertical;
+                }
+
+                .ad2-publish-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                    width: 100%;
+                    padding: 14px;
+                    border-radius: 14px;
+                    background: linear-gradient(135deg, #111, #333);
+                    color: #fff;
+                    font-weight: 700;
+                    font-size: 0.9rem;
+                    border: none;
+                    cursor: pointer;
+                    transition: transform 0.15s, opacity 0.2s;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                }
+
+                .ad2-publish-btn:hover { transform: translateY(-1px); }
+                .ad2-publish-btn:active { transform: translateY(0); }
+                .ad2-publish-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+                .ad2-status-msg {
+                    margin-top: 16px;
+                    padding: 12px;
+                    border-radius: 10px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .ad2-status-success { background: #ecfdf5; color: #059669; border: 1px solid #10b98122; }
+                .ad2-status-error { background: #fef2f2; color: #dc2626; border: 1px solid #ef444422; }
             `}</style>
 
             <div className="ad2-root">
@@ -468,11 +548,10 @@ const AdminDashboard: React.FC = () => {
                         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                     >
                         <div>
-                            <div className="ad2-badge"><div className="ad2-badge-dot" />Overview</div>
+
                             <h1 className="ad2-heading">Executive Overview</h1>
                             <p className="ad2-subtext">
-                                Welcome back, {user?.name || user?.email}. Property&nbsp;
-                                <span className="ad2-property-chip">{user?.propertyId || 'Unknown'}</span>
+                                Welcome back, {user?.name}
                             </p>
                         </div>
                         <div className="ad2-date-badge">
@@ -613,21 +692,68 @@ const AdminDashboard: React.FC = () => {
                                 <div className="ad2-card-title" style={{ margin: 0 }}>Activity Logs</div>
                                 <button className="ad2-view-all">View All</button>
                             </div>
-                            {activities.map((activity, i) => (
-                                <div key={i} className="ad2-activity-item">
-                                    <div className="ad2-activity-icon" style={{ background: activity.accentBg }}>
-                                        <activity.icon size={16} color={activity.accent} />
+                            {stats.recentActivity && stats.recentActivity.length > 0 ? (
+                                stats.recentActivity.map((activity, i) => (
+                                    <div key={i} className="ad2-activity-item cursor-default">
+                                        <div className="ad2-activity-icon" style={{ background: 'rgba(76,175,110,0.1)' }}>
+                                            <ShieldCheck size={16} color="#4caf6e" />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div className="ad2-activity-title">
+                                                Verification: {activity.visitCode}
+                                            </div>
+                                            <div className="ad2-activity-time">
+                                                Host: {activity.residentName} · {activity.verifiedAt ? new Date(activity.verifiedAt).toLocaleTimeString() : 'Recent'}
+                                            </div>
+                                        </div>
+                                        <ChevronRight size={14} color="#ddd" />
                                     </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div className="ad2-activity-title">{activity.title}</div>
-                                        <div className="ad2-activity-time">{activity.time}</div>
-                                    </div>
-                                    <ChevronRight size={14} color="#ddd" />
+                                ))
+                            ) : (
+                                <div className="text-center py-6 text-sm text-gray-400">
+                                    No recent activity logs available.
                                 </div>
-                            ))}
+                            )}
                         </section>
                     </motion.div>
 
+                    {/* Security on Duty */}
+                    <motion.div
+                        className="ad2-card"
+                        style={{ marginTop: '20px' }}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.36, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                        <div className="ad2-activity-header">
+                            <div className="ad2-card-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <ShieldCheck size={18} color="#60a5fa" />
+                                On-Duty Security Personnel
+                            </div>
+                            <span className="ad2-ops-admin-chip">Live Status</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px', marginTop: '16px' }}>
+                            {securityOnDuty.length > 0 ? (
+                                securityOnDuty.map((staff, idx) => (
+                                    <div key={idx} style={{ padding: '16px', borderRadius: '16px', background: '#f9f9f8', border: '1px solid #e8e8e6', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(96,165,250,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa', fontWeight: 'bold' }}>
+                                            {staff.name ? staff.name[0] : 'S'}
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#111' }}>{staff.name}</div>
+                                            <div style={{ fontSize: '0.7rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verified Personnel</div>
+                                        </div>
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4caf6e', boxShadow: '0 0 8px rgba(76,175,110,0.5)' }} />
+                                    </div>
+                                ))
+                            ) : (
+                                <div style={{ gridColumn: '1 / -1', padding: '30px', textAlign: 'center', background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '16px' }}>
+                                    <div style={{ color: '#dc2626', fontWeight: '700', fontSize: '0.9rem' }}>No Security Staff Currently On-Duty</div>
+                                    <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px' }}>Please ensure personnel log in at active stations.</div>
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
                 </main>
             </div>
         </>

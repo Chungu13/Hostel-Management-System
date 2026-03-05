@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "verified_visitors")
@@ -24,21 +25,27 @@ public class VerifiedVisitors implements Serializable {
     @Column(name = "resident_name", nullable = false)
     private String residentName;
 
-    @Column(name = "visitor_username", nullable = false)
-    private String visitorUsername;
-
-    @Column(name = "visitor_password", nullable = false)
-    private String visitorPassword;
+    @Column(name = "visit_code", nullable = false)
+    private String visitCode;
 
     @Column(name = "verification_status", nullable = false)
     private String status;
 
-    public VerifiedVisitors(SecurityStaff securityStaff, String residentName, String visitorUsername,
-            String visitorPassword) {
+    @Column(name = "verified_at")
+    private LocalDateTime verifiedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (verifiedAt == null) {
+            verifiedAt = LocalDateTime.now();
+        }
+    }
+
+    public VerifiedVisitors(SecurityStaff securityStaff, String residentName, String visitCode) {
         this.securityStaff = securityStaff;
         this.residentName = residentName;
-        this.visitorUsername = visitorUsername;
-        this.visitorPassword = visitorPassword;
+        this.visitCode = visitCode;
         this.status = "Verified";
+        this.verifiedAt = LocalDateTime.now();
     }
 }

@@ -1,217 +1,258 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import { motion } from 'framer-motion';
-import {
-    ShieldCheck,
-    UserCheck,
-    LogOut,
-    History,
-    Search,
-    ChevronRight,
-    MapPin,
-    AlertCircle,
-    Activity,
-    Radar,
-    Lock
-} from 'lucide-react';
+import { ShieldCheck, UserCheck, History, MapPin, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../utils/api';
 
 const SecurityDashboard: React.FC = () => {
     const { user } = useAuth();
-    const [stats, setStats] = useState({
-        todayVerified: 0,
-        currentInBuilding: 0,
-        activeSensors: 8,
-        threatLevel: 'Low'
-    });
+    const [onDuty, setOnDuty] = useState(false);
+    const [stats, setStats] = useState({ todayVerified: 0, currentInBuilding: 0 });
+    const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
     useEffect(() => {
-        // Mocking behavior for dashboard stats
-        setStats(prev => ({
-            ...prev,
-            todayVerified: 12,
-            currentInBuilding: 5
-        }));
+        const fetchDutyStatus = async () => {
+            try {
+                const res = await api.get('/api/security/duty/status');
+                setOnDuty(res.data.onDuty);
+            } catch (err) {
+                console.error("Error fetching duty status:", err);
+            }
+        };
+
+        const fetchStats = async () => {
+            try {
+                const res = await api.get('/api/security/stats');
+                setStats({
+                    todayVerified: res.data.todayVerified,
+                    currentInBuilding: res.data.currentInBuilding
+                });
+                setRecentActivity(res.data.recentActivity);
+            } catch (err) {
+                console.error("Error fetching stats:", err);
+            }
+        };
+
+        fetchDutyStatus();
+        fetchStats();
     }, []);
 
+    const toggleDuty = async () => {
+        try {
+            const res = await api.post('/api/security/duty/toggle');
+            setOnDuty(res.data.onDuty);
+        } catch (err) {
+            console.error("Error toggling duty status:", err);
+        }
+    };
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const greeting = now.getHours() < 12 ? 'morning' : now.getHours() < 17 ? 'afternoon' : 'evening';
+    const firstName = user?.name?.split(' ')[0] || 'Officer';
+
     return (
-        <div className="flex bg-slate-900 min-h-screen text-slate-100 font-sans">
+        <div
+            className="flex min-h-screen font-['Plus_Jakarta_Sans',sans-serif]"
+            style={{
+                backgroundColor: '#f7f7f5',
+                backgroundImage: `
+                    radial-gradient(circle at 5% 10%, rgba(134,197,152,0.10) 0%, transparent 45%),
+                    radial-gradient(circle at 95% 90%, rgba(134,197,152,0.07) 0%, transparent 45%)
+                `
+            }}
+        >
             <Sidebar />
-            <main className="flex-1 p-8 ml-0 lg:ml-0 overflow-y-auto">
-                {/* Tactical Header */}
-                <header className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/5 pb-8">
+
+            <main className="flex-1 px-5 py-8 md:pl-20 md:pr-10 md:py-10 overflow-y-auto">
+
+                {/* ── Header ── */}
+                <motion.header
+                    className="mb-8 flex flex-wrap items-start justify-between gap-4"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                >
                     <div>
-                        <div className="flex items-center gap-2 text-emerald-500 font-black text-[10px] uppercase tracking-[0.3em] mb-3">
-                            <Radar size={14} className="animate-pulse" />
-                            Live Surveillance Active
-                        </div>
-                        <h1 className="text-4xl font-black tracking-tight text-white mb-1">
-                            Security <span className="text-emerald-500">Control Hub</span>
+                        <p className="text-[0.72rem] font-medium text-gray-400 mb-1">{dateStr}</p>
+                        <h1 className="text-[1.85rem] font-bold text-gray-900 tracking-tight leading-tight mb-1">
+                            Good {greeting}, {firstName}.
                         </h1>
-                        <p className="text-slate-400 font-medium text-sm flex items-center gap-2">
-                            <Activity size={14} className="text-slate-500" />
-                            Operator: {user?.name || `ID #${user?.id}`} • District 7 Sector 4
-                        </p>
+                        <p className="text-sm text-gray-400">Here's your shift overview for today.</p>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="px-5 py-3 bg-white/5 border border-white/10 rounded-2xl flex flex-col items-center">
-                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 text-center">Threat Level</span>
-                            <span className="text-xs font-black text-emerald-500 uppercase flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-                                Nominal
+
+                    {/* Duty toggle */}
+                    <button
+                        onClick={toggleDuty}
+                        className="flex items-center gap-3 px-5 py-3 rounded-2xl transition-all hover:-translate-y-0.5 active:translate-y-0"
+                        style={onDuty ? {
+                            background: 'rgba(76,175,110,0.08)',
+                            border: '1px solid rgba(76,175,110,0.25)',
+                        } : {
+                            background: 'rgba(224,92,92,0.06)',
+                            border: '1px solid rgba(224,92,92,0.2)',
+                        }}
+                    >
+                        <span className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{
+                                background: onDuty ? '#4caf6e' : '#e05c5c',
+                                boxShadow: onDuty ? '0 0 6px #4caf6e' : '0 0 6px #e05c5c'
+                            }} />
+                        <div className="flex flex-col items-start">
+                            <span className="text-[0.6rem] font-medium uppercase tracking-widest text-gray-400 leading-none mb-0.5">
+                                Duty Status
+                            </span>
+                            <span className="text-sm font-bold leading-none"
+                                style={{ color: onDuty ? '#4caf6e' : '#e05c5c' }}>
+                                {onDuty ? 'On Duty' : 'Off Duty'}
                             </span>
                         </div>
-                        <div className="px-5 py-3 bg-red-500/10 border border-red-500/20 rounded-2xl flex flex-col items-center">
-                            <span className="text-[9px] font-bold text-red-500 uppercase tracking-widest mb-1 text-center">Alert Protocol</span>
-                            <span className="text-xs font-black text-red-400 uppercase italic">Standby</span>
-                        </div>
-                    </div>
-                </header>
+                    </button>
+                </motion.header>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                {/* ── Stat Cards ── */}
+                <div className="grid grid-cols-1 gap-4 mb-5">
+                    {[
+                        { icon: UserCheck, label: 'Verified Today', value: stats.todayVerified, color: '#4caf6e', bg: 'rgba(76,175,110,0.08)', border: 'rgba(76,175,110,0.15)' },
+                    ].map((card, i) => (
+                        <motion.div
+                            key={card.label}
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.06 + i * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                            className="bg-white rounded-[18px] p-6"
+                            style={{ border: `1px solid ${card.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)' }}
+                        >
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+                                style={{ background: card.bg }}>
+                                <card.icon size={18} style={{ color: card.color }} />
+                            </div>
+                            <p className="text-[0.68rem] font-semibold uppercase tracking-widest text-gray-400 mb-1">{card.label}</p>
+                            <p className="text-3xl font-bold text-gray-900">{card.value}</p>
+                        </motion.div>
+                    ))}
+                </div>
+
+                {/* ── Action Cards ── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                     <motion.div
-                        whileHover={{ y: -5 }}
-                        className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group shadow-2xl"
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
                     >
-                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <UserCheck size={60} />
-                        </div>
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Verified Today</p>
-                        <h3 className="text-5xl font-black text-white group-hover:text-emerald-400 transition-colors">{stats.todayVerified}</h3>
+                        <Link
+                            to="/security/verify"
+                            className="flex flex-col justify-between h-[155px] rounded-[18px] p-6 group transition-all hover:-translate-y-1"
+                            style={{
+                                background: 'linear-gradient(135deg, #4caf6e, #5ec47f)',
+                                boxShadow: '0 4px 20px rgba(76,175,110,0.28)'
+                            }}
+                        >
+                            <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <ShieldCheck size={22} className="text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-white leading-tight">Verify Visitor</h3>
+                                <p className="text-white/70 text-sm mt-0.5">Scan QR or enter code</p>
+                            </div>
+                        </Link>
                     </motion.div>
 
                     <motion.div
-                        whileHover={{ y: -5 }}
-                        className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group shadow-2xl"
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
                     >
-                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <MapPin size={60} />
-                        </div>
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Inside Perimeter</p>
-                        <h3 className="text-5xl font-black text-white group-hover:text-primary transition-colors">{stats.currentInBuilding}</h3>
-                    </motion.div>
-
-                    <motion.div
-                        whileHover={{ y: -5 }}
-                        className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group shadow-2xl"
-                    >
-                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Radar size={60} />
-                        </div>
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Online Sensors</p>
-                        <h3 className="text-5xl font-black text-white group-hover:text-amber-400 transition-colors">{stats.activeSensors}</h3>
-                    </motion.div>
-
-                    <motion.div
-                        whileHover={{ y: -5 }}
-                        className="bg-emerald-500 p-8 rounded-[2.5rem] relative overflow-hidden group shadow-2xl shadow-emerald-500/20"
-                    >
-                        <div className="absolute top-0 right-0 p-6 opacity-20">
-                            <Activity size={60} className="text-white" />
-                        </div>
-                        <p className="text-[10px] font-black text-emerald-900 uppercase tracking-[0.2em] mb-4">System Status</p>
-                        <h3 className="text-3xl font-black text-emerald-950 italic">OPERATIONAL</h3>
+                        <Link
+                            to="/security/history"
+                            className="flex flex-col justify-between h-[155px] rounded-[18px] p-6 bg-white group transition-all hover:-translate-y-1"
+                            style={{
+                                border: '1px solid rgba(0,0,0,0.04)',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)'
+                            }}
+                        >
+                            <div className="w-11 h-11 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform"
+                                style={{ background: 'rgba(76,175,110,0.08)' }}>
+                                <History size={22} color="#4caf6e" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900 leading-tight">Entry History</h3>
+                                <p className="text-gray-400 text-sm mt-0.5">Browse past visitor logs</p>
+                            </div>
+                        </Link>
                     </motion.div>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
-                    <div className="xl:col-span-2 space-y-10">
-                        {/* Action Grid */}
-                        <section>
-                            <div className="flex items-center gap-4 mb-8 px-4">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                <h2 className="text-lg font-black uppercase tracking-widest text-slate-300">Tactical Actions</h2>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <Link to="/security/verify" className="bg-emerald-500 hover:bg-emerald-400 h-[220px] rounded-[3rem] p-10 flex flex-col justify-between group transition-all shadow-xl shadow-emerald-500/10 active:scale-[0.98]">
-                                    <ShieldCheck size={48} className="text-emerald-950 group-hover:scale-110 transition-transform" />
-                                    <div>
-                                        <h3 className="text-2xl font-black text-emerald-950 tracking-tight">Verify Identity</h3>
-                                        <p className="text-emerald-900/60 font-bold text-sm">Scan QR or Manual Entry</p>
-                                    </div>
-                                </Link>
-                                <Link to="/security/history" className="bg-white/5 border border-white/10 hover:border-white/20 h-[220px] rounded-[3rem] p-10 flex flex-col justify-between group transition-all active:scale-[0.98]">
-                                    <History size={48} className="text-white group-hover:scale-110 transition-transform" />
-                                    <div>
-                                        <h3 className="text-2xl font-black text-white tracking-tight">Access History</h3>
-                                        <p className="text-slate-500 font-bold text-sm">Review full entrance logs</p>
-                                    </div>
-                                </Link>
-                            </div>
-                        </section>
-
-                        {/* Event Feed */}
-                        <section className="bg-white/5 border border-white/10 rounded-[3rem] p-10">
-                            <div className="flex items-center justify-between mb-10">
-                                <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.3em]">Live Intelligence Feed</h3>
-                                <div className="flex items-center gap-2 group cursor-pointer text-[10px] font-black text-emerald-500">
-                                    REFRESH COMM-LINK
-                                    <Activity size={12} className="group-hover:rotate-180 transition-transform duration-500" />
-                                </div>
-                            </div>
-                            <div className="space-y-4">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="flex items-center justify-between p-6 bg-white/5 rounded-3xl border border-white/5 hover:border-white/10 transition-all">
-                                        <div className="flex items-center gap-5">
-                                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                                                <UserCheck size={24} />
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-white leading-none mb-1 text-sm">Visitor Clear: #V-00{i * 32}</p>
-                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Entry Point Alpha • Clearance Level 1</p>
-                                            </div>
-                                        </div>
-                                        <span className="text-[10px] font-black text-emerald-500/50">{i * 8}m ago</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
+                {/* ── Recent Activity ── */}
+                <motion.section
+                    className="bg-white rounded-[18px] p-6"
+                    style={{
+                        border: '1px solid rgba(0,0,0,0.04)',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)'
+                    }}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <p className="text-[0.65rem] font-semibold text-gray-400 uppercase tracking-widest">Recent Activity</p>
+                        <button
+                            onClick={() => {
+                                // Re-trigger the stats fetch
+                                const fetchStats = async () => {
+                                    try {
+                                        const res = await api.get('/api/security/stats');
+                                        setStats({
+                                            todayVerified: res.data.todayVerified,
+                                            currentInBuilding: res.data.currentInBuilding
+                                        });
+                                        setRecentActivity(res.data.recentActivity);
+                                    } catch (err) {
+                                        console.error("Error fetching stats:", err);
+                                    }
+                                };
+                                fetchStats();
+                            }}
+                            className="flex items-center gap-1.5 text-[0.72rem] font-semibold hover:opacity-70 transition-opacity"
+                            style={{ color: '#4caf6e' }}>
+                            <Activity size={12} /> Refresh
+                        </button>
                     </div>
-
-                    {/* Lateral Intel Column */}
-                    <aside className="space-y-8">
-                        <section className="bg-red-500/10 border border-red-500/20 rounded-[2.5rem] p-8 text-red-500 relative overflow-hidden group">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-red-500 animate-pulse" />
-                            <h3 className="font-black text-sm flex items-center gap-3 mb-4 uppercase tracking-widest">
-                                <AlertCircle size={20} className="animate-bounce" />
-                                Critical Alert
-                            </h3>
-                            <p className="text-xs font-bold text-red-400/80 leading-relaxed mb-6">
-                                Unauthorized perimeter breach detected at Sector 9. Initiate manual override if visual contact fails.
-                            </p>
-                            <button className="w-full py-4 bg-red-500 text-white font-black rounded-2xl shadow-xl shadow-red-500/20 hover:scale-[1.02] active:scale-95 transition-all text-xs flex items-center justify-center gap-2">
-                                <Lock size={14} />
-                                ACTIVATE LOCKDOWN
-                            </button>
-                        </section>
-
-                        <section className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8">
-                            <h3 className="font-black text-xs text-slate-400 uppercase tracking-widest mb-6">Standard Protocols</h3>
-                            <ul className="space-y-6">
-                                {[
-                                    { label: 'ID Verification', desc: 'Scan all physical credentials' },
-                                    { label: 'CCTV Monitoring', desc: 'Active sweep every 15 mins' },
-                                    { label: 'Incident Logging', desc: 'Report any verbal disputes' }
-                                ].map((step, idx) => (
-                                    <li key={idx} className="flex gap-4">
-                                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-black text-emerald-500 shrink-0 border border-emerald-500/20">
-                                            0{idx + 1}
+                    <div className="flex flex-col gap-2.5">
+                        {recentActivity.length > 0 ? (
+                            recentActivity.map((activity, i) => (
+                                <div key={activity.id || i}
+                                    className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-100 hover:bg-gray-100/60 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-lg flex items-center justify-center"
+                                            style={{ background: 'rgba(76,175,110,0.1)' }}>
+                                            <UserCheck size={15} color="#4caf6e" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-black text-white uppercase tracking-wider">{step.label}</p>
-                                            <p className="text-[10px] text-slate-500 font-bold">{step.desc}</p>
+                                            <p className="text-sm font-semibold text-gray-800 leading-tight">
+                                                {activity.visitCode} - {activity.residentName}
+                                            </p>
+                                            <p className="text-[0.68rem] text-gray-400 mt-0.5">
+                                                Main entrance · {activity.verifiedAt ? new Date(activity.verifiedAt).toLocaleTimeString() : 'Just now'}
+                                            </p>
                                         </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
+                                    </div>
+                                    <span className="text-[0.65rem] font-semibold px-2.5 py-1 rounded-full"
+                                        style={{ background: 'rgba(76,175,110,0.08)', color: '#4caf6e' }}>
+                                        Verified
+                                    </span>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-10">
+                                <p className="text-sm text-gray-400">No activity logged yet today.</p>
+                            </div>
+                        )}
+                    </div>
+                </motion.section>
 
-                        <div className="text-center">
-                            <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.4em]">Malo OS Security v14.2</p>
-                        </div>
-                    </aside>
-                </div>
             </main>
         </div>
     );

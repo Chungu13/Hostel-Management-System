@@ -9,6 +9,7 @@ import ResidentManagement from './pages/admin/ResidentManagement';
 import StaffManagement from './pages/admin/StaffManagement';
 import ReportsPage from './pages/admin/ReportsPage';
 import ProfilePage from './pages/admin/ProfilePage';
+import NoticesPage from './pages/admin/NoticesPage';
 
 /**
  * ProtectedRoute — guards routes that require authentication.
@@ -99,6 +100,11 @@ function App() {
                         <Route path="/profile" element={
                             <ProtectedRoute>
                                 <ProfilePage />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/notices" element={
+                            <ProtectedRoute>
+                                <NoticesPage />
                             </ProtectedRoute>
                         } />
 

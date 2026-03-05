@@ -31,66 +31,70 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAuthFilter jwtAuthFilter;
+        @Autowired
+        private JwtAuthFilter jwtAuthFilter;
 
-    @Value("${frontend.url}")
-    private String frontendUrl;
+        @Value("${frontend.url}")
+        private String frontendUrl;
 
-    @Value("${admin.url}")
-    private String adminUrl;
+        @Value("${admin.url}")
+        private String adminUrl;
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                // Disable CSRF — stateless REST API doesn't use cookies for auth
-                .csrf(AbstractHttpConfigurer::disable)
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http
+                                // Disable CSRF — stateless REST API doesn't use cookies for auth
+                                .csrf(AbstractHttpConfigurer::disable)
 
-                // CORS — delegate to the corsConfigurationSource bean below
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                                // CORS — delegate to the corsConfigurationSource bean below
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // No server-side sessions
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                // No server-side sessions
+                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // Route authorisation
-                .authorizeHttpRequests(auth -> auth
-                        // Permit all OPTIONS requests (Preflight)
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                        // Public auth endpoints
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/api/auth/google",
-                                "/api/auth/properties")
-                        .permitAll()
-                        // Everything else requires a valid JWT
-                        .anyRequest().authenticated())
+                                // Route authorisation
+                                .authorizeHttpRequests(auth -> auth
+                                                // Permit all OPTIONS requests (Preflight)
+                                                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**")
+                                                .permitAll()
+                                                // Public auth endpoints
+                                                .requestMatchers(
+                                                                "/api/auth/login",
+                                                                "/api/auth/register",
+                                                                "/api/auth/google",
+                                                                "/api/auth/properties",
+                                                                "/api/visits/public/pass/**",
+                                                                "/error")
+                                                .permitAll()
+                                                // Everything else requires a valid JWT
+                                                .anyRequest().authenticated())
 
-                // Insert JWT filter before Spring's default username/password filter
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                                // Insert JWT filter before Spring's default username/password filter
+                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+                return http.build();
+        }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration config = new CorsConfiguration();
 
-        // Add common local origins to handle localhost/127.0.0.1 variations
-        config.setAllowedOriginPatterns(List.of(
-                frontendUrl,
-                adminUrl,
-                "http://localhost:*",
-                "http://127.0.0.1:*"));
+                // Add common local origins to handle localhost/127.0.0.1 variations
+                config.setAllowedOriginPatterns(List.of(
+                                frontendUrl,
+                                adminUrl,
+                                "http://localhost:*",
+                                "http://127.0.0.1:*"));
 
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin"));
-        config.setExposedHeaders(List.of("Authorization"));
-        config.setAllowCredentials(true);
-        config.setMaxAge(3600L); // Cache preflight for 1 hour
+                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+                config.setAllowedHeaders(
+                                List.of("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin"));
+                config.setExposedHeaders(List.of("Authorization"));
+                config.setAllowCredentials(true);
+                config.setMaxAge(3600L); // Cache preflight for 1 hour
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", config);
+                return source;
+        }
 }

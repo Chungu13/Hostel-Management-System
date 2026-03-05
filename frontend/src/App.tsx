@@ -13,7 +13,8 @@ import HistoryPage from './pages/resident/HistoryPage';
 import ProfilePage from './pages/resident/ProfilePage';
 import SecurityDashboard from './pages/security/SecurityDashboard';
 import VerifyVisitor from './pages/security/VerifyVisitor';
-import PendingApprovalPage from './pages/auth/PendingApprovalPage';
+import AwaitingApprovalPage from './pages/auth/AwaitingApprovalPage';
+import GuestPass from './pages/public/GuestPass';
 
 const ProtectedRoute = ({ children, allowedRole = 'Resident' }: { children: React.ReactNode, allowedRole?: string }) => {
   const { user } = useAuth();
@@ -38,10 +39,28 @@ const ProtectedRoute = ({ children, allowedRole = 'Resident' }: { children: Reac
   }
 
   // 2. Role based protection
-  if (user.myRole !== allowedRole && !user.needsOnboarding) {
+  const isSecurityRole = (user.myRole === 'Security Staff' || user.myRole === 'Security');
+  const isAllowed = user.myRole === allowedRole || (allowedRole === 'Security Staff' && isSecurityRole);
+
+  if (!isAllowed && !user.needsOnboarding) {
     return <Navigate to="/login" />;
   }
   return <>{children}</>;
+};
+
+const Home = () => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" />;
+
+  if (user.myRole === 'Resident') {
+    return <ResidentDashboard />;
+  }
+
+  if (user.myRole === 'Security Staff' || user.myRole === 'Security') {
+    return <Navigate to="/security" replace />;
+  }
+
+  return <Navigate to="/login" />;
 };
 
 function App() {
@@ -53,16 +72,15 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/pending-approval" element={
           <ProtectedRoute allowedRole="Resident">
-            <PendingApprovalPage />
+            <AwaitingApprovalPage />
           </ProtectedRoute>
         } />
+        <Route path="/guest-pass/:code" element={<GuestPass />} />
+
+        {/* Home Route - Handles redirection based on role */}
+        <Route path="/" element={<Home />} />
 
         {/* Resident Protected Routes */}
-        <Route path="/" element={
-          <ProtectedRoute allowedRole="Resident">
-            <ResidentDashboard />
-          </ProtectedRoute>
-        } />
         <Route path="/onboarding" element={
           <ProtectedRoute allowedRole="Resident">
             <OnboardingPage />
@@ -99,6 +117,11 @@ function App() {
         <Route path="/security/history" element={
           <ProtectedRoute allowedRole="Security Staff">
             <HistoryPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/security/profile" element={
+          <ProtectedRoute allowedRole="Security Staff">
+            <ProfilePage />
           </ProtectedRoute>
         } />
 

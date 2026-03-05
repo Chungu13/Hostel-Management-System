@@ -28,14 +28,20 @@ public class VisitRequest implements Serializable {
     @Column(name = "visitor_name", nullable = false)
     private String visitorName;
 
-    @Column(name = "visitor_username", nullable = false, unique = true)
-    private String visitorUsername;
-
-    @Column(name = "visitor_password", nullable = false)
-    private String visitorPassword;
+    @Column(name = "visit_code", nullable = false, unique = true)
+    private String visitCode;
 
     @Column(name = "request_date", nullable = false)
     private LocalDateTime requestDate;
+
+    @Column(name = "visit_date")
+    private String visitDate;
+
+    @Column(name = "visit_time")
+    private String visitTime;
+
+    @Column(name = "purpose")
+    private String purpose;
 
     @Column(name = "status", nullable = false)
     private String status;
@@ -44,18 +50,20 @@ public class VisitRequest implements Serializable {
     protected void onCreate() {
         requestDate = LocalDateTime.now();
         if (status == null) {
-            status = "Pending";
+            status = "Approved";
         }
     }
 
-    public VisitRequest(Residents resident, String residentName, String visitorName, String visitorUsername,
-            String visitorPassword) {
+    public VisitRequest(Residents resident, String residentName, String visitorName, String visitCode,
+            String visitDate, String visitTime, String purpose) {
         this.resident = resident;
         this.residentName = residentName;
         this.visitorName = visitorName;
-        this.visitorUsername = visitorUsername;
-        this.visitorPassword = visitorPassword;
+        this.visitCode = visitCode;
+        this.visitDate = visitDate;
+        this.visitTime = visitTime;
+        this.purpose = purpose;
         this.requestDate = LocalDateTime.now();
-        this.status = "Pending";
+        this.status = "Approved";
     }
 }

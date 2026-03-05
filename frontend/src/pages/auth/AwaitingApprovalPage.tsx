@@ -4,7 +4,7 @@ import { Clock, ShieldAlert, ArrowLeft, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const PendingApprovalPage: React.FC = () => {
+const AwaitingApprovalPage: React.FC = () => {
     const { logout, user } = useAuth();
     const navigate = useNavigate();
     const [scanned, setScanned] = useState(false);
@@ -59,8 +59,8 @@ const PendingApprovalPage: React.FC = () => {
                 {/* Text Content */}
                 <div className="space-y-4 mb-12">
                     <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
-                        Pending Security <br />
-                        <span className="text-amber-500">Verification</span>
+                        Security Verification <br />
+                        <span className="text-amber-500">Required</span>
                     </h1>
                     <p className="text-slate-500 font-medium leading-relaxed max-w-[360px] mx-auto">
                         Your resident account for <span className="text-slate-900 font-bold">{user?.email}</span> has been established but requires administrative approval before dashboard access is granted.
@@ -108,4 +108,4 @@ const PendingApprovalPage: React.FC = () => {
     );
 };
 
-export default PendingApprovalPage;
+export default AwaitingApprovalPage;

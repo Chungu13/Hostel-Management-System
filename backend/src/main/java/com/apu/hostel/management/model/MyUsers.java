@@ -47,6 +47,9 @@ public class MyUsers implements Serializable {
     private String phone;
 
     @Column
+    private String ic;
+
+    @Column
     private String address;
 
     @Lob

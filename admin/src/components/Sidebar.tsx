@@ -7,11 +7,11 @@ import {
     ShieldCheck,
     LogOut,
     BarChart,
-    Settings,
     ShieldAlert,
     Menu,
     X,
     ChevronRight,
+    Megaphone
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
@@ -29,10 +29,10 @@ const Sidebar: React.FC = () => {
 
     const menuItems = [
         { path: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
+        { path: '/notices', icon: Megaphone, label: 'Notices' },
         { path: '/residents', icon: Users, label: 'Residents' },
-        { path: '/staff', icon: ShieldCheck, label: 'Staff Hub' },
-        { path: '/reports', icon: BarChart, label: 'Critical Reports' },
-        { path: '/profile', icon: User, label: 'Profile' },
+        { path: '/staff', icon: ShieldCheck, label: 'Security Staff' },
+        { path: '/reports', icon: BarChart, label: 'Reports' },
     ];
 
     const initials = (user?.name || user?.email || 'A')[0].toUpperCase();
@@ -47,14 +47,11 @@ const Sidebar: React.FC = () => {
                         style={{ background: 'linear-gradient(135deg, #4caf6e, #81c995)', boxShadow: '0 2px 8px rgba(76,175,110,0.3)' }}>
                         M
                     </div>
-                    <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-gray-900 text-[1.1rem] leading-none tracking-tight">Malo</span>
-                        <span className="text-[0.58rem] text-green-500 uppercase tracking-[0.15em] font-semibold">Admin Console</span>
-                    </div>
+                    <span className="font-bold text-gray-900 text-[1.1rem] leading-none tracking-tight">Malo</span>
                 </div>
                 <button
                     onClick={() => setIsOpen(false)}
-                    className="lg:hidden w-8 h-8 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                    className="w-8 h-8 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                 >
                     <X size={15} />
                 </button>
@@ -113,8 +110,10 @@ const Sidebar: React.FC = () => {
 
             {/* Footer */}
             <div className="mt-6 pt-6 border-t border-gray-100 flex flex-col gap-1">
+
+                {/* Profile link */}
                 <NavLink
-                    to="/settings"
+                    to="/profile"
                     onClick={() => setIsOpen(false)}
                     className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all border
@@ -126,12 +125,14 @@ const Sidebar: React.FC = () => {
                 >
                     {({ isActive }) => (
                         <>
-                            <Settings size={17} className={isActive ? 'text-green-500' : 'text-gray-400'} />
-                            <span>Config Terminal</span>
+                            <User size={17} className={isActive ? 'text-green-500' : 'text-gray-400'} />
+                            <span>Profile</span>
+                            {isActive && <ChevronRight size={14} className="text-green-400 ml-auto" />}
                         </>
                     )}
                 </NavLink>
 
+                {/* Logout */}
                 <button
                     onClick={handleLogout}
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-50 hover:text-red-500 transition-all border border-transparent group w-full"
@@ -158,10 +159,10 @@ const Sidebar: React.FC = () => {
 
     return (
         <>
-            {/* Hamburger toggle (always visible, push-out style like other Sidebar) */}
+            {/* Hamburger */}
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed top-5 left-5 z-40 w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-gray-800 hover:shadow-md transition-all"
+                className="fixed top-5 left-5 z-40 w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-800 hover:shadow-md transition-all"
                 style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)' }}
             >
                 <Menu size={18} />
