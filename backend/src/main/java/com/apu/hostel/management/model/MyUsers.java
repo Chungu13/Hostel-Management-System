@@ -9,7 +9,11 @@ import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
-@Table(name = "my_users")
+@Table(name = "my_users", indexes = {
+        @Index(name = "idx_user_email", columnList = "email"),
+        @Index(name = "idx_user_property", columnList = "propertyId"),
+        @Index(name = "idx_user_role", columnList = "myRole")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

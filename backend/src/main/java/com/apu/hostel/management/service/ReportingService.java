@@ -16,6 +16,9 @@ public class ReportingService {
     @Autowired
     private SecurityStaffRepository securityStaffRepository;
 
+    @Autowired
+    private com.apu.hostel.management.repository.VisitRequestRepository visitRequestRepository;
+
     public List<Object[]> getResidentGenderReport(Long propertyId) {
         return residentRepository.countByGenderAndPropertyId(propertyId);
     }
@@ -34,5 +37,21 @@ public class ReportingService {
 
     public long getTotalSecurityStaff(Long propertyId) {
         return securityStaffRepository.countByPropertyId(propertyId);
+    }
+
+    public List<Object[]> getVisitStatusBreakdown(Long propertyId) {
+        return visitRequestRepository.countByStatusAndPropertyId(propertyId);
+    }
+
+    public List<Object[]> getVisitsPerDayInMonth(Long propertyId, String monthPrefix) {
+        return visitRequestRepository.countByDayInMonth(propertyId, monthPrefix);
+    }
+
+    public List<Object[]> getTopResidentsByVisitors(Long propertyId) {
+        return visitRequestRepository.findTopResidentsByVisitors(propertyId);
+    }
+
+    public List<Object[]> getVisitsByDay(Long propertyId) {
+        return visitRequestRepository.countByDateAndPropertyId(propertyId);
     }
 }

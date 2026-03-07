@@ -142,9 +142,7 @@ const Sidebar: React.FC = () => {
                                     <div className="text-[0.85rem] font-semibold leading-tight text-zinc-900">
                                         {user?.name || user?.email || "User"}
                                     </div>
-                                    <div className="text-[0.7rem] font-normal text-zinc-400">
-                                        {user?.myRole || "—"}
-                                    </div>
+
                                 </div>
                             </div>
 

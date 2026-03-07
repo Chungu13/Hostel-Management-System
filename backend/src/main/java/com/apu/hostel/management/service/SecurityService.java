@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -88,12 +90,9 @@ public class SecurityService {
         visitorDetailsRepository.save(details);
     }
 
-    public List<VerifiedVisitors> getVerificationHistory(LocalDateTime clearedAt) {
-        if (clearedAt == null)
-            return verifiedVisitorsRepository.findAll();
-        return verifiedVisitorsRepository.findAll().stream()
-                .filter(v -> v.getVerifiedAt() != null && v.getVerifiedAt().isAfter(clearedAt))
-                .toList();
+    public Page<VerifiedVisitors> getVerificationHistory(Long propertyId, java.time.LocalDateTime clearedAt,
+            Pageable pageable) {
+        return verifiedVisitorsRepository.findByPropertyIdAndVerifiedAtAfter(propertyId, clearedAt, pageable);
     }
 
     public Optional<VerifiedVisitors> findLastVerifiedByCode(String visitCode) {
@@ -132,7 +131,7 @@ public class SecurityService {
         return securityStaffRepository.findById(staffId).orElse(null);
     }
 
-    public Map<String, Object> getDashboardStats(LocalDateTime clearedAt) {
+    public Map<String, Object> getDashboardStats(Long propertyId, LocalDateTime clearedAt) {
         // Use a 24-hour window to be safer with timezones
         java.time.LocalDateTime twentyFourHoursAgo = java.time.LocalDateTime.now().minusHours(24);
 
@@ -142,16 +141,19 @@ public class SecurityService {
             filterStart = clearedAt;
         }
 
-        long todayVerified = verifiedVisitorsRepository.countByVerifiedAtAfter(filterStart);
+        long todayVerified = verifiedVisitorsRepository.countBySecurityStaffPropertyIdAndVerifiedAtAfter(propertyId,
+                filterStart);
 
-        List<VerifiedVisitors> recentLogs = verifiedVisitorsRepository.findFirst5ByOrderByIdDesc();
+        List<VerifiedVisitors> recentLogs = verifiedVisitorsRepository
+                .findFirst5BySecurityStaffPropertyIdOrderByIdDesc(propertyId);
         if (clearedAt != null) {
             recentLogs = recentLogs.stream()
                     .filter(v -> v.getVerifiedAt() != null && v.getVerifiedAt().isAfter(clearedAt))
                     .toList();
         }
 
-        System.out.println("Stats Fetch - Today count: " + todayVerified + " | Total logs found: " + recentLogs.size());
+        System.out.println("Stats (Property " + propertyId + ") - Today: " + todayVerified + " | Total logs: "
+                + recentLogs.size());
 
         return Map.of(
                 "todayVerified", todayVerified,

@@ -190,16 +190,11 @@ const VisitHistory: React.FC = () => {
                     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
                     <div>
-                        <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.08em]"
-                            style={{ background: 'rgba(76,175,110,0.08)', border: '1px solid rgba(76,175,110,0.2)', color: '#4caf6e' }}>
-                            <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-                            Records
-                        </div>
-                        <h1 className="m-0 flex items-center gap-2.5 text-[1.85rem] font-bold tracking-tight text-gray-900 leading-tight">
-                            <History size={24} color="#4caf6e" />
+
+                        <h1 className="page-title">
                             Visit Records
                         </h1>
-                        <p className="m-0 mt-1 text-sm text-gray-400">
+                        <p className="page-subtitle">
                             {user.myRole === "Resident"
                                 ? "Track your guest logs and QR passes"
                                 : "Complete system-wide visitor logs"}

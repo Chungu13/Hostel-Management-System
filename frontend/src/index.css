@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -17,6 +18,24 @@
 }
 
 @layer components {
+
+  /* Standardized Typography */
+  .page-title {
+    @apply text-[1.85rem] font-bold text-zinc-900 tracking-[-0.03em] leading-tight;
+  }
+
+  .page-subtitle {
+    @apply text-sm text-zinc-400 font-normal mt-1;
+  }
+
+  .section-title {
+    @apply text-[1.1rem] font-bold text-zinc-900 tracking-[-0.02em];
+  }
+
+  .section-label {
+    @apply text-[0.65rem] font-semibold text-zinc-400 uppercase tracking-widest;
+  }
+
   .card-premium {
     @apply bg-white rounded-2xl shadow-sm border border-slate-100 p-6 transition-all hover:shadow-md;
   }

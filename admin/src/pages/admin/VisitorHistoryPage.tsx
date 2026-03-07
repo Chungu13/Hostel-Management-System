@@ -120,12 +120,9 @@ const VisitorHistoryPage: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                 >
                     <div>
-                        <div className="mb-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[0.65rem] font-bold text-emerald-600 uppercase tracking-wider">
-                            <ShieldCheck size={12} />
-                            Administrative Logs
-                        </div>
-                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Visitor Master History</h1>
-                        <p className="text-sm text-gray-400 mt-1">Audit and track all visitor movements across the property.</p>
+
+                        <h1 className="page-title">Visit History</h1>
+                        <p className="page-subtitle">Audit and track all visitor movements across the property.</p>
                     </div>
 
                     <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all shadow-sm">

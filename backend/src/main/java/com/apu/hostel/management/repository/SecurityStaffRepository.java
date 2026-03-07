@@ -1,6 +1,8 @@
 package com.apu.hostel.management.repository;
 
 import com.apu.hostel.management.model.SecurityStaff;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -13,11 +15,15 @@ public interface SecurityStaffRepository extends JpaRepository<SecurityStaff, Lo
 
     List<SecurityStaff> findByPropertyId(Long propertyId);
 
+    Page<SecurityStaff> findByPropertyId(Long propertyId, Pageable pageable);
+
     List<SecurityStaff> findByPropertyIdAndOnDuty(Long propertyId, boolean onDuty);
 
     long countByPropertyId(Long propertyId);
 
     List<SecurityStaff> findByNameContaining(String name);
+
+    Page<SecurityStaff> findByNameContainingIgnoreCaseAndPropertyId(String name, Long propertyId, Pageable pageable);
 
     Optional<SecurityStaff> findByEmail(String email);
 

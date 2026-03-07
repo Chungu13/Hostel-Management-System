@@ -191,11 +191,10 @@ const StaffManagement: React.FC = () => {
                         <div>
 
 
-                            <h1 className="flex items-center gap-2 text-2xl md:text-[1.85rem] font-bold tracking-tight text-zinc-900 leading-tight">
-                                <ShieldAlert className="text-sky-500" size={26} strokeWidth={2.2} />
+                            <h1 className="page-title">
                                 Staff Management
                             </h1>
-                            <p className="text-sm text-zinc-400 mt-1">
+                            <p className="page-subtitle">
                                 Manage security personnel and system access
                             </p>
                         </div>

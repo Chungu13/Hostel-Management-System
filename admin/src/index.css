@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -15,11 +16,29 @@
 @layer base {
     body {
         @apply bg-bg-darker text-text-main min-h-screen;
-        font-family: 'Outfit', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
     }
 }
 
 @layer components {
+
+    /* Standardized Typography */
+    .page-title {
+        @apply text-[1.85rem] font-bold text-zinc-900 tracking-[-0.03em] leading-tight;
+    }
+
+    .page-subtitle {
+        @apply text-sm text-zinc-400 font-normal mt-1;
+    }
+
+    .section-title {
+        @apply text-[1.1rem] font-bold text-zinc-900 tracking-[-0.02em];
+    }
+
+    .section-label {
+        @apply text-[0.65rem] font-semibold text-zinc-400 uppercase tracking-widest;
+    }
+
     .glass {
         @apply bg-slate-900/70 backdrop-blur-lg border border-white/10 rounded-2xl;
     }

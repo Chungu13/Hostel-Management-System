@@ -1,42 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from '../../components/Sidebar';
 import { motion } from 'framer-motion';
-import { Users, ShieldCheck, Clock, CheckCircle2, TrendingUp, Calendar, ChevronRight } from 'lucide-react';
+import {
+    Users, ShieldCheck, Clock, CheckCircle2,
+    Calendar, ShieldAlert, UserPlus
+} from 'lucide-react';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
-import {
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-    Tooltip as RechartsTooltip,
-    Legend,
-    AreaChart,
-    Area,
-    XAxis,
-    YAxis,
-    CartesianGrid
-} from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardStats {
     totalResidents: number;
     totalStaff: number;
+    pendingVisits: number;
+    todayVisitors: number;
     recentActivity?: any[];
-}
-
-interface GenderDistribution {
-    name: string;
-    value: number;
 }
 
 const AdminDashboard: React.FC = () => {
     const { user, login } = useAuth();
+    const navigate = useNavigate();
     const [stats, setStats] = useState<DashboardStats>({
         totalResidents: 0,
-        totalStaff: 0
+        totalStaff: 0,
+        pendingVisits: 0,
+        todayVisitors: 0
     });
-
-    const [genderData, setGenderData] = useState<GenderDistribution[]>([]);
     const [securityOnDuty, setSecurityOnDuty] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -45,22 +34,15 @@ const AdminDashboard: React.FC = () => {
             if (!user?.propertyId) return;
             try {
                 setLoading(true);
-                const [statsRes, genderRes, securityRes, profileRes] = await Promise.all([
+                const [statsRes, securityRes, profileRes] = await Promise.all([
                     api.get(`/api/dashboard/stats?propertyId=${user.propertyId}`),
-                    api.get(`/api/dashboard/gender-distribution?propertyId=${user.propertyId}`),
                     api.get(`/api/security/on-duty/${user.propertyId}`),
                     api.get(`/api/profile/me`)
                 ]);
                 setStats(statsRes.data);
-                setGenderData(genderRes.data);
                 setSecurityOnDuty(securityRes.data);
-
-                // Sync name with AuthContext if it's more accurate
                 if (profileRes.data.fullName && profileRes.data.fullName !== user.name) {
-                    login({
-                        ...user,
-                        name: profileRes.data.fullName
-                    });
+                    login({ ...user, name: profileRes.data.fullName });
                 }
             } catch (err) {
                 console.error("Error fetching data:", err);
@@ -71,700 +53,202 @@ const AdminDashboard: React.FC = () => {
         fetchData();
     }, [user]);
 
-    const COLORS = ['#4caf6e', '#81c995', '#b8e0c4'];
-
     const cards = [
-        { label: 'Total Residents', value: stats.totalResidents, icon: Users, accent: '#4caf6e', accentBg: 'rgba(76,175,110,0.1)' },
-        { label: 'Security Staff', value: stats.totalStaff, icon: ShieldCheck, accent: '#60a5fa', accentBg: 'rgba(96,165,250,0.1)' },
+        { label: 'Total Residents', value: stats.totalResidents, icon: Users, path: '/residents' },
+        { label: 'Security Staff', value: stats.totalStaff, icon: ShieldCheck, path: '/staff' },
+        { label: 'Pending Visit Requests', value: stats.pendingVisits, icon: ShieldAlert, path: '/history' },
+        { label: 'Visits Today', value: stats.todayVisitors, icon: Clock, path: '/history' },
     ];
 
-    const tooltipStyle = {
-        backgroundColor: '#fff',
-        border: '1px solid #e8e8e6',
-        borderRadius: '10px',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        fontSize: '12px',
-        color: '#333'
-    };
-
-    const activities = [
-        { title: 'New resident registration', time: '2 hours ago', icon: Users, accent: '#4caf6e', accentBg: 'rgba(76,175,110,0.1)' },
-        { title: 'Staff shift started', time: '5 hours ago', icon: ShieldCheck, accent: '#60a5fa', accentBg: 'rgba(96,165,250,0.1)' },
-        { title: 'Facility report generated', time: 'Yesterday', icon: CheckCircle2, accent: '#4caf6e', accentBg: 'rgba(76,175,110,0.08)' },
-    ];
+    const firstName = user?.name?.split(' ')[0] || 'Admin';
+    const now = new Date();
+    const greeting = now.getHours() < 12 ? 'morning' : now.getHours() < 17 ? 'afternoon' : 'evening';
 
     return (
-        <>
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        <div
+            className="flex min-h-screen font-['Plus_Jakarta_Sans',sans-serif]"
+            style={{
+                backgroundColor: '#f7f7f5',
+                backgroundImage: `
+                    radial-gradient(circle at 5% 10%, rgba(134,197,152,0.10) 0%, transparent 45%),
+                    radial-gradient(circle at 95% 90%, rgba(134,197,152,0.07) 0%, transparent 45%)
+                `
+            }}
+        >
+            <Sidebar />
 
-                * { box-sizing: border-box; }
+            <main className="flex-1 px-5 py-8 md:pl-20 md:pr-10 md:py-10 overflow-y-auto">
 
-                .ad2-root {
-                    display: flex;
-                    min-height: 100vh;
-                    background-color: #f7f7f5;
-                    background-image:
-                        radial-gradient(circle at 5% 10%, rgba(134,197,152,0.1) 0%, transparent 45%),
-                        radial-gradient(circle at 95% 90%, rgba(134,197,152,0.07) 0%, transparent 45%);
-                    font-family: 'Plus Jakarta Sans', sans-serif;
-                }
+                {/* ── Header ── */}
+                <motion.div
+                    className="flex flex-wrap items-start justify-between gap-4 mb-8"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                >
+                    <div>
 
-                .ad2-main {
-                    flex: 1;
-                    padding: 40px 40px 40px 80px;
-                    width: 100%;
-                    overflow-y: auto;
-                }
-
-                @media (max-width: 768px) {
-                    .ad2-main { padding: 24px 20px 24px 70px; }
-                    .ad2-stats   { grid-template-columns: 1fr 1fr !important; }
-                    .ad2-charts  { grid-template-columns: 1fr !important; }
-                    .ad2-bottom  { grid-template-columns: 1fr !important; }
-                    .ad2-notice-grid { grid-template-columns: 1fr !important; }
-                }
-
-                /* Header */
-                .ad2-header {
-                    display: flex;
-                    align-items: flex-start;
-                    justify-content: space-between;
-                    flex-wrap: wrap;
-                    gap: 16px;
-                    margin-bottom: 32px;
-                }
-
-                .ad2-badge {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 6px;
-                    background: rgba(76,175,110,0.08);
-                    border: 1px solid rgba(76,175,110,0.2);
-                    color: #4caf6e;
-                    font-size: 0.72rem;
-                    font-weight: 600;
-                    letter-spacing: 0.08em;
-                    text-transform: uppercase;
-                    padding: 4px 10px;
-                    border-radius: 20px;
-                    margin-bottom: 10px;
-                }
-
-                .ad2-badge-dot { width: 6px; height: 6px; background: #4caf6e; border-radius: 50%; }
-
-                .ad2-heading {
-                    font-size: 1.85rem;
-                    font-weight: 700;
-                    color: #111;
-                    letter-spacing: -0.03em;
-                    line-height: 1.2;
-                    margin: 0 0 6px;
-                }
-
-                .ad2-subtext {
-                    font-size: 0.875rem;
-                    color: #999;
-                    font-weight: 400;
-                    margin: 0;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    flex-wrap: wrap;
-                }
-
-                .ad2-property-chip {
-                    display: inline-flex;
-                    align-items: center;
-                    background: rgba(76,175,110,0.07);
-                    border: 1px solid rgba(76,175,110,0.18);
-                    color: #4caf6e;
-                    font-size: 0.72rem;
-                    font-weight: 600;
-                    font-family: monospace;
-                    padding: 2px 8px;
-                    border-radius: 6px;
-                }
-
-                .ad2-date-badge {
-                    display: flex;
-                    align-items: center;
-                    gap: 7px;
-                    background: #fff;
-                    border: 1px solid #e8e8e6;
-                    border-radius: 12px;
-                    padding: 10px 16px;
-                    font-size: 0.82rem;
-                    font-weight: 600;
-                    color: #555;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-                    white-space: nowrap;
-                    align-self: flex-start;
-                    margin-top: 4px;
-                }
-
-                /* Stats */
-                .ad2-stats {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 16px;
-                    margin-bottom: 24px;
-                }
-
-                .ad2-stat-card {
-                    background: #fff;
-                    border-radius: 18px;
-                    padding: 22px;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
-                    border: 1px solid rgba(0,0,0,0.04);
-                    cursor: default;
-                    transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
-                }
-
-                .ad2-stat-card:hover {
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-                    border-color: rgba(76,175,110,0.15);
-                    transform: translateY(-2px);
-                }
-
-                .ad2-stat-icon {
-                    width: 40px; height: 40px;
-                    border-radius: 10px;
-                    display: flex; align-items: center; justify-content: center;
-                    margin-bottom: 14px;
-                    transition: transform 0.2s;
-                }
-
-                .ad2-stat-card:hover .ad2-stat-icon { transform: scale(1.1); }
-
-                .ad2-stat-label {
-                    font-size: 0.7rem;
-                    font-weight: 600;
-                    letter-spacing: 0.08em;
-                    text-transform: uppercase;
-                    color: #bbb;
-                    margin-bottom: 5px;
-                }
-
-                .ad2-stat-value {
-                    font-size: 2rem;
-                    font-weight: 700;
-                    color: #111;
-                    letter-spacing: -0.04em;
-                    line-height: 1;
-                }
-
-                .ad2-stat-value-sm {
-                    font-size: 1.1rem;
-                    font-weight: 700;
-                    color: #4caf6e;
-                    letter-spacing: -0.01em;
-                    line-height: 1;
-                }
-
-                .ad2-stat-loading {
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    color: #ddd;
-                    line-height: 1;
-                }
-
-                /* Charts */
-                .ad2-charts {
-                    display: grid;
-                    grid-template-columns: 1fr 320px;
-                    gap: 20px;
-                    margin-bottom: 24px;
-                }
-
-                .ad2-card {
-                    background: #fff;
-                    border-radius: 20px;
-                    padding: 28px;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
-                    border: 1px solid rgba(0,0,0,0.04);
-                }
-
-                .ad2-card-header {
-                    display: flex;
-                    align-items: flex-start;
-                    justify-content: space-between;
-                    margin-bottom: 20px;
-                    flex-wrap: wrap;
-                    gap: 10px;
-                }
-
-                .ad2-card-title {
-                    font-size: 0.95rem;
-                    font-weight: 700;
-                    color: #111;
-                    letter-spacing: -0.01em;
-                    margin: 0 0 3px;
-                }
-
-                .ad2-card-subtitle {
-                    font-size: 0.75rem;
-                    color: #bbb;
-                    font-weight: 400;
-                    margin: 0;
-                }
-
-                .ad2-trend-pill {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 5px;
-                    background: rgba(76,175,110,0.08);
-                    border: 1px solid rgba(76,175,110,0.2);
-                    color: #4caf6e;
-                    font-size: 0.72rem;
-                    font-weight: 700;
-                    padding: 4px 10px;
-                    border-radius: 20px;
-                    white-space: nowrap;
-                }
-
-                /* Bottom grid */
-                .ad2-bottom {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 20px;
-                }
-
-                .ad2-ops-grid {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 12px;
-                }
-
-                .ad2-ops-btn {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                    padding: 22px 16px;
-                    border-radius: 16px;
-                    border: none;
-                    cursor: pointer;
-                    font-family: 'Plus Jakarta Sans', sans-serif;
-                    transition: transform 0.15s, box-shadow 0.2s, opacity 0.15s;
-                }
-
-                .ad2-ops-btn:hover { transform: translateY(-2px); }
-
-                .ad2-ops-title {
-                    font-size: 0.85rem;
-                    font-weight: 700;
-                    line-height: 1.2;
-                }
-
-                .ad2-ops-sub {
-                    font-size: 0.7rem;
-                    opacity: 0.6;
-                    font-weight: 400;
-                }
-
-                .ad2-ops-primary {
-                    background: linear-gradient(135deg, #4caf6e, #5ec47f);
-                    color: #fff;
-                    box-shadow: 0 4px 14px rgba(76,175,110,0.25);
-                }
-
-                .ad2-ops-primary:hover { box-shadow: 0 6px 20px rgba(76,175,110,0.32); }
-
-                .ad2-ops-secondary {
-                    background: #f9f9f8;
-                    color: #333;
-                    border: 1.5px solid #e8e8e6 !important;
-                }
-
-                .ad2-ops-secondary:hover {
-                    background: #f2f2f0;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-                }
-
-                .ad2-ops-admin-label {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    margin-bottom: 18px;
-                }
-
-                .ad2-ops-admin-chip {
-                    font-size: 0.62rem;
-                    font-weight: 600;
-                    letter-spacing: 0.1em;
-                    text-transform: uppercase;
-                    color: #bbb;
-                    background: #f5f5f3;
-                    border: 1px solid #ebebea;
-                    padding: 3px 8px;
-                    border-radius: 6px;
-                }
-
-                /* Activity logs */
-                .ad2-activity-header {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    margin-bottom: 16px;
-                }
-
-                .ad2-view-all {
-                    font-size: 0.78rem;
-                    font-weight: 600;
-                    color: #4caf6e;
-                    background: none;
-                    border: none;
-                    cursor: pointer;
-                    font-family: 'Plus Jakarta Sans', sans-serif;
-                    transition: color 0.15s;
-                }
-
-                .ad2-view-all:hover { color: #3a9a5a; text-decoration: underline; }
-
-                .ad2-activity-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 12px;
-                    border-radius: 12px;
-                    cursor: pointer;
-                    transition: background 0.15s, border-color 0.15s;
-                    border: 1px solid transparent;
-                    margin-bottom: 6px;
-                }
-
-                .ad2-activity-item:last-child { margin-bottom: 0; }
-
-                .ad2-activity-item:hover {
-                    background: #fafafa;
-                    border-color: #f0f0ee;
-                }
-
-                .ad2-activity-icon {
-                    width: 36px; height: 36px;
-                    border-radius: 10px;
-                    display: flex; align-items: center; justify-content: center;
-                    flex-shrink: 0;
-                }
-
-                .ad2-activity-title {
-                    font-size: 0.855rem;
-                    font-weight: 500;
-                    color: #333;
-                    line-height: 1.3;
-                    flex: 1;
-                }
-
-                .ad2-activity-time {
-                    font-size: 0.72rem;
-                    color: #bbb;
-                    margin-top: 2px;
-                }
-
-                /* Notice Publisher */
-                .ad2-notice-section {
-                    margin-top: 24px;
-                }
-
-                .ad2-form-group {
-                    margin-bottom: 20px;
-                }
-
-                .ad2-label {
-                    display: block;
-                    font-size: 0.75rem;
-                    font-weight: 700;
-                    color: #555;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    margin-bottom: 8px;
-                }
-
-                .ad2-input, .ad2-select, .ad2-textarea {
-                    width: 100%;
-                    padding: 12px 16px;
-                    border-radius: 12px;
-                    border: 1.5px solid #e8e8e6;
-                    background: #fcfcfb;
-                    font-family: inherit;
-                    font-size: 0.9rem;
-                    color: #111;
-                    outline: none;
-                    transition: border-color 0.2s, background 0.2s;
-                }
-
-                .ad2-input:focus, .ad2-select:focus, .ad2-textarea:focus {
-                    border-color: #4caf6e;
-                    background: #fff;
-                }
-
-                .ad2-textarea {
-                    min-height: 100px;
-                    resize: vertical;
-                }
-
-                .ad2-publish-btn {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 10px;
-                    width: 100%;
-                    padding: 14px;
-                    border-radius: 14px;
-                    background: linear-gradient(135deg, #111, #333);
-                    color: #fff;
-                    font-weight: 700;
-                    font-size: 0.9rem;
-                    border: none;
-                    cursor: pointer;
-                    transition: transform 0.15s, opacity 0.2s;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                }
-
-                .ad2-publish-btn:hover { transform: translateY(-1px); }
-                .ad2-publish-btn:active { transform: translateY(0); }
-                .ad2-publish-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-                .ad2-status-msg {
-                    margin-top: 16px;
-                    padding: 12px;
-                    border-radius: 10px;
-                    font-size: 0.8rem;
-                    font-weight: 600;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-
-                .ad2-status-success { background: #ecfdf5; color: #059669; border: 1px solid #10b98122; }
-                .ad2-status-error { background: #fef2f2; color: #dc2626; border: 1px solid #ef444422; }
-            `}</style>
-
-            <div className="ad2-root">
-                <Sidebar />
-
-                <main className="ad2-main">
-
-                    {/* Header */}
-                    <motion.div
-                        className="ad2-header"
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                        <div>
-
-                            <h1 className="ad2-heading">Executive Overview</h1>
-                            <p className="ad2-subtext">
-                                Welcome back, {user?.name || 'Admin'}
-                            </p>
-                        </div>
-                        <div className="ad2-date-badge">
-                            <Calendar size={15} color="#4caf6e" />
-                            {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                        </div>
-                    </motion.div>
-
-                    {/* Stat Cards */}
-                    <div className="ad2-stats">
-                        {cards.map((card, index) => (
-                            <motion.div
-                                key={index}
-                                className="ad2-stat-card"
-                                initial={{ opacity: 0, y: 16 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.07, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                            >
-                                <div className="ad2-stat-icon" style={{ background: card.accentBg }}>
-                                    <card.icon size={20} color={card.accent} />
-                                </div>
-                                <div className="ad2-stat-label">{card.label}</div>
-                                {loading ? (
-                                    <div className="ad2-stat-loading">…</div>
-                                ) : typeof card.value === 'string' ? (
-                                    <div className="ad2-stat-value-sm">{card.value}</div>
-                                ) : (
-                                    <div className="ad2-stat-value">{card.value}</div>
-                                )}
-                            </motion.div>
-                        ))}
+                        <h1 className="page-title">
+                            Good {greeting}, {firstName}.
+                        </h1>
+                        <p className="page-subtitle">Here's what's happening at your property today.</p>
                     </div>
+                    <div className="mt-1 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-[0.8rem] font-medium text-gray-500"
+                        style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                        <Calendar size={14} color="#4caf6e" />
+                        {now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </div>
+                </motion.div>
 
-                    {/* Charts */}
-                    <motion.div
-                        className="ad2-charts"
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                        <section className="ad2-card">
-                            <div className="ad2-card-header">
-                                <div>
-                                    <div className="ad2-card-title">Occupancy Distribution</div>
-                                    <p className="ad2-card-subtitle">Trends and demographic split across the property</p>
-                                </div>
-                                <div className="ad2-trend-pill">
-                                    <TrendingUp size={11} /> 12% increase
-                                </div>
+                {/* ── Stat Cards ── */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+                    {cards.map((card, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                            whileHover={{ y: -3 }}
+                            onClick={() => navigate(card.path)}
+                            className="bg-white rounded-[18px] p-5 cursor-pointer transition-all"
+                            style={{
+                                border: '1px solid rgba(0,0,0,0.04)',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)'
+                            }}
+                        >
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+                                style={{ background: 'rgba(76,175,110,0.08)' }}>
+                                <card.icon size={18} color="#4caf6e" />
                             </div>
-                            <div style={{ height: 300 }}>
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={genderData}>
-                                        <defs>
-                                            <linearGradient id="colorGreen2" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#4caf6e" stopOpacity={0.16} />
-                                                <stop offset="95%" stopColor="#4caf6e" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0ee" vertical={false} />
-                                        <XAxis dataKey="name" stroke="#ccc" fontSize={11} tickLine={false} axisLine={false} dy={8} />
-                                        <YAxis stroke="#ccc" fontSize={11} tickLine={false} axisLine={false} dx={-8} />
-                                        <RechartsTooltip contentStyle={tooltipStyle} />
-                                        <Area type="monotone" dataKey="value" stroke="#4caf6e" strokeWidth={2.5} fillOpacity={1} fill="url(#colorGreen2)" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </section>
+                            <p className="text-[0.68rem] font-semibold uppercase tracking-widest text-gray-400 mb-1">
+                                {card.label}
+                            </p>
+                            {loading
+                                ? <div className="h-8 w-12 bg-gray-100 rounded-lg animate-pulse" />
+                                : <p className="text-3xl font-bold text-gray-900 tracking-tight">{card.value}</p>
+                            }
+                        </motion.div>
+                    ))}
+                </div>
 
-                        <section className="ad2-card">
-                            <div className="ad2-card-header">
-                                <div>
-                                    <div className="ad2-card-title">Gender Ratio</div>
-                                    <p className="ad2-card-subtitle">Breakdown of resident demographics</p>
-                                </div>
-                            </div>
-                            <div style={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={genderData}
-                                            innerRadius={65}
-                                            outerRadius={90}
-                                            paddingAngle={6}
-                                            dataKey="value"
-                                            stroke="none"
-                                        >
-                                            {genderData.map((_entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <RechartsTooltip contentStyle={tooltipStyle} />
-                                        <Legend
-                                            iconType="circle"
-                                            iconSize={8}
-                                            wrapperStyle={{ paddingTop: '16px', fontSize: '12px', fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#888' }}
-                                        />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </section>
-                    </motion.div>
+                {/* ── Quick Actions + Recent Activity ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
 
-                    {/* Bottom */}
-                    <motion.div
-                        className="ad2-bottom"
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
+                    {/* Quick Actions */}
+                    <motion.section
+                        className="bg-white rounded-[20px] p-6"
+                        style={{ border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)' }}
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.4, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
                     >
-                        {/* Quick Operations */}
-                        <section className="ad2-card">
-                            <div className="ad2-ops-admin-label">
-                                <div className="ad2-card-title" style={{ margin: 0 }}>Quick Operations</div>
-                                <span className="ad2-ops-admin-chip">Admin Only</span>
-                            </div>
-                            <div className="ad2-ops-grid">
-                                <button className="ad2-ops-btn ad2-ops-primary">
-                                    <Users size={22} />
-                                    <div>
-                                        <div className="ad2-ops-title">Add Resident</div>
-                                        <div className="ad2-ops-sub">Direct insertion</div>
+                        <p className="section-label mb-4">Quick Actions</p>
+                        <div className="grid grid-cols-2 gap-3">
+                            {[
+                                { icon: UserPlus, label: 'Add Resident', path: '/residents' },
+                                { icon: ShieldCheck, label: 'Register Staff', path: '/staff' },
+                            ].map((btn) => (
+                                <button
+                                    key={btn.label}
+                                    onClick={() => navigate(btn.path)}
+                                    className="flex flex-col items-center justify-center gap-3 py-6 rounded-2xl border border-gray-100 bg-gray-50 hover:border-green-200 hover:bg-green-50/40 transition-all group"
+                                >
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+                                        style={{ background: 'rgba(76,175,110,0.08)' }}>
+                                        <btn.icon size={18} color="#4caf6e" />
                                     </div>
+                                    <span className="text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">
+                                        {btn.label}
+                                    </span>
                                 </button>
-                                <button className="ad2-ops-btn ad2-ops-secondary">
-                                    <ShieldCheck size={22} color="#4caf6e" />
-                                    <div>
-                                        <div className="ad2-ops-title">Register Staff</div>
-                                        <div className="ad2-ops-sub">Access control</div>
-                                    </div>
-                                </button>
-                            </div>
-                        </section>
+                            ))}
+                        </div>
+                    </motion.section>
 
-                        {/* Activity Logs */}
-                        <section className="ad2-card">
-                            <div className="ad2-activity-header">
-                                <div className="ad2-card-title" style={{ margin: 0 }}>Activity Logs</div>
-                                <button className="ad2-view-all">View All</button>
-                            </div>
-                            {stats.recentActivity && stats.recentActivity.length > 0 ? (
-                                stats.recentActivity.map((activity, i) => (
-                                    <div key={i} className="ad2-activity-item cursor-default">
-                                        <div className="ad2-activity-icon" style={{ background: 'rgba(76,175,110,0.1)' }}>
-                                            <ShieldCheck size={16} color="#4caf6e" />
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div className="ad2-activity-title">
-                                                Verification: {activity.visitCode}
-                                            </div>
-                                            <div className="ad2-activity-time">
-                                                Host: {activity.residentName} · {activity.verifiedAt ? new Date(activity.verifiedAt).toLocaleTimeString() : 'Recent'}
-                                            </div>
-                                        </div>
-                                        <ChevronRight size={14} color="#ddd" />
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="text-center py-6 text-sm text-gray-400">
-                                    No recent activity logs available.
-                                </div>
-                            )}
-                        </section>
-                    </motion.div>
-
-                    {/* Security on Duty */}
-                    <motion.div
-                        className="ad2-card"
-                        style={{ marginTop: '20px' }}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.36, ease: [0.22, 1, 0.36, 1] }}
+                    {/* Recent Activity */}
+                    <motion.section
+                        className="bg-white rounded-[20px] p-6"
+                        style={{ border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)' }}
+                        initial={{ opacity: 0, x: 12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.32, ease: [0.22, 1, 0.36, 1] }}
                     >
-                        <div className="ad2-activity-header">
-                            <div className="ad2-card-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <ShieldCheck size={18} color="#60a5fa" />
-                                On-Duty Security Personnel
-                            </div>
-                            <span className="ad2-ops-admin-chip">Live Status</span>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px', marginTop: '16px' }}>
-                            {securityOnDuty.length > 0 ? (
-                                securityOnDuty.map((staff, idx) => (
-                                    <div key={idx} style={{ padding: '16px', borderRadius: '16px', background: '#f9f9f8', border: '1px solid #e8e8e6', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(96,165,250,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa', fontWeight: 'bold' }}>
-                                            {staff.name ? staff.name[0] : 'S'}
+                        <p className="section-label mb-4">Recent Activity</p>
+                        {stats.recentActivity && stats.recentActivity.length > 0 ? (
+                            <div className="flex flex-col gap-2">
+                                {stats.recentActivity.map((activity: any, i: number) => (
+                                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-gray-50 bg-gray-50/60 hover:bg-gray-50 transition-colors">
+                                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                                            style={{ background: 'rgba(76,175,110,0.08)' }}>
+                                            <CheckCircle2 size={15} color="#4caf6e" />
                                         </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#111' }}>{staff.name}</div>
-                                            <div style={{ fontSize: '0.7rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verified Personnel</div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-gray-800 leading-tight truncate">
+                                                {activity.visitorName || 'Guest'} visited {activity.residentName}
+                                            </p>
+                                            <p className="text-[0.68rem] text-gray-400 mt-0.5">
+                                                {new Date(activity.verifiedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {activity.visitCode}
+                                            </p>
                                         </div>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4caf6e', boxShadow: '0 0 8px rgba(76,175,110,0.5)' }} />
                                     </div>
-                                ))
-                            ) : (
-                                <div style={{ gridColumn: '1 / -1', padding: '30px', textAlign: 'center', background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '16px' }}>
-                                    <div style={{ color: '#dc2626', fontWeight: '700', fontSize: '0.9rem' }}>No Security Staff Currently On-Duty</div>
-                                    <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px' }}>Please ensure personnel log in at active stations.</div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-8 text-center">
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                                    style={{ background: 'rgba(76,175,110,0.06)' }}>
+                                    <CheckCircle2 size={18} color="#c8e6c9" />
                                 </div>
-                            )}
+                                <p className="text-sm text-gray-400">No recent activity yet.</p>
+                            </div>
+                        )}
+                    </motion.section>
+                </div>
+
+                {/* ── On-Duty Security ── */}
+                <motion.section
+                    className="bg-white rounded-[20px] p-6"
+                    style={{ border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)' }}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.36, ease: [0.22, 1, 0.36, 1] }}
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <p className="text-[0.65rem] font-semibold text-gray-400 uppercase tracking-widest">On-Duty Security</p>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.62rem] font-semibold uppercase tracking-widest"
+                            style={{ background: 'rgba(76,175,110,0.08)', border: '1px solid rgba(76,175,110,0.18)', color: '#4caf6e' }}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                            Live
+                        </span>
+                    </div>
+
+                    {securityOnDuty.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {securityOnDuty.map((staff, idx) => (
+                                <div key={idx} className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                                        style={{ background: 'linear-gradient(135deg, #4caf6e, #81c995)' }}>
+                                        {staff.name ? staff.name[0].toUpperCase() : 'S'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-gray-800 leading-tight truncate">{staff.name}</p>
+                                        <p className="text-[0.68rem] text-gray-400 mt-0.5">Security Staff</p>
+                                    </div>
+                                    <span className="w-2 h-2 rounded-full flex-shrink-0"
+                                        style={{ background: '#4caf6e', boxShadow: '0 0 6px rgba(76,175,110,0.6)' }} />
+                                </div>
+                            ))}
                         </div>
-                    </motion.div>
-                </main>
-            </div>
-        </>
+                    ) : (
+                        <div className="p-5 rounded-xl text-center"
+                            style={{ background: 'rgba(224,92,92,0.06)', border: '1px solid rgba(224,92,92,0.15)' }}>
+                            <p className="text-sm font-semibold text-red-400">No security staff currently on duty.</p>
+                        </div>
+                    )}
+                </motion.section>
+
+            </main>
+        </div>
     );
 };
 

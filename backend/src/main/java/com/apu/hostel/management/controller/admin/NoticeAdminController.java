@@ -18,15 +18,17 @@ public class NoticeAdminController {
     @Autowired
     private com.apu.hostel.management.repository.UserRepository userRepository;
 
+    @Autowired
+    private com.apu.hostel.management.security.SecurityUtils securityUtils;
+
     private Long getAdminPropertyId() {
-        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
-                .getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof com.apu.hostel.management.security.JwtPrincipal principal) {
-            return userRepository.findById(principal.getUserId())
+        Long userId = securityUtils.getUserId();
+        if (userId != null) {
+            return userRepository.findById(userId)
                     .map(com.apu.hostel.management.model.MyUsers::getPropertyId)
-                    .orElseThrow(() -> new IllegalStateException("Admin profile not found"));
+                    .orElse(null);
         }
-        throw new IllegalStateException("Authentication context missing or invalid.");
+        return null;
     }
 
     @PostMapping("/publish")

@@ -18,15 +18,17 @@ public class NoticeController {
     @Autowired
     private com.apu.hostel.management.repository.UserRepository userRepository;
 
+    @Autowired
+    private com.apu.hostel.management.security.SecurityUtils securityUtils;
+
     private Long getResidentPropertyId() {
-        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
-                .getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof com.apu.hostel.management.security.JwtPrincipal principal) {
-            return userRepository.findById(principal.getUserId())
-                    .map(com.apu.hostel.management.model.MyUsers::getPropertyId)
-                    .orElseThrow(() -> new IllegalStateException("Resident profile not found"));
+        Long userId = securityUtils.getUserId();
+        if (userId == null) {
+            throw new IllegalStateException("Authentication context missing or invalid.");
         }
-        throw new IllegalStateException("Authentication context missing or invalid.");
+        return userRepository.findById(userId)
+                .map(com.apu.hostel.management.model.MyUsers::getPropertyId)
+                .orElseThrow(() -> new IllegalStateException("Resident profile not found"));
     }
 
     @GetMapping("/latest")

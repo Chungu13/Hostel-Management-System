@@ -16,12 +16,32 @@ import {
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Sidebar: React.FC = () => {
-    const { user, logout } = useAuth();
+    const { user, login, logout } = useAuth();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
+
+    // Sync full name if it's missing or looks like an email prefix
+    React.useEffect(() => {
+        if (!user) return;
+        const syncName = async () => {
+            try {
+                const res = await api.get('/api/profile/me');
+                if (res.data.fullName && res.data.fullName !== user.name) {
+                    login({ ...user, name: res.data.fullName });
+                }
+            } catch (err) {
+                console.warn("Failed to sync user name in sidebar", err);
+            }
+        };
+        // Only sync if name isn't set or name matches email prefix (heuristic)
+        if (!user.name || user.name === user.email?.split('@')[0]) {
+            syncName();
+        }
+    }, [user?.id]);
 
     const handleLogout = () => {
         logout();
@@ -34,7 +54,7 @@ const Sidebar: React.FC = () => {
         { path: '/residents', icon: Users, label: 'Residents' },
         { path: '/staff', icon: ShieldCheck, label: 'Security Staff' },
         { path: '/history', icon: History, label: 'Visitor History' },
-        { path: '/reports', icon: BarChart, label: 'Reports' },
+        { path: '/reports', icon: BarChart, label: 'Analytics' },
     ];
 
     const initials = (user?.name || user?.email || 'A')[0].toUpperCase();
@@ -70,10 +90,7 @@ const Sidebar: React.FC = () => {
                         {user?.name || user?.email || 'Admin'}
                     </p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
-                        <p className="text-[0.65rem] text-gray-400 font-medium uppercase tracking-wider truncate">
-                            {user?.myRole || 'Admin'}
-                        </p>
+
                     </div>
                 </div>
             </div>

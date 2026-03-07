@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,13 +28,12 @@ public class VisitService {
     @Autowired
     private VisitorDetailsRepository visitorDetailsRepository;
 
-    public List<VisitRequest> getRequestsByResident(Long residentId, java.time.LocalDateTime clearedAt) {
-        List<VisitRequest> requests = visitRequestRepository.findByResidentId(residentId);
-        if (clearedAt == null)
-            return requests;
-        return requests.stream()
-                .filter(r -> r.getRequestDate() != null && r.getRequestDate().isAfter(clearedAt))
-                .toList();
+    public Page<VisitRequest> getRequestsByResident(Long residentId, java.time.LocalDateTime clearedAt,
+            Pageable pageable) {
+        if (clearedAt == null) {
+            return visitRequestRepository.findByResidentId(residentId, pageable);
+        }
+        return visitRequestRepository.findByResidentIdAndAfter(residentId, clearedAt, pageable);
     }
 
     @Transactional
@@ -93,7 +94,7 @@ public class VisitService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
-    public List<VisitRequest> getAllHistoryAdmin() {
-        return visitRequestRepository.findAll();
+    public Page<VisitRequest> getAllHistoryAdmin(Pageable pageable) {
+        return visitRequestRepository.findAll(pageable);
     }
 }

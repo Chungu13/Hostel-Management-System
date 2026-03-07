@@ -1,15 +1,16 @@
 package com.apu.hostel.management.controller.security;
 
 import com.apu.hostel.management.service.SecurityService;
-import com.apu.hostel.management.security.JwtPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import java.util.Map;
 import java.util.Optional;
+import com.apu.hostel.management.model.MyUsers;
+import com.apu.hostel.management.model.VerifiedVisitors;
 
 @RestController
 @RequestMapping("/api/security")
@@ -21,6 +22,9 @@ public class SecurityController {
     @Autowired
     private com.apu.hostel.management.repository.UserRepository userRepository;
 
+    @Autowired
+    private com.apu.hostel.management.security.SecurityUtils securityUtils;
+
     private java.time.LocalDateTime getUserClearedAt(Long userId) {
         return userRepository.findById(userId)
                 .map(com.apu.hostel.management.model.MyUsers::getHistoryClearedAt)
@@ -28,29 +32,60 @@ public class SecurityController {
     }
 
     @GetMapping("/history")
-    public ResponseEntity<?> getVerificationHistory() {
-        JwtPrincipal principal = getAuthenticatedPrincipal();
-        java.time.LocalDateTime clearedAt = principal != null ? getUserClearedAt(principal.getUserId()) : null;
-        return ResponseEntity.ok(securityService.getVerificationHistory(clearedAt));
+    public ResponseEntity<Page<VerifiedVisitors>> getVerificationHistory(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
+            return ResponseEntity.status(401).build();
+
+        if (!securityUtils.isSecurityStaff() && !securityUtils.isManagingStaff()) {
+            return ResponseEntity.status(403).build();
+        }
+
+        MyUsers user = userRepository.findById(currentUserId).orElse(null);
+        if (user == null || user.getPropertyId() == null) {
+            return ResponseEntity.status(400).build();
+        }
+
+        java.time.LocalDateTime clearedAt = getUserClearedAt(currentUserId);
+        return ResponseEntity.ok(
+                securityService.getVerificationHistory(user.getPropertyId(), clearedAt, PageRequest.of(page, size)));
     }
 
     @GetMapping("/stats")
     public ResponseEntity<?> getStats() {
-        JwtPrincipal principal = getAuthenticatedPrincipal();
-        java.time.LocalDateTime clearedAt = principal != null ? getUserClearedAt(principal.getUserId()) : null;
-        return ResponseEntity.ok(securityService.getDashboardStats(clearedAt));
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
+            return ResponseEntity.status(401).body("Not authenticated");
+
+        if (!securityUtils.isSecurityStaff() && !securityUtils.isManagingStaff()) {
+            return ResponseEntity.status(403).body("Unauthorized: Security access required");
+        }
+
+        MyUsers user = userRepository.findById(currentUserId).orElse(null);
+        if (user == null || user.getPropertyId() == null) {
+            return ResponseEntity.status(400).body("User not linked to a property");
+        }
+
+        java.time.LocalDateTime clearedAt = getUserClearedAt(currentUserId);
+        return ResponseEntity.ok(securityService.getDashboardStats(user.getPropertyId(), clearedAt));
     }
 
     @PostMapping("/verify")
     public ResponseEntity<?> verifyVisitor(@RequestBody Map<String, String> data) {
         try {
-            JwtPrincipal principal = getAuthenticatedPrincipal();
-            Long staffId = (principal != null) ? principal.getUserId() : 1L; // Fallback to 1L for now if not fully
-                                                                             // secured
+            Long currentUserId = securityUtils.getUserId();
+            if (currentUserId == null)
+                return ResponseEntity.status(401).body("Not authenticated");
+
+            if (!securityUtils.isSecurityStaff() && !securityUtils.isManagingStaff()) {
+                return ResponseEntity.status(403).body("Unauthorized: Security access required");
+            }
 
             Optional<com.apu.hostel.management.model.VisitRequest> visitOpt = securityService
                     .getVisitByCode(data.get("visitCode"));
-            boolean verified = securityService.verifyVisitor(staffId, data.get("visitCode"));
+            boolean verified = securityService.verifyVisitor(currentUserId, data.get("visitCode"));
 
             if (verified && visitOpt.isPresent()) {
                 com.apu.hostel.management.model.VisitRequest v = visitOpt.get();
@@ -69,14 +104,6 @@ public class SecurityController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
-    }
-
-    private JwtPrincipal getAuthenticatedPrincipal() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof JwtPrincipal principal) {
-            return principal;
-        }
-        return null;
     }
 
     @PostMapping("/log-details")
@@ -98,24 +125,40 @@ public class SecurityController {
 
     @PostMapping("/duty/toggle")
     public ResponseEntity<?> toggleDutyStatus() {
-        JwtPrincipal principal = getAuthenticatedPrincipal();
-        if (principal == null)
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
             return ResponseEntity.status(401).body("Not authenticated");
-        boolean onDuty = securityService.toggleDutyStatus(principal.getUserId());
+
+        if (!securityUtils.isSecurityStaff()) {
+            return ResponseEntity.status(403).body("Unauthorized: Only Security Staff can toggle duty");
+        }
+
+        boolean onDuty = securityService.toggleDutyStatus(currentUserId);
         return ResponseEntity.ok(Map.of("onDuty", onDuty));
     }
 
     @GetMapping("/duty/status")
     public ResponseEntity<?> getDutyStatus() {
-        JwtPrincipal principal = getAuthenticatedPrincipal();
-        if (principal == null)
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
             return ResponseEntity.status(401).body("Not authenticated");
-        var staff = securityService.getStaffById(principal.getUserId());
+
+        var staff = securityService.getStaffById(currentUserId);
         return ResponseEntity.ok(Map.of("onDuty", staff != null && staff.isOnDuty()));
     }
 
     @GetMapping("/on-duty/{propertyId}")
     public ResponseEntity<?> getOnDutyByProperty(@PathVariable Long propertyId) {
-        return ResponseEntity.ok(securityService.getOnDutyStaff(propertyId));
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
+            return ResponseEntity.status(401).body("Not authenticated");
+
+        // Simple check: Only users linked to this property can see on-duty staff
+        return userRepository.findById(currentUserId).map(user -> {
+            if (!propertyId.equals(user.getPropertyId()) && !securityUtils.isManagingStaff()) {
+                return ResponseEntity.status(403).body("Unauthorized for this property");
+            }
+            return ResponseEntity.ok(securityService.getOnDutyStaff(propertyId));
+        }).orElse(ResponseEntity.notFound().build());
     }
 }

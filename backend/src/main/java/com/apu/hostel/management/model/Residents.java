@@ -7,7 +7,12 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "residents")
+@Table(name = "residents", indexes = {
+        @Index(name = "idx_resident_property", columnList = "property_id"),
+        @Index(name = "idx_resident_email", columnList = "email"),
+        @Index(name = "idx_resident_phone", columnList = "phone"),
+        @Index(name = "idx_resident_ic", columnList = "ic")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

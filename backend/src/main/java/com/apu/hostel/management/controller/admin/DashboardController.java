@@ -5,6 +5,7 @@ import com.apu.hostel.management.repository.ResidentRepository;
 import com.apu.hostel.management.repository.SecurityStaffRepository;
 import com.apu.hostel.management.repository.VerifiedVisitorsRepository;
 import com.apu.hostel.management.repository.UserRepository;
+import com.apu.hostel.management.repository.VisitRequestRepository;
 import com.apu.hostel.management.security.JwtPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -32,22 +33,37 @@ public class DashboardController {
     @Autowired
     private VerifiedVisitorsRepository verifiedVisitorsRepository;
 
+    @Autowired
+    private VisitRequestRepository visitRequestRepository;
+
+    @Autowired
+    private com.apu.hostel.management.security.SecurityUtils securityUtils;
+
     private Long getAdminPropertyId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof JwtPrincipal principal) {
-            return userRepository.findById(principal.getUserId())
+        Long userId = securityUtils.getUserId();
+        if (userId != null) {
+            return userRepository.findById(userId)
                     .map(MyUsers::getPropertyId)
-                    .orElseThrow(() -> new IllegalStateException("Admin profile not found"));
+                    .orElse(null);
         }
-        throw new IllegalStateException("Authentication context missing or invalid admin profile.");
+        return null;
     }
 
     @GetMapping("/stats")
     public ResponseEntity<?> getStats() {
         Long propertyId = getAdminPropertyId();
         Map<String, Object> stats = new HashMap<>();
+
+        // Total counts
         stats.put("totalResidents", residentRepository.countByPropertyId(propertyId));
         stats.put("totalStaff", securityStaffRepository.countByPropertyId(propertyId));
+
+        // Actionable & Operational
+        stats.put("pendingVisits", visitRequestRepository.countByStatus("Pending")); // Track requests needing attention
+
+        String today = java.time.LocalDate.now().toString();
+        stats.put("todayVisitors", visitRequestRepository.countByResidentPropertyIdAndVisitDate(propertyId, today));
+
         stats.put("recentActivity", verifiedVisitorsRepository.findFirst5ByOrderByIdDesc());
 
         return ResponseEntity.ok(stats);

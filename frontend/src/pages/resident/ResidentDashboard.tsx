@@ -20,7 +20,7 @@ type VisitStatus = "Approved" | "Rejected" | string;
 type Visit = {
     id?: number | string;
     status: VisitStatus;
-    visitDate: string; // ISO or parseable date string
+    visitDate: string;
 };
 
 type Stats = {
@@ -73,7 +73,7 @@ const ResidentDashboard: React.FC = () => {
                 const visits = response.data ?? [];
                 const approvedVisits = visits.filter((v) => v.status === "Approved");
 
-                // Choose the nearest FUTURE approved visit
+
                 const now = new Date();
                 const upcoming =
                     approvedVisits
@@ -103,10 +103,7 @@ const ResidentDashboard: React.FC = () => {
         };
 
         const fetchSecurityOnDuty = async () => {
-            // In a real scenario, the resident has a propertyId in their token/user object
-            // Let's assume the backend handles the mapping if we hit /api/security/on-duty/{propertyId}
-            // or we can add a generic endpoint for "my property security"
-            // For now, let's use the propertyId from user if available.
+
             const propertyId = (user as any)?.propertyId;
             if (propertyId) {
                 try {
@@ -142,12 +139,8 @@ const ResidentDashboard: React.FC = () => {
                     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
                     <div>
-                        <h1 className="m-0 text-[1.9rem] font-bold tracking-[-0.03em] text-zinc-900 leading-tight">
-                            Hello,{" "}
-                            <span className="text-emerald-600">
-                                {user?.name || user?.email || "Resident"}
-                            </span>
-                            !
+                        <h1 className="page-title">
+                            Hello, <span className="text-black">{user?.name || user?.email || "Resident"}</span>
                         </h1>
                         <p className="m-0 text-sm font-normal text-zinc-400">
                             Manage your visitor passes and stay updated.
@@ -209,7 +202,7 @@ const ResidentDashboard: React.FC = () => {
                 >
                     {/* Security on Duty */}
                     <section className="rounded-[18px] border border-black/5 bg-white p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)]">
-                        <h2 className="mb-5 flex items-center gap-2 text-base font-bold tracking-[-0.01em] text-zinc-900">
+                        <h2 className="section-title mb-5 flex items-center gap-2">
                             <ShieldCheck size={17} className="text-emerald-600" />
                             Security on Duty
                         </h2>
@@ -239,7 +232,7 @@ const ResidentDashboard: React.FC = () => {
 
                     {/* Quick Tools */}
                     <section className="rounded-[18px] border border-black/5 bg-white p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)]">
-                        <h2 className="mb-5 text-base font-bold tracking-[-0.01em] text-zinc-900">
+                        <h2 className="section-title mb-5">
                             Quick Tools
                         </h2>
 

@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 @Service
@@ -31,23 +33,16 @@ public class AdminService {
     private com.apu.hostel.management.repository.VisitRequestRepository visitRequestRepository;
 
     // --- Resident Logic ---
-    public List<Residents> searchResidents(Long propertyId, String type, String value) {
-        // Simple implementation: filter all then search. In production, use Repository
-        // queries with propertyId.
-        List<Residents> all = residentRepository.findAll().stream()
-                .filter(r -> r.getProperty() != null && r.getProperty().getId().equals(propertyId))
-                .toList();
-
-        if (value == null || value.trim().isEmpty())
-            return all;
+    public Page<Residents> searchResidents(Long propertyId, String type, String value, Pageable pageable) {
+        if (value == null || value.trim().isEmpty()) {
+            return residentRepository.findByPropertyId(propertyId, pageable);
+        }
 
         switch (type) {
             case "name":
-                return all.stream().filter(r -> r.getName().toLowerCase().contains(value.toLowerCase())).toList();
-            case "email":
-                return all.stream().filter(r -> r.getEmail().equalsIgnoreCase(value)).toList();
+                return residentRepository.findByNameContainingIgnoreCaseAndPropertyId(value, propertyId, pageable);
             default:
-                return all;
+                return residentRepository.findByPropertyId(propertyId, pageable);
         }
     }
 
@@ -135,19 +130,16 @@ public class AdminService {
     }
 
     // --- Staff Logic ---
-    public List<SecurityStaff> searchStaff(Long propertyId, String type, String value) {
-        List<SecurityStaff> all = staffRepository.findAll().stream()
-                .filter(s -> s.getProperty() != null && s.getProperty().getId().equals(propertyId))
-                .toList();
-
-        if (value == null || value.trim().isEmpty())
-            return all;
+    public Page<SecurityStaff> searchStaff(Long propertyId, String type, String value, Pageable pageable) {
+        if (value == null || value.trim().isEmpty()) {
+            return staffRepository.findByPropertyId(propertyId, pageable);
+        }
 
         switch (type) {
             case "name":
-                return all.stream().filter(s -> s.getName().toLowerCase().contains(value.toLowerCase())).toList();
+                return staffRepository.findByNameContainingIgnoreCaseAndPropertyId(value, propertyId, pageable);
             default:
-                return all;
+                return staffRepository.findByPropertyId(propertyId, pageable);
         }
     }
 

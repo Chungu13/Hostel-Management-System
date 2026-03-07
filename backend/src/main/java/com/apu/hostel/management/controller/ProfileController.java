@@ -4,10 +4,8 @@ import com.apu.hostel.management.model.MyUsers;
 import com.apu.hostel.management.model.Property;
 import com.apu.hostel.management.repository.PropertyRepository;
 import com.apu.hostel.management.repository.UserRepository;
-import com.apu.hostel.management.security.JwtPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,22 +23,17 @@ public class ProfileController {
     @Autowired
     private PropertyRepository propertyRepository;
 
-    private JwtPrincipal getPrincipal() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof JwtPrincipal jp) {
-            return jp;
-        }
-        return null;
-    }
+    @Autowired
+    private com.apu.hostel.management.security.SecurityUtils securityUtils;
 
     /** GET /api/profile/me - Returns the logged in user's profile */
     @GetMapping("/me")
     public ResponseEntity<?> getMyProfile() {
-        JwtPrincipal principal = getPrincipal();
-        if (principal == null)
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
             return ResponseEntity.status(401).body("Not authenticated");
 
-        return userRepository.findById(principal.getUserId())
+        return userRepository.findById(currentUserId)
                 .map(user -> {
                     Map<String, Object> resp = new java.util.HashMap<>();
                     resp.put("fullName", user.getFullName() != null ? user.getFullName() : "");
@@ -66,20 +59,20 @@ public class ProfileController {
     /** PUT /api/profile/me - Updates the logged in user's profile */
     @PutMapping("/me")
     public ResponseEntity<?> updateMyProfile(@RequestBody Map<String, String> data) {
-        JwtPrincipal principal = getPrincipal();
-        if (principal == null)
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
             return ResponseEntity.status(401).body("Not authenticated");
-        return updateProfileLogic(principal.getUserId(), data, false);
+        return updateProfileLogic(currentUserId, data, false);
     }
 
     /** POST /api/profile/clear-history - Clears history from user's view */
     @PostMapping("/clear-history")
     public ResponseEntity<?> clearHistory() {
-        JwtPrincipal principal = getPrincipal();
-        if (principal == null)
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
             return ResponseEntity.status(401).body("Not authenticated");
 
-        Optional<MyUsers> userOpt = userRepository.findById(principal.getUserId());
+        Optional<MyUsers> userOpt = userRepository.findById(currentUserId);
         if (userOpt.isEmpty())
             return ResponseEntity.status(404).build();
 
@@ -95,11 +88,11 @@ public class ProfileController {
      */
     @GetMapping("/manager")
     public ResponseEntity<?> getManagerInfo() {
-        JwtPrincipal principal = getPrincipal();
-        if (principal == null)
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
             return ResponseEntity.status(401).body("Not authenticated");
 
-        Optional<MyUsers> userOpt = userRepository.findById(principal.getUserId());
+        Optional<MyUsers> userOpt = userRepository.findById(currentUserId);
         if (userOpt.isEmpty())
             return ResponseEntity.status(404).build();
 
@@ -130,43 +123,67 @@ public class ProfileController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<?> getProfileById(@PathVariable Long id) {
-        Optional<MyUsers> userOpt = userRepository.findById(id);
-        if (userOpt.isPresent()) {
-            MyUsers user = userOpt.get();
-            Map<String, Object> resp = new java.util.HashMap<>();
-            resp.put("fullName", user.getFullName() != null ? user.getFullName() : "");
-            resp.put("email", user.getEmail());
-            resp.put("phone", user.getPhone() != null ? user.getPhone() : "");
-            resp.put("ic", user.getIc() != null ? user.getIc() : "");
-            resp.put("myRole", user.getMyRole());
-            resp.put("profileImage", user.getProfileImage());
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
+            return ResponseEntity.status(401).body("Not authenticated");
 
-            if (user.getPropertyId() != null) {
-                propertyRepository.findById(user.getPropertyId()).ifPresent(prop -> {
-                    resp.put("propertyName", prop.getName());
-                    resp.put("propertyAddress", prop.getAddress());
-                    resp.put("propertyType", prop.getPropertyType());
-                });
-            }
-            return ResponseEntity.ok(resp);
+        Optional<MyUsers> targetUserOpt = userRepository.findById(id);
+        if (targetUserOpt.isEmpty())
+            return ResponseEntity.notFound().build();
+
+        MyUsers targetUser = targetUserOpt.get();
+        MyUsers currentUser = userRepository.findById(currentUserId).orElse(null);
+
+        // Authorization logic
+        boolean isOwner = currentUserId.equals(id);
+        boolean isStaff = securityUtils.isManagingStaff() || securityUtils.isSecurityStaff();
+        boolean sameProperty = currentUser != null && targetUser.getPropertyId() != null
+                && targetUser.getPropertyId().equals(currentUser.getPropertyId());
+
+        // Rule: Only owner OR (Staff AND same property) can view details
+        if (!isOwner && !(isStaff && sameProperty)) {
+            return ResponseEntity.status(403).body("Unauthorized to view this profile");
         }
-        return ResponseEntity.notFound().build();
+
+        Map<String, Object> resp = new java.util.HashMap<>();
+        resp.put("fullName", targetUser.getFullName() != null ? targetUser.getFullName() : "");
+        resp.put("email", targetUser.getEmail());
+        resp.put("phone", targetUser.getPhone() != null ? targetUser.getPhone() : "");
+        resp.put("ic", targetUser.getIc() != null ? targetUser.getIc() : "");
+        resp.put("myRole", targetUser.getMyRole());
+        resp.put("profileImage", targetUser.getProfileImage());
+
+        if (targetUser.getPropertyId() != null) {
+            propertyRepository.findById(targetUser.getPropertyId()).ifPresent(prop -> {
+                resp.put("propertyName", prop.getName());
+                resp.put("propertyAddress", prop.getAddress());
+                resp.put("propertyType", prop.getPropertyType());
+            });
+        }
+        return ResponseEntity.ok(resp);
     }
 
     /** PUT /api/profile/{id} - Updates a profile by id */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateProfileById(@PathVariable Long id, @RequestBody Map<String, String> data) {
-        JwtPrincipal principal = getPrincipal();
-        if (principal == null)
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
             return ResponseEntity.status(401).body("Not authenticated");
 
-        // Authorization: Only owner or Staff can update
-        boolean isOwner = principal.getUserId().equals(id);
-        boolean isStaff = org.springframework.security.core.context.SecurityContextHolder.getContext()
-                .getAuthentication().getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_Managing_Staff"));
+        Optional<MyUsers> targetUserOpt = userRepository.findById(id);
+        if (targetUserOpt.isEmpty())
+            return ResponseEntity.notFound().build();
 
-        if (!isOwner && !isStaff) {
+        MyUsers targetUser = targetUserOpt.get();
+        MyUsers currentUser = userRepository.findById(currentUserId).orElse(null);
+
+        // Authorization: Only owner or (Staff AND same property) can update
+        boolean isOwner = currentUserId.equals(id);
+        boolean isStaff = securityUtils.isManagingStaff();
+        boolean sameProperty = currentUser != null && targetUser.getPropertyId() != null
+                && targetUser.getPropertyId().equals(currentUser.getPropertyId());
+
+        if (!isOwner && !(isStaff && sameProperty)) {
             return ResponseEntity.status(403).body("Unauthorized to update this profile");
         }
 

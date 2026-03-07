@@ -126,15 +126,12 @@ const RequestVisit: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
-                    <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-emerald-600/20 bg-emerald-600/10 px-2.5 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-emerald-600">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
-                        Visit Management
-                    </div>
 
-                    <h1 className="m-0 text-[1.85rem] font-bold tracking-[-0.03em] text-zinc-900 leading-tight">
+
+                    <h1 className="page-title">
                         Request a Visit
                     </h1>
-                    <p className="m-0 text-sm font-normal text-zinc-400">
+                    <p className="page-subtitle">
                         Generate a secure QR Access Pass for your guest
                     </p>
                 </motion.header>
@@ -159,7 +156,7 @@ const RequestVisit: React.FC = () => {
                                 <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                                     {/* Visitor Info */}
                                     <div className="flex items-center gap-3">
-                                        <span className="whitespace-nowrap text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-zinc-400">
+                                        <span className="section-label whitespace-nowrap">
                                             Visitor Info
                                         </span>
                                         <div className="h-px flex-1 bg-zinc-200" />
@@ -254,9 +251,7 @@ const RequestVisit: React.FC = () => {
                                     </div>
 
                                     <div className="rounded-2xl border border-emerald-600/10 bg-emerald-600/5 p-4 text-[0.8rem] leading-relaxed text-emerald-800">
-                                        <p className="m-0 flex items-center gap-2 font-semibold">
-                                            <ShieldCheck size={16} /> Instant Access Pass
-                                        </p>
+
                                         <p className="mt-1 opacity-80">
                                             A secure QR code will be generated immediately for your guest to use at the security gate.
                                         </p>

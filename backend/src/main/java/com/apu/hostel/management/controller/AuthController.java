@@ -5,13 +5,11 @@ import com.apu.hostel.management.model.Property;
 import com.apu.hostel.management.repository.UserRepository;
 
 import com.apu.hostel.management.repository.PropertyRepository;
-import com.apu.hostel.management.security.JwtPrincipal;
 import com.apu.hostel.management.security.JwtUtil;
+import com.apu.hostel.management.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -38,6 +36,9 @@ public class AuthController {
     private com.apu.hostel.management.service.ResidentService residentService;
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private SecurityUtils securityUtils;
 
     @Value("${google.client.id}")
     private String googleClientId;
@@ -113,6 +114,7 @@ public class AuthController {
 
             Payload payload = idToken.getPayload();
             String email = payload.getEmail();
+            String name = (String) payload.get("name");
             String requestedRole = data.get("role");
 
             Optional<MyUsers> userOpt = userRepository.findByEmail(email);
@@ -120,6 +122,11 @@ public class AuthController {
 
             if (userOpt.isPresent()) {
                 user = userOpt.get();
+                // If user has no name yet, save the name from Google
+                if ((user.getFullName() == null || user.getFullName().isBlank()) && name != null) {
+                    user.setFullName(name);
+                    userRepository.save(user);
+                }
                 if ("Managing Staff".equals(requestedRole)
                         && !user.isOnboarded()
                         && !"Managing Staff".equals(user.getMyRole())) {
@@ -135,6 +142,7 @@ public class AuthController {
 
                 user = new MyUsers();
                 user.setEmail(email);
+                user.setFullName(name); // Set name from Google
                 user.setPassword("GOOGLE_AUTH_" + java.util.UUID.randomUUID());
                 user.setMyRole(requestedRole != null ? requestedRole : "Resident");
                 user.setOnboarded(false);
@@ -158,12 +166,12 @@ public class AuthController {
 
     @PostMapping("/admin/onboarding")
     public ResponseEntity<?> adminOnboarding(@RequestBody Map<String, Object> data) {
-        JwtPrincipal principal = getAuthenticatedPrincipal();
-        if (principal == null) {
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null) {
             return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
         }
 
-        Optional<MyUsers> userOpt = userRepository.findById(principal.getUserId());
+        Optional<MyUsers> userOpt = userRepository.findById(currentUserId);
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(404).body(Map.of("message", "User not found"));
         }
@@ -203,12 +211,12 @@ public class AuthController {
     @PostMapping("/onboarding")
     public ResponseEntity<?> onboarding(@RequestBody Map<String, Object> data) {
         try {
-            JwtPrincipal principal = getAuthenticatedPrincipal();
-            if (principal == null) {
+            Long currentUserId = securityUtils.getUserId();
+            if (currentUserId == null) {
                 return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
             }
 
-            Optional<MyUsers> userOpt = userRepository.findById(principal.getUserId());
+            Optional<MyUsers> userOpt = userRepository.findById(currentUserId);
             if (userOpt.isEmpty()) {
                 return ResponseEntity.status(404).body(Map.of("message", "User not found"));
             }
@@ -232,7 +240,7 @@ public class AuthController {
             userRepository.save(user);
 
             residentService.registerResident(
-                    principal.getUserId(),
+                    currentUserId,
                     safeGet(data, "name"),
                     user.getEmail(),
                     safeGet(data, "phone"),
@@ -260,8 +268,8 @@ public class AuthController {
 
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody Map<String, String> data) {
-        JwtPrincipal principal = getAuthenticatedPrincipal();
-        if (principal == null)
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
             return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
 
         String oldPass = data.get("oldPassword");
@@ -271,7 +279,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("message", "New password must be at least 6 characters"));
         }
 
-        Optional<MyUsers> userOpt = userRepository.findById(principal.getUserId());
+        Optional<MyUsers> userOpt = userRepository.findById(currentUserId);
         if (userOpt.isEmpty())
             return ResponseEntity.status(404).build();
 
@@ -284,14 +292,6 @@ public class AuthController {
         userRepository.save(user);
 
         return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
-    }
-
-    private JwtPrincipal getAuthenticatedPrincipal() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof JwtPrincipal principal) {
-            return principal;
-        }
-        return null;
     }
 
     private Map<String, Object> buildAuthResponse(MyUsers user, String token) {
@@ -312,6 +312,10 @@ public class AuthController {
         String displayName = user.getFullName();
         if (displayName == null || displayName.isBlank()) {
             displayName = user.getEmail().split("@")[0];
+            // Format prefix to Title Case
+            if (displayName.length() > 0) {
+                displayName = Character.toUpperCase(displayName.charAt(0)) + displayName.substring(1).toLowerCase();
+            }
         }
         response.put("name", displayName);
 

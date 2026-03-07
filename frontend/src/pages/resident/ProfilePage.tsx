@@ -146,14 +146,11 @@ const ProfilePage: React.FC = () => {
                     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
                     <div>
-                        <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.72rem] font-semibold uppercase tracking-widest"
-                            style={{ background: 'rgba(76,175,110,0.08)', border: '1px solid rgba(76,175,110,0.2)', color: '#4caf6e' }}>
-                            <Shield size={11} /> Account
-                        </div>
-                        <h1 className="text-[1.85rem] font-bold text-gray-900 tracking-tight leading-tight mb-1">
+
+                        <h1 className="page-title">
                             Your Profile
                         </h1>
-                        <p className="text-sm text-gray-400">Keep your details up to date so everything runs smoothly.</p>
+                        <p className="page-subtitle">Keep your details up to date so everything runs smoothly.</p>
                     </div>
                     <div className="mt-1 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-[0.75rem] font-medium text-gray-500"
                         style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
@@ -177,7 +174,7 @@ const ProfilePage: React.FC = () => {
 
                             {/* Personal Info */}
                             <div className="flex items-center gap-3 mb-5">
-                                <span className="text-[0.65rem] font-semibold uppercase tracking-widest text-gray-400 whitespace-nowrap">Personal Details</span>
+                                <span className="section-label whitespace-nowrap">Personal Details</span>
                                 <div className="flex-1 h-px bg-gray-100" />
                             </div>
 
