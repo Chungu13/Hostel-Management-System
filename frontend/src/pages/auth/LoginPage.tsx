@@ -51,7 +51,7 @@ const LoginPage: React.FC = () => {
                 }
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
+            setError(err.friendlyMessage || 'Invalid credentials. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -90,7 +90,7 @@ const LoginPage: React.FC = () => {
                 }
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Google sign-in failed. Please try again.');
+            setError(err.friendlyMessage || 'Google sign-in failed. Please try again.');
         } finally {
             setLoading(false);
         }

@@ -10,6 +10,7 @@ import com.apu.hostel.management.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -24,8 +25,15 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "Endpoints for user login, registration, and session management")
 public class AuthController {
 
     @Autowired
@@ -44,25 +52,22 @@ public class AuthController {
     private String googleClientId;
 
     @PostMapping("/login")
+    @Operation(summary = "Login existing user", description = "Authenticates user and returns JWT token.")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
         String email = credentials.get("email");
         String password = credentials.get("password");
 
-        Optional<MyUsers> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.status(404)
-                    .body(Map.of("message", "No account found with this email. Please register first."));
-        }
+        MyUsers user = userRepository.findByEmail(email)
+                .orElseThrow(
+                        () -> new IllegalArgumentException("No account found with this email. Please register first."));
 
-        MyUsers user = userOpt.get();
         if (!user.getPassword().equals(password)) {
-            return ResponseEntity.status(401).body(Map.of("message", "Incorrect password. Please try again."));
+            throw new IllegalArgumentException("Incorrect password. Please try again.");
         }
 
         // Block login ONLY if they have onboarded but aren't approved yet.
-        // This allows new users to log in to complete onboarding.
         if (user.isOnboarded() && !user.isApproved() && "Resident".equals(user.getMyRole())) {
-            return ResponseEntity.status(403).body(Map.of("message", "Your account is pending admin approval."));
+            throw new AccessDeniedException("Your account is pending admin approval.");
         }
 
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getMyRole());
@@ -70,13 +75,14 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @Operation(summary = "Register new user", description = "Creates a new user record (defaults to Resident role).")
     public ResponseEntity<?> register(@RequestBody Map<String, String> data) {
         String email = data.get("email");
         String password = data.get("password");
         String role = data.get("role");
 
         if (userRepository.findByEmail(email).isPresent()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Email already registered"));
+            throw new IllegalArgumentException("Email already registered");
         }
 
         MyUsers user = new MyUsers();
@@ -92,13 +98,14 @@ public class AuthController {
     }
 
     @PostMapping("/google")
-    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> data) {
+    @Operation(summary = "Google OAuth Login", description = "Handles Google ID tokens for secure authentication.")
+    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> data)
+            throws GeneralSecurityException, IOException {
         String idTokenString = data.get("token");
 
         if (googleClientId == null || googleClientId.isBlank()
                 || googleClientId.equals("YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com")) {
-            return ResponseEntity.status(500)
-                    .body(Map.of("message", "Google Client ID is not configured on the server."));
+            throw new RuntimeException("Google Client ID is not configured on the server.");
         }
 
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
@@ -106,80 +113,67 @@ public class AuthController {
                 .setAudience(Collections.singletonList(googleClientId))
                 .build();
 
-        try {
-            GoogleIdToken idToken = verifier.verify(idTokenString);
-            if (idToken == null) {
-                return ResponseEntity.status(401).body(Map.of("message", "Invalid Google ID token."));
-            }
+        GoogleIdToken idToken = verifier.verify(idTokenString);
+        if (idToken == null) {
+            throw new AccessDeniedException("Invalid Google ID token.");
+        }
 
-            Payload payload = idToken.getPayload();
-            String email = payload.getEmail();
-            String name = (String) payload.get("name");
-            String requestedRole = data.get("role");
+        Payload payload = idToken.getPayload();
+        String email = payload.getEmail();
+        String name = (String) payload.get("name");
+        String requestedRole = data.get("role");
 
-            Optional<MyUsers> userOpt = userRepository.findByEmail(email);
-            MyUsers user;
+        Optional<MyUsers> userOpt = userRepository.findByEmail(email);
+        MyUsers user;
 
-            if (userOpt.isPresent()) {
-                user = userOpt.get();
-                // If user has no name yet, save the name from Google
-                if ((user.getFullName() == null || user.getFullName().isBlank()) && name != null) {
-                    user.setFullName(name);
-                    userRepository.save(user);
-                }
-                if ("Managing Staff".equals(requestedRole)
-                        && !user.isOnboarded()
-                        && !"Managing Staff".equals(user.getMyRole())) {
-                    user.setMyRole("Managing Staff");
-                    userRepository.save(user);
-                }
-            } else {
-                // Block auto-registration for Admins
-                if ("Managing Staff".equals(requestedRole)) {
-                    return ResponseEntity.status(404).body(Map.of("message",
-                            "No manager account found for this email. Please register your building first."));
-                }
-
-                user = new MyUsers();
-                user.setEmail(email);
-                user.setFullName(name); // Set name from Google
-                user.setPassword("GOOGLE_AUTH_" + java.util.UUID.randomUUID());
-                user.setMyRole(requestedRole != null ? requestedRole : "Resident");
-                user.setOnboarded(false);
-                user.setApproved(false);
+        if (userOpt.isPresent()) {
+            user = userOpt.get();
+            if ((user.getFullName() == null || user.getFullName().isBlank()) && name != null) {
+                user.setFullName(name);
                 userRepository.save(user);
             }
-
-            // Google Login Security Gate
-            if (user.isOnboarded() && !user.isApproved() && "Resident".equals(user.getMyRole())) {
-                return ResponseEntity.status(403).body(Map.of("message", "Your account is pending admin approval."));
+            if ("Managing Staff".equals(requestedRole)
+                    && !user.isOnboarded()
+                    && !"Managing Staff".equals(user.getMyRole())) {
+                user.setMyRole("Managing Staff");
+                userRepository.save(user);
+            }
+        } else {
+            if ("Managing Staff".equals(requestedRole)) {
+                throw new IllegalArgumentException(
+                        "No manager account found for this email. Please register your building first.");
             }
 
-            String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getMyRole());
-            return ResponseEntity.ok(buildAuthResponse(user, token));
-
-        } catch (Exception e) {
-            return ResponseEntity.status(500)
-                    .body(Map.of("message", "Error verifying Google token: " + e.getMessage()));
+            user = new MyUsers();
+            user.setEmail(email);
+            user.setFullName(name);
+            user.setPassword("GOOGLE_AUTH_" + java.util.UUID.randomUUID());
+            user.setMyRole(requestedRole != null ? requestedRole : "Resident");
+            user.setOnboarded(false);
+            user.setApproved(false);
+            userRepository.save(user);
         }
+
+        if (user.isOnboarded() && !user.isApproved() && "Resident".equals(user.getMyRole())) {
+            throw new AccessDeniedException("Your account is pending admin approval.");
+        }
+
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getMyRole());
+        return ResponseEntity.ok(buildAuthResponse(user, token));
     }
 
     @PostMapping("/admin/onboarding")
     public ResponseEntity<?> adminOnboarding(@RequestBody Map<String, Object> data) {
         Long currentUserId = securityUtils.getUserId();
         if (currentUserId == null) {
-            return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
+            throw new AccessDeniedException("Not authenticated");
         }
 
-        Optional<MyUsers> userOpt = userRepository.findById(currentUserId);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.status(404).body(Map.of("message", "User not found"));
-        }
-
-        MyUsers user = userOpt.get();
+        MyUsers user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         if (user.isOnboarded()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Account has already been onboarded"));
+            throw new IllegalArgumentException("Account has already been onboarded");
         }
 
         Property property = new Property();
@@ -210,50 +204,43 @@ public class AuthController {
 
     @PostMapping("/onboarding")
     public ResponseEntity<?> onboarding(@RequestBody Map<String, Object> data) {
-        try {
-            Long currentUserId = securityUtils.getUserId();
-            if (currentUserId == null) {
-                return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
-            }
-
-            Optional<MyUsers> userOpt = userRepository.findById(currentUserId);
-            if (userOpt.isEmpty()) {
-                return ResponseEntity.status(404).body(Map.of("message", "User not found"));
-            }
-
-            Object rawPropertyId = data.get("propertyId");
-            if (rawPropertyId == null || rawPropertyId.toString().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Property selection is required"));
-            }
-
-            Long propertyId;
-            try {
-                propertyId = Long.valueOf(rawPropertyId.toString());
-            } catch (NumberFormatException e) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Invalid property selection"));
-            }
-
-            MyUsers user = userOpt.get();
-            user.setOnboarded(true);
-            user.setPropertyId(propertyId);
-            user.setFullName(safeGet(data, "name"));
-            userRepository.save(user);
-
-            residentService.registerResident(
-                    currentUserId,
-                    safeGet(data, "name"),
-                    user.getEmail(),
-                    safeGet(data, "phone"),
-                    safeGet(data, "ic"),
-                    safeGet(data, "gender"),
-                    safeGet(data, "address"),
-                    safeGet(data, "room"),
-                    propertyId);
-
-            return ResponseEntity.ok(Map.of("message", "Onboarding complete"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Onboarding failed: " + e.getMessage()));
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null) {
+            throw new AccessDeniedException("Not authenticated");
         }
+
+        MyUsers user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        Object rawPropertyId = data.get("propertyId");
+        if (rawPropertyId == null || rawPropertyId.toString().trim().isEmpty()) {
+            throw new IllegalArgumentException("Property selection is required");
+        }
+
+        Long propertyId;
+        try {
+            propertyId = Long.valueOf(rawPropertyId.toString());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid property selection");
+        }
+
+        user.setOnboarded(true);
+        user.setPropertyId(propertyId);
+        user.setFullName(safeGet(data, "name"));
+        userRepository.save(user);
+
+        residentService.registerResident(
+                currentUserId,
+                safeGet(data, "name"),
+                user.getEmail(),
+                safeGet(data, "phone"),
+                safeGet(data, "ic"),
+                safeGet(data, "gender"),
+                safeGet(data, "address"),
+                safeGet(data, "room"),
+                propertyId);
+
+        return ResponseEntity.ok(Map.of("message", "Onboarding complete"));
     }
 
     private String safeGet(Map<String, Object> data, String key) {
@@ -270,22 +257,20 @@ public class AuthController {
     public ResponseEntity<?> changePassword(@RequestBody Map<String, String> data) {
         Long currentUserId = securityUtils.getUserId();
         if (currentUserId == null)
-            return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
+            throw new AccessDeniedException("Not authenticated");
 
         String oldPass = data.get("oldPassword");
         String newPass = data.get("newPassword");
 
         if (newPass == null || newPass.length() < 6) {
-            return ResponseEntity.badRequest().body(Map.of("message", "New password must be at least 6 characters"));
+            throw new IllegalArgumentException("New password must be at least 6 characters");
         }
 
-        Optional<MyUsers> userOpt = userRepository.findById(currentUserId);
-        if (userOpt.isEmpty())
-            return ResponseEntity.status(404).build();
+        MyUsers user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        MyUsers user = userOpt.get();
         if (!user.getPassword().equals(oldPass)) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Current password is incorrect"));
+            throw new IllegalArgumentException("Current password is incorrect");
         }
 
         user.setPassword(newPass);
@@ -300,7 +285,7 @@ public class AuthController {
         response.put("email", user.getEmail());
         response.put("myRole", user.getMyRole());
         response.put("isOnboarded", user.isOnboarded());
-        response.put("needsOnboarding", !user.isOnboarded()); // Added for frontend logic consistency
+        response.put("needsOnboarding", !user.isOnboarded());
         response.put("isApproved", user.isApproved());
         response.put("createdAt", user.getCreatedAt());
         response.put("token", token);
@@ -312,7 +297,6 @@ public class AuthController {
         String displayName = user.getFullName();
         if (displayName == null || displayName.isBlank()) {
             displayName = user.getEmail().split("@")[0];
-            // Format prefix to Title Case
             if (displayName.length() > 0) {
                 displayName = Character.toUpperCase(displayName.charAt(0)) + displayName.substring(1).toLowerCase();
             }

@@ -6,15 +6,20 @@ import com.apu.hostel.management.repository.PropertyRepository;
 import com.apu.hostel.management.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.Optional;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/profile")
 @Slf4j
+@Tag(name = "Profile", description = "User profile management (View, Edit, IC/NRC Validation)")
 public class ProfileController {
 
     @Autowired
@@ -28,10 +33,11 @@ public class ProfileController {
 
     /** GET /api/profile/me - Returns the logged in user's profile */
     @GetMapping("/me")
+    @Operation(summary = "Get current user profile", description = "Returns full profile details for the authenticated user.")
     public ResponseEntity<?> getMyProfile() {
         Long currentUserId = securityUtils.getUserId();
         if (currentUserId == null)
-            return ResponseEntity.status(401).body("Not authenticated");
+            throw new IllegalArgumentException("Not authenticated");
 
         return userRepository.findById(currentUserId)
                 .map(user -> {
@@ -53,30 +59,30 @@ public class ProfileController {
                     }
                     return ResponseEntity.ok(resp);
                 })
-                .orElse(ResponseEntity.status(404).build());
+                .orElseThrow(() -> new IllegalArgumentException("User profile not found"));
     }
 
     /** PUT /api/profile/me - Updates the logged in user's profile */
     @PutMapping("/me")
+    @Operation(summary = "Update current user profile", description = "Updates details with validation for phone, name, and NRC.")
     public ResponseEntity<?> updateMyProfile(@RequestBody Map<String, String> data) {
         Long currentUserId = securityUtils.getUserId();
         if (currentUserId == null)
-            return ResponseEntity.status(401).body("Not authenticated");
+            throw new IllegalArgumentException("Not authenticated");
         return updateProfileLogic(currentUserId, data, false);
     }
 
     /** POST /api/profile/clear-history - Clears history from user's view */
     @PostMapping("/clear-history")
+    @Operation(summary = "Clear notification history", description = "Soft-clears history for the authenticated user.")
     public ResponseEntity<?> clearHistory() {
         Long currentUserId = securityUtils.getUserId();
         if (currentUserId == null)
-            return ResponseEntity.status(401).body("Not authenticated");
+            throw new IllegalArgumentException("Not authenticated");
 
-        Optional<MyUsers> userOpt = userRepository.findById(currentUserId);
-        if (userOpt.isEmpty())
-            return ResponseEntity.status(404).build();
+        MyUsers user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        MyUsers user = userOpt.get();
         user.setHistoryClearedAt(java.time.LocalDateTime.now());
         userRepository.save(user);
 
@@ -90,24 +96,21 @@ public class ProfileController {
     public ResponseEntity<?> getManagerInfo() {
         Long currentUserId = securityUtils.getUserId();
         if (currentUserId == null)
-            return ResponseEntity.status(401).body("Not authenticated");
+            throw new IllegalArgumentException("Not authenticated");
 
-        Optional<MyUsers> userOpt = userRepository.findById(currentUserId);
-        if (userOpt.isEmpty())
-            return ResponseEntity.status(404).build();
+        MyUsers residentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        MyUsers residentUser = userOpt.get();
         if (residentUser.getPropertyId() == null) {
-            return ResponseEntity.status(400).body(Map.of("message", "User not linked to any property"));
+            throw new IllegalArgumentException("User not linked to any property");
         }
 
-        Optional<Property> propertyOpt = propertyRepository.findById(residentUser.getPropertyId());
-        if (propertyOpt.isEmpty())
-            return ResponseEntity.status(404).body(Map.of("message", "Property not found"));
+        Property property = propertyRepository.findById(residentUser.getPropertyId())
+                .orElseThrow(() -> new IllegalArgumentException("Property not found"));
 
-        MyUsers admin = propertyOpt.get().getAdmin();
+        MyUsers admin = property.getAdmin();
         if (admin == null)
-            return ResponseEntity.status(404).body(Map.of("message", "Manager not found"));
+            throw new IllegalArgumentException("Manager not found for this property");
 
         return ResponseEntity.ok(Map.of(
                 "name", admin.getFullName() != null ? admin.getFullName() : "Property Manager",
@@ -115,7 +118,7 @@ public class ProfileController {
                 "phone", admin.getPhone() != null ? admin.getPhone() : "N/A",
                 "address", admin.getAddress() != null ? admin.getAddress() : "N/A",
                 "profileImage", admin.getProfileImage() != null ? admin.getProfileImage() : "",
-                "propertyName", propertyOpt.get().getName()));
+                "propertyName", property.getName()));
     }
 
     /**
@@ -125,13 +128,11 @@ public class ProfileController {
     public ResponseEntity<?> getProfileById(@PathVariable Long id) {
         Long currentUserId = securityUtils.getUserId();
         if (currentUserId == null)
-            return ResponseEntity.status(401).body("Not authenticated");
+            throw new IllegalArgumentException("Not authenticated");
 
-        Optional<MyUsers> targetUserOpt = userRepository.findById(id);
-        if (targetUserOpt.isEmpty())
-            return ResponseEntity.notFound().build();
+        MyUsers targetUser = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
 
-        MyUsers targetUser = targetUserOpt.get();
         MyUsers currentUser = userRepository.findById(currentUserId).orElse(null);
 
         // Authorization logic
@@ -142,7 +143,7 @@ public class ProfileController {
 
         // Rule: Only owner OR (Staff AND same property) can view details
         if (!isOwner && !(isStaff && sameProperty)) {
-            return ResponseEntity.status(403).body("Unauthorized to view this profile");
+            throw new AccessDeniedException("Unauthorized to view this profile");
         }
 
         Map<String, Object> resp = new java.util.HashMap<>();
@@ -168,13 +169,11 @@ public class ProfileController {
     public ResponseEntity<?> updateProfileById(@PathVariable Long id, @RequestBody Map<String, String> data) {
         Long currentUserId = securityUtils.getUserId();
         if (currentUserId == null)
-            return ResponseEntity.status(401).body("Not authenticated");
+            throw new IllegalArgumentException("Not authenticated");
 
-        Optional<MyUsers> targetUserOpt = userRepository.findById(id);
-        if (targetUserOpt.isEmpty())
-            return ResponseEntity.notFound().build();
+        MyUsers targetUser = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
 
-        MyUsers targetUser = targetUserOpt.get();
         MyUsers currentUser = userRepository.findById(currentUserId).orElse(null);
 
         // Authorization: Only owner or (Staff AND same property) can update
@@ -184,23 +183,21 @@ public class ProfileController {
                 && targetUser.getPropertyId().equals(currentUser.getPropertyId());
 
         if (!isOwner && !(isStaff && sameProperty)) {
-            return ResponseEntity.status(403).body("Unauthorized to update this profile");
+            throw new AccessDeniedException("Unauthorized to update this profile");
         }
 
         return updateProfileLogic(id, data, isStaff);
     }
 
     private ResponseEntity<?> updateProfileLogic(Long id, Map<String, String> data, boolean isAdmin) {
-        Optional<MyUsers> userOpt = userRepository.findById(id);
-        if (userOpt.isEmpty())
-            return ResponseEntity.notFound().build();
-        MyUsers user = userOpt.get();
+        MyUsers user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
 
-        // 1. Validate & Format Full Name (Chungu Muloshi format)
+        // 1. Validate & Format Full Name
         if (data.containsKey("fullName")) {
             String rawName = data.get("fullName").trim();
             if (rawName.isEmpty() || rawName.length() < 3 || rawName.length() > 100) {
-                return ResponseEntity.badRequest().body("Full name must be between 3 and 100 characters.");
+                throw new IllegalArgumentException("Full name must be between 3 and 100 characters.");
             }
 
             // Format to Title Case
@@ -220,8 +217,8 @@ public class ProfileController {
         if (data.containsKey("phone")) {
             String phone = data.get("phone").trim();
             if (!phone.matches("^\\+260[0-9]{9}$")) {
-                return ResponseEntity.badRequest()
-                        .body("Phone number must be in Zambian format: +260 followed by 9 digits.");
+                throw new IllegalArgumentException(
+                        "Phone number must be in Zambian format: +260 followed by 9 digits.");
             }
             user.setPhone(phone);
         }
@@ -230,8 +227,7 @@ public class ProfileController {
         if (data.containsKey("ic")) {
             String ic = data.get("ic").trim();
             if (!ic.matches("^[0-9]{6}/[0-9]{2}/[0-9]{1}$")) {
-                return ResponseEntity.badRequest()
-                        .body("NRC must be in Zambian format: ######/##/# (e.g., 123456/11/1)");
+                throw new IllegalArgumentException("NRC must be in Zambian format: ######/##/# (e.g., 123456/11/1)");
             }
             user.setIc(ic);
         }
@@ -240,19 +236,19 @@ public class ProfileController {
         if (data.containsKey("email")) {
             String email = data.get("email").trim().toLowerCase();
             if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$")) {
-                return ResponseEntity.badRequest().body("Invalid email format.");
+                throw new IllegalArgumentException("Invalid email format.");
             }
             // Check if email is already taken by ANOTHER user
             Optional<MyUsers> existing = userRepository.findByEmail(email);
             if (existing.isPresent() && !existing.get().getId().equals(id)) {
-                return ResponseEntity.badRequest().body("Email is already in use by another account.");
+                throw new IllegalArgumentException("Email is already in use by another account.");
             }
             user.setEmail(email);
         }
 
         // 4. Protection: Users cannot change their own Role
         if (data.containsKey("myRole") && !isAdmin) {
-            return ResponseEntity.status(403).body("You are not authorized to change account roles.");
+            throw new AccessDeniedException("You are not authorized to change account roles.");
         } else if (data.containsKey("myRole") && isAdmin) {
             user.setMyRole(data.get("myRole"));
         }
@@ -260,9 +256,6 @@ public class ProfileController {
         if (data.containsKey("profileImage")) {
             user.setProfileImage(data.get("profileImage"));
         }
-
-        // Note: Permanent Address removal from update flow as requested
-        // user.setAddress(...) is intentionally omitted here
 
         userRepository.save(user);
         log.info("Profile updated successfully for user ID: {}", id);

@@ -1,0 +1,19 @@
+config:
+  target: "http://localhost:8080"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: Warm up
+    - duration: 120
+      arrivalRate: 20
+      rampTo: 50
+      name: Ramp up to Stress Test
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Public Visitor Pass Check"
+    flow:
+      - get:
+          url: "/api/visits/public/pass/SAMPLE-CODE" # Testing a public endpoint

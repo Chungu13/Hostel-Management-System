@@ -34,6 +34,9 @@ public class SecurityConfig {
         @Autowired
         private JwtAuthFilter jwtAuthFilter;
 
+        @Autowired
+        private RateLimitingFilter rateLimitingFilter;
+
         @Value("${frontend.url}")
         private String frontendUrl;
 
@@ -64,12 +67,15 @@ public class SecurityConfig {
                                                                 "/api/auth/google",
                                                                 "/api/auth/properties",
                                                                 "/api/visits/public/pass/**",
+                                                                "/api/health",
                                                                 "/error")
                                                 .permitAll()
                                                 // Everything else requires a valid JWT
                                                 .anyRequest().authenticated())
 
-                                // Insert JWT filter before Spring's default username/password filter
+                                // Add Rate Limiting first
+                                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+                                // Insert JWT filter
                                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();

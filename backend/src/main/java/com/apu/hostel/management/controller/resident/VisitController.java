@@ -9,7 +9,10 @@ import com.apu.hostel.management.repository.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +20,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/visits")
+@Tag(name = "Visits", description = "Endpoints for managing visitor requests and passes")
 public class VisitController {
 
     @Autowired
@@ -32,60 +36,57 @@ public class VisitController {
     private com.apu.hostel.management.security.SecurityUtils securityUtils;
 
     @GetMapping("/admin/history")
+    @Operation(summary = "Get all visit history (Admin)", description = "Returns a paginated list of all visit requests for the admin portal.")
     public ResponseEntity<Page<VisitRequest>> getAdminHistory(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         if (!securityUtils.isManagingStaff()) {
-            return ResponseEntity.status(403).build();
+            throw new AccessDeniedException("Unauthorized to view admin history");
         }
         return ResponseEntity.ok(visitService.getAllHistoryAdmin(PageRequest.of(page, size)));
     }
 
     @GetMapping("/resident/{id}")
+    @Operation(summary = "Get visit history for a resident", description = "Returns paginated visits for a specific resident. IDOR protected: Only owner or staff of same property can view.")
     public ResponseEntity<?> getResidentVisits(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Long currentUserId = securityUtils.getUserId();
         if (currentUserId == null)
-            return ResponseEntity.status(401).body("Not authenticated");
+            throw new AccessDeniedException("Not authenticated");
 
-        // Authorization logic
+        MyUsers targetUser = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
+
+        // IDOR Protection
         boolean isOwner = currentUserId.equals(id);
         boolean isStaff = securityUtils.isManagingStaff() || securityUtils.isSecurityStaff();
-
-        MyUsers targetUser = userRepository.findById(id).orElse(null);
-        if (targetUser == null)
-            return ResponseEntity.notFound().build();
 
         MyUsers currentUser = userRepository.findById(currentUserId).orElse(null);
         boolean sameProperty = currentUser != null && targetUser.getPropertyId() != null
                 && targetUser.getPropertyId().equals(currentUser.getPropertyId());
 
-        // Only owner OR (Staff AND same property) can view details
         if (!isOwner && !(isStaff && sameProperty)) {
-            return ResponseEntity.status(403).body("Unauthorized to view these visits");
+            throw new AccessDeniedException("Unauthorized to view these visits");
         }
 
-        // Find if user has cleared their history
         java.time.LocalDateTime clearedAt = targetUser.getHistoryClearedAt();
         return ResponseEntity.ok(visitService.getRequestsByResident(id, clearedAt, PageRequest.of(page, size)));
     }
 
     @PostMapping("/request")
+    @Operation(summary = "Create a new visit request", description = "Allows a resident to request a visitor pass. IDOR protected: Only for self unless admin.")
     public ResponseEntity<?> requestVisit(@Valid @RequestBody VisitRequestDTO dto) {
         Long currentUserId = securityUtils.getUserId();
         if (currentUserId == null)
-            return ResponseEntity.status(401).body("Not authenticated");
+            throw new AccessDeniedException("Not authenticated");
 
         Long residentId = dto.getResidentId();
-        MyUsers residentUser = userRepository.findById(residentId).orElse(null);
-        if (residentUser == null) {
-            return ResponseEntity.badRequest().body("Resident not found");
-        }
+        MyUsers residentUser = userRepository.findById(residentId)
+                .orElseThrow(() -> new IllegalArgumentException("Resident not found"));
 
-        // Security Check: Only residents can create visits, and only for themeselves
-        // (unless staff of the same building)
+        // IDOR Protection
         boolean isOwner = currentUserId.equals(residentId);
         boolean isStaff = securityUtils.isManagingStaff();
 
@@ -94,7 +95,7 @@ public class VisitController {
                 && residentUser.getPropertyId().equals(currentUser.getPropertyId());
 
         if (!isOwner && !(isStaff && sameProperty)) {
-            return ResponseEntity.status(403).body("Cannot request visit for another user");
+            throw new AccessDeniedException("Unauthorized: Cannot request visit for another user");
         }
 
         VisitRequest created = visitService.createVisitRequest(
@@ -108,53 +109,61 @@ public class VisitController {
     }
 
     @PostMapping("/status")
+    @Operation(summary = "Update visit status", description = "IDOR protected: Only owner or staff of same property can update.")
     public ResponseEntity<?> updateVisitStatus(@RequestBody Map<String, Object> payload) {
         Long id = Long.valueOf(payload.get("id").toString());
         String status = payload.get("status").toString();
 
-        // Check ownership/role before updating
-        return visitRequestRepository.findById(id).map(visit -> {
-            Long currentUserId = securityUtils.getUserId();
-            if (currentUserId == null)
-                return ResponseEntity.status(401).build();
+        VisitRequest visit = visitRequestRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Visit request not found"));
 
-            boolean isOwner = visit.getResident() != null && visit.getResident().getId().equals(currentUserId);
-            boolean isStaff = securityUtils.isManagingStaff() || securityUtils.isSecurityStaff();
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
+            throw new AccessDeniedException("Not authenticated");
 
-            MyUsers currentUser = userRepository.findById(currentUserId).orElse(null);
-            boolean sameProperty = currentUser != null && visit.getResident() != null
-                    && visit.getResident().getProperty() != null
-                    && visit.getResident().getProperty().getId().equals(currentUser.getPropertyId());
+        // IDOR Protection
+        boolean isOwner = visit.getResident() != null && visit.getResident().getId().equals(currentUserId);
+        boolean isStaff = securityUtils.isManagingStaff() || securityUtils.isSecurityStaff();
 
-            if (!isOwner && !(isStaff && sameProperty)) {
-                return ResponseEntity.status(403).body("Unauthorized to update this visit's status");
-            }
+        MyUsers currentUser = userRepository.findById(currentUserId).orElse(null);
+        boolean sameProperty = currentUser != null && visit.getResident() != null
+                && visit.getResident().getProperty() != null
+                && visit.getResident().getProperty().getId().equals(currentUser.getPropertyId());
 
-            visitService.updateStatus(id, status);
-            return ResponseEntity.ok().build();
-        }).orElse(ResponseEntity.notFound().build());
+        if (!isOwner && !(isStaff && sameProperty)) {
+            throw new AccessDeniedException("Unauthorized to update this visit's status");
+        }
+
+        visitService.updateStatus(id, status);
+        return ResponseEntity.ok(Map.of("message", "Status updated successfully"));
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete a visit request", description = "IDOR protected: Only owner or manager can delete.")
     public ResponseEntity<?> deleteVisit(@PathVariable Long id) {
-        return visitRequestRepository.findById(id).map(visit -> {
-            Long currentUserId = securityUtils.getUserId();
-            boolean isOwner = visit.getResident() != null && visit.getResident().getId().equals(currentUserId);
-            boolean isStaff = securityUtils.isManagingStaff();
+        VisitRequest visit = visitRequestRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Visit request not found"));
 
-            if (!isOwner && !isStaff) {
-                return ResponseEntity.status(403).body("Unauthorized to delete this visit");
-            }
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
+            throw new AccessDeniedException("Not authenticated");
 
-            visitService.deleteVisit(id);
-            return ResponseEntity.ok().build();
-        }).orElse(ResponseEntity.notFound().build());
+        boolean isOwner = visit.getResident() != null && visit.getResident().getId().equals(currentUserId);
+        boolean isStaff = securityUtils.isManagingStaff();
+
+        if (!isOwner && !isStaff) {
+            throw new AccessDeniedException("Unauthorized to delete this visit");
+        }
+
+        visitService.deleteVisit(id);
+        return ResponseEntity.ok(Map.of("message", "Visit deleted successfully"));
     }
 
     @GetMapping("/public/pass/{code}")
+    @Operation(summary = "Public pass access", description = "Returns visit details by unique code. Used by visitors.")
     public ResponseEntity<VisitRequest> getPublicVisitPass(@PathVariable String code) {
         return visitRequestRepository.findByVisitCode(code)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElseThrow(() -> new IllegalArgumentException("Invalid visit code"));
     }
 }
