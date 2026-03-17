@@ -86,25 +86,16 @@ const RegisterPage: React.FC = () => {
 
     return (
         <div
-            className="min-h-screen flex items-center justify-center p-6 font-sans"
-            style={{
-                backgroundColor: '#f7f7f5',
-                backgroundImage: `
-                    radial-gradient(circle at 10% 20%, rgba(134,197,152,0.12) 0%, transparent 50%),
-                    radial-gradient(circle at 90% 80%, rgba(134,197,152,0.08) 0%, transparent 50%)
-                `
-            }}
+            className="min-h-screen flex items-center justify-center p-6 font-sans bg-[#f7f7f5] [background-image:radial-gradient(circle_at_10%_20%,rgba(134,197,152,0.12)_0%,transparent_50%),radial-gradient(circle_at_90%_80%,rgba(134,197,152,0.08)_0%,transparent_50%)]"
         >
             <motion.div
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className="w-full max-w-[460px] bg-white rounded-[1.5rem] relative overflow-hidden"
-                style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}
+                className="w-full max-w-[460px] bg-white rounded-[1.5rem] relative overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.04)]"
             >
                 {/* Green top bar */}
-                <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[1.5rem]"
-                    style={{ background: 'linear-gradient(90deg, #4caf6e, #81c995)' }} />
+                <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[1.5rem] bg-gradient-to-r from-[#4caf6e] to-[#81c995]" />
 
 
 
@@ -113,8 +104,7 @@ const RegisterPage: React.FC = () => {
 
                     {/* Brand */}
                     <div className="flex items-center gap-2.5 mb-8">
-                        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center text-white font-bold text-base flex-shrink-0"
-                            style={{ background: 'linear-gradient(135deg, #4caf6e, #81c995)', boxShadow: '0 2px 8px rgba(76,175,110,0.28)' }}>
+                        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center text-white font-bold text-base flex-shrink-0 bg-gradient-to-br from-[#4caf6e] to-[#81c995] shadow-[0_2px_8px_rgba(76,175,110,0.28)]">
                             M
                         </div>
                         <div className="flex flex-col gap-0.5">
@@ -211,11 +201,7 @@ const RegisterPage: React.FC = () => {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full py-3.5 text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0 mt-1"
-                                        style={{
-                                            background: 'linear-gradient(135deg, #4caf6e, #5ec47f)',
-                                            boxShadow: '0 4px 16px rgba(76,175,110,0.28)'
-                                        }}
+                                        className="w-full py-3.5 text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0 mt-1 bg-gradient-to-br from-[#4caf6e] to-[#5ec47f] shadow-[0_4px_16px_rgba(76,175,110,0.28)]"
                                     >
                                         {loading
                                             ? <Loader2 size={17} className="animate-spin" />
@@ -251,11 +237,7 @@ const RegisterPage: React.FC = () => {
                                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                                 className="flex flex-col items-center text-center py-10"
                             >
-                                <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-                                    style={{
-                                        background: 'rgba(76,175,110,0.08)',
-                                        border: '2px solid rgba(76,175,110,0.2)'
-                                    }}>
+                                <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6 bg-[#4caf6e]/[0.08] border-2 border-[#4caf6e]/20">
                                     <Check size={34} color="#4caf6e" strokeWidth={2.5} />
                                 </div>
                                 <h2 className="text-[1.5rem] font-bold text-gray-900 tracking-tight mb-2">
