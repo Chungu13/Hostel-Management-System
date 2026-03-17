@@ -290,7 +290,7 @@ const RegisterPage: React.FC = () => {
                             theme="outline"
                             shape="pill"
                             size="large"
-                            use_fedcm_for_prompt={true}
+                            use_fedcm_for_prompt={false}
                         />
                     </div>
 

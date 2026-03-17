@@ -222,6 +222,7 @@ const RegisterPage: React.FC = () => {
                                     <GoogleLogin
                                         onSuccess={handleGoogleSuccess}
                                         onError={() => setError('Google enrollment failed.')}
+                                        use_fedcm_for_prompt={false}
                                         theme="outline"
                                         shape="pill"
                                         size="large"
