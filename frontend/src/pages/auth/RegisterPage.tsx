@@ -124,7 +124,7 @@ const RegisterPage: React.FC = () => {
                         </div>
                         <div className="flex flex-col gap-0.5">
                             <span className="font-bold text-gray-900 text-[1.15rem] leading-none tracking-tight">Malo</span>
-                            <span className="text-[0.58rem] text-green-500 uppercase tracking-[0.15em] font-semibold">User Enrollment</span>
+
                         </div>
                     </div>
 
@@ -137,12 +137,7 @@ const RegisterPage: React.FC = () => {
                                 exit={{ opacity: 0, x: 12 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                {/* Badge + heading */}
-                                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[0.68rem] font-semibold uppercase tracking-widest mb-3"
-                                    style={{ background: 'rgba(76,175,110,0.08)', border: '1px solid rgba(76,175,110,0.2)', color: '#4caf6e' }}>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                                    New Account
-                                </div>
+
 
                                 <h1 className="text-[1.85rem] font-bold text-gray-900 tracking-tight leading-snug mb-1.5">
                                     Create Account

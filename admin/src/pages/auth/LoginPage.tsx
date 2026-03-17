@@ -99,8 +99,6 @@ const LoginPage: React.FC = () => {
         <div className="min-h-screen flex font-['Plus_Jakarta_Sans'] bg-[#f7f7f5]">
             {/* Left Panel */}
             <div className="hidden lg:flex w-[420px] shrink-0 bg-white border-r border-[#ebebea] flex-col justify-between px-11 py-12 relative overflow-hidden">
-                {/* subtle green glow */}
-                <div className="pointer-events-none absolute -top-20 -right-20 h-[260px] w-[260px] rounded-full bg-emerald-500/10 blur-2xl" />
 
                 <div>
                     {/* Brand */}

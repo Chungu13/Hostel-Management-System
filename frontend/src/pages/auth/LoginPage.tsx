@@ -127,18 +127,14 @@ const LoginPage: React.FC = () => {
                         <span className="text-[1.35rem] font-bold text-[#1a1a1a] tracking-[-0.02em] leading-none">
                             Malo
                         </span>
-                        <span className="text-[0.62rem] text-[#4caf6e] tracking-[0.12em] uppercase font-medium">
-                            Hostel Management
-                        </span>
+
                     </div>
                 </div>
 
                 <h1 className="text-[1.85rem] font-bold text-[#111] leading-[1.2] tracking-[-0.02em] m-0 mb-[6px]">
                     Sign in
                 </h1>
-                <p className="text-[0.875rem] text-[#888] font-normal tracking-[0.01em] m-0 mb-8">
-                    Manage your hostel or security profile
-                </p>
+
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
                     <div className="flex flex-col gap-[6px]">

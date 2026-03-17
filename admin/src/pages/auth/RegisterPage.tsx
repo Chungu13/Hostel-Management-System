@@ -89,8 +89,6 @@ const RegisterPage: React.FC = () => {
         <div className="min-h-screen flex font-['Plus_Jakarta_Sans'] bg-[#f7f7f5]">
             {/* Left Panel */}
             <div className="hidden lg:flex w-[420px] shrink-0 bg-white border-r border-[#ebebea] flex-col justify-between px-11 py-12 relative overflow-hidden">
-                {/* subtle green glow */}
-                <div className="pointer-events-none absolute -top-20 -right-20 h-[260px] w-[260px] rounded-full bg-emerald-500/10 blur-2xl" />
 
                 <div>
                     {/* Brand */}
@@ -180,20 +178,13 @@ const RegisterPage: React.FC = () => {
                         <span className="text-[1.15rem] font-bold text-[#1a1a1a] tracking-[-0.02em]">Malo</span>
                     </div>
 
-                    {/* Badge */}
-                    <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20
-                                    text-[#4caf6e] text-[0.7rem] font-semibold tracking-widest uppercase
-                                    px-3 py-1 rounded-full mb-2.5">
-                        <ShieldCheck size={11} />
-                        Manager Registration
-                    </div>
+
 
                     <h2 className="text-[1.85rem] font-bold text-[#111] tracking-[-0.03em] leading-tight mb-1.5">
                         Register Building
                     </h2>
                     <p className="text-[0.875rem] text-[#888] mb-8">
-                        Join Malo as a property manager
-                    </p>
+                        Join Malo                  </p>
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
@@ -279,7 +270,7 @@ const RegisterPage: React.FC = () => {
                                        disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                         >
                             {loading ? <Loader2 size={17} className="animate-spin" /> : <UserPlus size={17} />}
-                            {loading ? 'Creating Account…' : 'Register as Manager'}
+                            {loading ? 'Creating Account…' : 'Register'}
                         </button>
                     </form>
 
