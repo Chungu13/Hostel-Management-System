@@ -114,20 +114,18 @@ const LoginPage: React.FC = () => {
                         </div>
                         <div className="flex flex-col leading-none">
                             <span className="text-[1.2rem] font-bold text-[#1a1a1a] tracking-[-0.02em]">Malo</span>
-                            <span className="text-[0.6rem] text-[#4caf6e] tracking-[0.12em] uppercase font-medium mt-1">
-                                Admin Console
-                            </span>
+
                         </div>
                     </div>
 
                     {/* Headline */}
                     <h2 className="text-[2rem] font-bold text-[#111] tracking-[-0.04em] leading-[1.2] mb-4">
-                        Manage your<br />hostel <span className="text-[#4caf6e]">smarter.</span>
+                        Manage your<br />apartment, hostel, complex <span className="text-[#4caf6e]">smarter.</span>
                     </h2>
 
-                    <p className="text-[0.855rem] text-[#aaa] leading-[1.7] max-w-[280px]">
+                    {/* <p className="text-[0.855rem] text-[#aaa] leading-[1.7] max-w-[280px]">
                         Full control over residents, visitor passes, staff, and reports — all in one place.
-                    </p>
+                    </p> */}
 
                     {/* Feature list */}
                     <div className="flex flex-col gap-3.5 mt-11">
@@ -174,21 +172,12 @@ const LoginPage: React.FC = () => {
                     </div>
 
                     {/* Badge */}
-                    <div
-                        className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20
-                                    text-[#4caf6e] text-[0.7rem] font-semibold tracking-widest uppercase
-                                    px-3 py-1 rounded-full mb-2.5"
-                    >
-                        <ShieldCheck size={11} />
-                        Admin Access Only
-                    </div>
+
 
                     <h2 className="text-[1.85rem] font-bold text-[#111] tracking-[-0.03em] leading-tight mb-1.5">
-                        Admin Login
+                        Login
                     </h2>
-                    <p className="text-[0.875rem] text-[#888] mb-8">
-                        Access your management console
-                    </p>
+
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">

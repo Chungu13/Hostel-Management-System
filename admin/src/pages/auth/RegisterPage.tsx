@@ -102,9 +102,7 @@ const RegisterPage: React.FC = () => {
                         </div>
                         <div className="flex flex-col leading-none">
                             <span className="text-[1.2rem] font-bold text-[#1a1a1a] tracking-[-0.02em]">Malo</span>
-                            <span className="text-[0.6rem] text-[#4caf6e] tracking-[0.12em] uppercase font-medium mt-1">
-                                Admin Console
-                            </span>
+
                         </div>
                     </div>
 

@@ -11,7 +11,7 @@ const RegisterPage: React.FC = () => {
         email: '',
         password: '',
         confirmPassword: '',
-        role: 'Resident' as 'Resident' | 'Security Staff'
+        role: 'Resident'
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -37,11 +37,7 @@ const RegisterPage: React.FC = () => {
                 login(response.data);
                 setSuccess(true);
                 setTimeout(() => {
-                    if (formData.role === 'Resident') {
-                        navigate('/onboarding');
-                    } else {
-                        navigate('/security');
-                    }
+                    navigate('/onboarding');
                 }, 2500);
             }
         } catch (err: any) {
@@ -90,7 +86,7 @@ const RegisterPage: React.FC = () => {
 
     return (
         <div
-            className="min-h-screen flex items-center justify-center p-6 font-['Plus_Jakarta_Sans',sans-serif]"
+            className="min-h-screen flex items-center justify-center p-6 font-sans"
             style={{
                 backgroundColor: '#f7f7f5',
                 backgroundImage: `
@@ -152,33 +148,11 @@ const RegisterPage: React.FC = () => {
                                     Create Account
                                 </h1>
                                 <p className="text-sm text-gray-400 mb-8 font-normal leading-relaxed">
-                                    {formData.role === 'Resident' ? 'Join our secure residency community today.' : 'Join our professional security network today.'}
+                                    Join our secure residency community today.
                                 </p>
 
                                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
-                                    {/* Role Selector */}
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-[0.72rem] font-medium text-gray-500 uppercase tracking-wider">
-                                            Your Role
-                                        </label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, role: 'Resident' })}
-                                                className={`py-2 text-[0.7rem] font-bold rounded-lg border transition-all ${formData.role === 'Resident' ? 'bg-green-50 border-green-200 text-green-600 shadow-sm shadow-green-100' : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-white'}`}
-                                            >
-                                                Resident
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, role: 'Security Staff' })}
-                                                className={`py-2 text-[0.7rem] font-bold rounded-lg border transition-all ${formData.role === 'Security Staff' ? 'bg-green-50 border-green-200 text-green-600 shadow-sm shadow-green-100' : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-white'}`}
-                                            >
-                                                Security
-                                            </button>
-                                        </div>
-                                    </div>
 
                                     {/* Email */}
                                     <div className="flex flex-col gap-1.5">
@@ -259,7 +233,7 @@ const RegisterPage: React.FC = () => {
                                             ? <Loader2 size={17} className="animate-spin" />
                                             : <UserPlus size={17} />
                                         }
-                                        {loading ? 'Processing Enrollment…' : (formData.role === 'Resident' ? 'Register as Resident' : 'Register as Security')}
+                                        {loading ? 'Processing Enrollment…' : 'Register as Resident'}
                                     </button>
                                 </form>
 
