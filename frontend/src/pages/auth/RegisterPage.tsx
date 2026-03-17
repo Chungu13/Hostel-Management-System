@@ -106,13 +106,8 @@ const RegisterPage: React.FC = () => {
                 <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[1.5rem]"
                     style={{ background: 'linear-gradient(90deg, #4caf6e, #81c995)' }} />
 
-                {/* Back arrow */}
-                <Link
-                    to="/login"
-                    className="absolute top-8 right-8 w-8 h-8 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors z-10"
-                >
-                    <ArrowLeft size={15} />
-                </Link>
+
+
 
                 <div className="p-10 pt-11">
 
@@ -142,9 +137,7 @@ const RegisterPage: React.FC = () => {
                                 <h1 className="text-[1.85rem] font-bold text-gray-900 tracking-tight leading-snug mb-1.5">
                                     Create Account
                                 </h1>
-                                <p className="text-sm text-gray-400 mb-8 font-normal leading-relaxed">
-                                    Join our secure residency community today.
-                                </p>
+
 
                                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
@@ -167,8 +160,8 @@ const RegisterPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Password row */}
-                                    <div className="grid grid-cols-2 gap-3">
+                                    {/* Passwords */}
+                                    <div className="flex flex-col gap-5">
                                         <div className="flex flex-col gap-1.5">
                                             <label className="text-[0.72rem] font-medium text-gray-500 uppercase tracking-wider">
                                                 Password
@@ -187,7 +180,7 @@ const RegisterPage: React.FC = () => {
                                         </div>
                                         <div className="flex flex-col gap-1.5">
                                             <label className="text-[0.72rem] font-medium text-gray-500 uppercase tracking-wider">
-                                                Confirm
+                                                Confirm Password
                                             </label>
                                             <div className="relative">
                                                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
@@ -228,7 +221,7 @@ const RegisterPage: React.FC = () => {
                                             ? <Loader2 size={17} className="animate-spin" />
                                             : <UserPlus size={17} />
                                         }
-                                        {loading ? 'Processing Enrollment…' : 'Register as Resident'}
+                                        {loading ? 'Creating Account...' : 'Create Account'}
                                     </button>
                                 </form>
 
