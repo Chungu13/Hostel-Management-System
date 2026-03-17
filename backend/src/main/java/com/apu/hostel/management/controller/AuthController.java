@@ -101,10 +101,15 @@ public class AuthController {
     @Operation(summary = "Google OAuth Login", description = "Handles Google ID tokens for secure authentication.")
     public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> data)
             throws GeneralSecurityException, IOException {
+
         String idTokenString = data.get("token");
+        System.out.println("=== GOOGLE LOGIN HIT ===");
+        System.out.println("Token present: " + (idTokenString != null && !idTokenString.isBlank()));
+        System.out.println("Google Client ID on server: " + googleClientId);
 
         if (googleClientId == null || googleClientId.isBlank()
                 || googleClientId.equals("YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com")) {
+            System.out.println("Google Client ID is missing or placeholder");
             throw new RuntimeException("Google Client ID is not configured on the server.");
         }
 
@@ -114,7 +119,10 @@ public class AuthController {
                 .build();
 
         GoogleIdToken idToken = verifier.verify(idTokenString);
+        System.out.println("Token verified successfully? " + (idToken != null));
+
         if (idToken == null) {
+            System.out.println("Google token verification failed");
             throw new AccessDeniedException("Invalid Google ID token.");
         }
 
@@ -123,15 +131,24 @@ public class AuthController {
         String name = (String) payload.get("name");
         String requestedRole = data.get("role");
 
+        System.out.println("Google email: " + email);
+        System.out.println("Google name: " + name);
+        System.out.println("Requested role: " + requestedRole);
+
         Optional<MyUsers> userOpt = userRepository.findByEmail(email);
         MyUsers user;
 
         if (userOpt.isPresent()) {
             user = userOpt.get();
+            System.out.println("Existing user found. Role=" + user.getMyRole()
+                    + ", onboarded=" + user.isOnboarded()
+                    + ", approved=" + user.isApproved());
+
             if ((user.getFullName() == null || user.getFullName().isBlank()) && name != null) {
                 user.setFullName(name);
                 userRepository.save(user);
             }
+
             if ("Managing Staff".equals(requestedRole)
                     && !user.isOnboarded()
                     && !"Managing Staff".equals(user.getMyRole())) {
@@ -139,7 +156,10 @@ public class AuthController {
                 userRepository.save(user);
             }
         } else {
+            System.out.println("No existing user found. Creating new user.");
+
             if ("Managing Staff".equals(requestedRole)) {
+                System.out.println("Manager login blocked because account does not exist");
                 throw new IllegalArgumentException(
                         "No manager account found for this email. Please register your building first.");
             }
@@ -152,13 +172,18 @@ public class AuthController {
             user.setOnboarded(false);
             user.setApproved(false);
             userRepository.save(user);
+
+            System.out.println("New user created with role=" + user.getMyRole());
         }
 
         if (user.isOnboarded() && !user.isApproved() && "Resident".equals(user.getMyRole())) {
+            System.out.println("User blocked: pending admin approval");
             throw new AccessDeniedException("Your account is pending admin approval.");
         }
 
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getMyRole());
+        System.out.println("JWT generated successfully for " + user.getEmail());
+
         return ResponseEntity.ok(buildAuthResponse(user, token));
     }
 
