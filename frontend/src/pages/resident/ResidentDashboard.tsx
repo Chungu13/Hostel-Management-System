@@ -70,7 +70,7 @@ const ResidentDashboard: React.FC = () => {
                     `/api/visits/resident/${user.id}`
                 );
 
-                const visits = response.data ?? [];
+                const visits = Array.isArray(response.data) ? response.data : [];
                 const approvedVisits = visits.filter((v) => v.status === "Approved");
 
 

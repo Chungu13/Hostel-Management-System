@@ -166,13 +166,12 @@ const StaffManagement: React.FC = () => {
 
     const filteredStaff = useMemo(() => {
         const q = searchTerm.trim().toLowerCase();
-        if (!q) return staff;
 
-        return staff.filter((s) => {
+        return Array.isArray(staff) ? staff.filter((s) => {
             const name = (s.name ?? "").toLowerCase();
             const email = (s.email ?? "").toLowerCase();
             return name.includes(q) || email.includes(q);
-        });
+        }) : [];
     }, [searchTerm, staff]);
 
     return (

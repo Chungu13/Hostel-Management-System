@@ -70,7 +70,7 @@ const VisitorHistoryPage: React.FC = () => {
     };
 
     const filteredAndSorted = useMemo(() => {
-        let result = [...visits];
+        let result = Array.isArray(visits) ? [...visits] : [];
 
         // Search
         if (searchTerm.trim()) {

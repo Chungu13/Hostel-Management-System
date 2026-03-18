@@ -188,7 +188,7 @@ const ResidentManagement: React.FC = () => {
     const filteredResidents = useMemo(() => {
         const q = searchTerm.trim().toLowerCase();
 
-        return residents.filter((r) => {
+        return Array.isArray(residents) ? residents.filter((r) => {
             const matchesSearch =
                 (r.name ?? "").toLowerCase().includes(q) || (r.email ?? "").toLowerCase().includes(q);
 
@@ -198,7 +198,7 @@ const ResidentManagement: React.FC = () => {
                 (filter === "approved" && r.approved);
 
             return matchesSearch && matchesFilter;
-        });
+        }) : [];
     }, [residents, searchTerm, filter]);
 
     return (

@@ -147,8 +147,8 @@ const VisitHistory: React.FC = () => {
 
     const filteredVisits = useMemo(() => {
         const term = searchTerm.trim().toLowerCase();
-        if (!term) return visits;
-        return visits.filter((v) => {
+        if (!term) return Array.isArray(visits) ? visits : [];
+        return (Array.isArray(visits) ? visits : []).filter((v) => {
             const name = (v.visitorName ?? "").toLowerCase();
             const code = (v.visitCode ?? "").toLowerCase();
             return name.includes(term) || code.includes(term);
