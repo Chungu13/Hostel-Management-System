@@ -65,7 +65,6 @@ public class AuthController {
             throw new IllegalArgumentException("Incorrect password. Please try again.");
         }
 
-        // Block login ONLY if they have onboarded but aren't approved yet.
         if (user.isOnboarded() && !user.isApproved() && "Resident".equals(user.getMyRole())) {
             throw new AccessDeniedException("Your account is pending admin approval.");
         }

@@ -13,7 +13,7 @@ type AuthResponse = {
     name?: string;
     propertyId?: string | number;
     isOnboarded: boolean;
-    token: string;  // JWT returned by the backend on every auth call
+    token: string;
     [key: string]: any;
 };
 
@@ -39,7 +39,7 @@ const LoginPage: React.FC = () => {
             const data = response.data;
 
             if (data) {
-                // Block non-admins from this portal
+
                 if (data.myRole !== 'Managing Staff') {
                     setError('Access denied. This portal is for managers only.');
                     setLoading(false);
@@ -48,7 +48,7 @@ const LoginPage: React.FC = () => {
 
                 login(data);
 
-                // Server drives the routing decision — never force onboarding from login
+
                 if (data.isOnboarded) {
                     navigate('/dashboard');
                 } else {
@@ -121,9 +121,7 @@ const LoginPage: React.FC = () => {
                         Manage your<br />apartment, hostel, complex <span className="text-[#4caf6e]">smarter.</span>
                     </h2>
 
-                    {/* <p className="text-[0.855rem] text-[#aaa] leading-[1.7] max-w-[280px]">
-                        Full control over residents, visitor passes, staff, and reports — all in one place.
-                    </p> */}
+
 
                     {/* Feature list */}
                     <div className="flex flex-col gap-3.5 mt-11">

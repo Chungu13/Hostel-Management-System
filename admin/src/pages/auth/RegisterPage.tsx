@@ -71,7 +71,7 @@ const RegisterPage: React.FC = () => {
             const data = response.data;
             if (data) {
                 login(data);
-                // Respect the server's answer: only go to onboarding if NOT yet onboarded
+
                 if (data.isOnboarded) {
                     navigate('/dashboard');
                 } else {
