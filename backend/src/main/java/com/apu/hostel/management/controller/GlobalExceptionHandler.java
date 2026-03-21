@@ -79,11 +79,18 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(DataIntegrityViolationException.class)
         public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex,
                         HttpServletRequest request) {
+                String message = "A database error occurred.";
+                String detail = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+                
+                if (detail != null && detail.contains("Duplicate entry")) {
+                        message = "A resident (or staff account) with this email already exists.";
+                }
+
                 ErrorResponse errorResponse = ErrorResponse.builder()
                                 .timestamp(LocalDateTime.now())
                                 .status(HttpStatus.CONFLICT.value())
                                 .error("Conflict")
-                                .message("A user with this email already exists")
+                                .message(message)
                                 .path(request.getRequestURI())
                                 .build();
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);

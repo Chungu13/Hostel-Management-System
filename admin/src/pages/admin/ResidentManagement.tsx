@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import Sidebar from "../../components/Sidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -65,6 +65,8 @@ const ResidentManagement: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [editingResident, setEditingResident] = useState<Resident | null>(null);
     const [formData, setFormData] = useState<FormData>(emptyForm);
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    const abortControllerRef = useRef<AbortController | null>(null);
     const { showToast } = useToast();
 
     // Confirmation Modal State
@@ -139,20 +141,29 @@ const ResidentManagement: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
-        if (!user?.propertyId) return;
+        if (!user?.propertyId || isSubmitting) return;
 
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
+        setIsSubmitting(true);
         try {
             if (editingResident) {
                 await api.put(
                     `/api/admin/residents/${editingResident.id}`,
-                    { ...formData, address: "Property Resident" }
+                    { ...formData, address: "Property Resident" },
+                    { signal: controller.signal }
                 );
                 showToast("Resident information updated", "success");
             } else {
                 await api.post(`/api/admin/residents`, {
                     ...formData,
                     address: "Property Resident",
-                });
+                }, { signal: controller.signal });
                 showToast("New resident added successfully", "success");
             }
 
@@ -161,7 +172,14 @@ const ResidentManagement: React.FC = () => {
             setFormData(emptyForm);
             void fetchResidents();
         } catch (err: any) {
-            alert(err?.response?.data?.message || "Operation failed");
+            if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') {
+                return;
+            }
+            const msg = err?.response?.data?.message || err?.message || "Operation failed";
+            // Displaying styled error popup instead of raw alert:
+            showToast(msg, "error");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -611,9 +629,10 @@ const ResidentManagement: React.FC = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-400 px-7 py-3 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(16,185,129,0.25)] transition hover:opacity-95 hover:-translate-y-[1px]"
+                                        disabled={isSubmitting}
+                                        className="rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-400 px-7 py-3 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(16,185,129,0.25)] transition hover:opacity-95 hover:-translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {editingResident ? "Save Changes" : "Create Resident"}
+                                        {isSubmitting ? "Processing..." : editingResident ? "Save Changes" : "Create Resident"}
                                     </button>
                                 </div>
                             </form>
