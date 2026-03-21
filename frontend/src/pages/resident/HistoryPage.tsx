@@ -75,8 +75,9 @@ const VisitHistory: React.FC = () => {
                 user.myRole === "Resident"
                     ? `/api/visits/resident/${user.id}`
                     : "/api/visits/history";
-            const response = await api.get<Visit[]>(endpoint);
-            setVisits(response.data ?? []);
+            const response = await api.get<any>(endpoint);
+            const dataList = response.data?.content || response.data || [];
+            setVisits(Array.isArray(dataList) ? dataList : []);
         } catch (err) {
             console.error("Error fetching history:", err);
         } finally {

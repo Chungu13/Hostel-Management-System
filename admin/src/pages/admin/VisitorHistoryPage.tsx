@@ -41,8 +41,9 @@ const VisitorHistoryPage: React.FC = () => {
     const fetchHistory = async () => {
         setLoading(true);
         try {
-            const response = await api.get<Visit[]>('/api/visits/admin/history');
-            setVisits(response.data || []);
+            const response = await api.get<any>('/api/visits/admin/history');
+            const dataList = response.data?.content || response.data || [];
+            setVisits(Array.isArray(dataList) ? dataList : []);
         } catch (err) {
             console.error("Error fetching admin history:", err);
         } finally {
