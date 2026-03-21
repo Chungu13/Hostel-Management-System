@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -73,6 +74,19 @@ public class GlobalExceptionHandler {
                                 .path(request.getRequestURI())
                                 .build();
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        }
+
+        @ExceptionHandler(DataIntegrityViolationException.class)
+        public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex,
+                        HttpServletRequest request) {
+                ErrorResponse errorResponse = ErrorResponse.builder()
+                                .timestamp(LocalDateTime.now())
+                                .status(HttpStatus.CONFLICT.value())
+                                .error("Conflict")
+                                .message("A user with this email already exists")
+                                .path(request.getRequestURI())
+                                .build();
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
         }
 
         @ExceptionHandler(Exception.class)

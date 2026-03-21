@@ -61,6 +61,7 @@ const StaffManagement: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
     const [formData, setFormData] = useState<FormData>(emptyForm);
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const { showToast } = useToast();
 
     // Confirmation Modal State
@@ -81,9 +82,9 @@ const StaffManagement: React.FC = () => {
     const closeConfirm = () => setConfirmConfig((p) => ({ ...p, isOpen: false }));
 
     useEffect(() => {
-        if (user?.propertyId) void fetchStaff();
+        void fetchStaff();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user?.propertyId]);
+    }, []);
 
     const fetchStaff = async (): Promise<void> => {
         setLoading(true);
@@ -123,8 +124,9 @@ const StaffManagement: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
-        if (!user?.propertyId) return;
+        if (!user?.propertyId || isSubmitting) return;
 
+        setIsSubmitting(true);
         try {
             if (editingStaff) {
                 await api.put(
@@ -140,7 +142,10 @@ const StaffManagement: React.FC = () => {
             setEditingStaff(null);
             void fetchStaff();
         } catch (err: any) {
-            alert(err?.response?.data?.message || "Operation failed");
+            const msg = err?.response?.data?.message || err?.message || "Operation failed";
+            alert(msg);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -234,7 +239,12 @@ const StaffManagement: React.FC = () => {
                     {/* Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <AnimatePresence>
-                            {filteredStaff.length === 0 && !loading ? (
+                            {loading ? (
+                                <div className="md:col-span-2 flex flex-col items-center justify-center py-20 text-zinc-500">
+                                    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4" />
+                                    <p className="text-sm font-medium">Connecting to server, please wait...</p>
+                                </div>
+                            ) : filteredStaff.length === 0 ? (
                                 <div className="md:col-span-2 flex flex-col items-center justify-center text-center py-20 px-5 gap-2">
                                     <div className="h-14 w-14 rounded-2xl bg-zinc-100 flex items-center justify-center">
                                         <ShieldCheck className="text-zinc-300" size={24} />
@@ -545,9 +555,10 @@ const StaffManagement: React.FC = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="rounded-xl bg-gradient-to-br from-sky-400 to-sky-200 px-7 py-3 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(56,189,248,0.30)] transition hover:opacity-95 hover:-translate-y-[1px]"
+                                        disabled={isSubmitting}
+                                        className="rounded-xl bg-gradient-to-br from-sky-400 to-sky-200 px-7 py-3 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(56,189,248,0.30)] transition hover:opacity-95 hover:-translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {editingStaff ? "Save Changes" : "Register Officer"}
+                                        {isSubmitting ? "Processing..." : editingStaff ? "Save Changes" : "Register Officer"}
                                     </button>
                                 </div>
                             </form>
