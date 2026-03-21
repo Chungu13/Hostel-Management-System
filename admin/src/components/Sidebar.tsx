@@ -214,6 +214,16 @@ const Sidebar: React.FC = () => {
                     </>
                 )}
             </AnimatePresence>
+
+            {/* Quick Sign Out (Global Top Right) */}
+            <button
+                onClick={handleLogout}
+                className="fixed top-5 right-5 z-40 flex items-center gap-2 h-10 px-4 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50 transition-all"
+                style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)' }}
+            >
+                <LogOut size={16} className="text-gray-400 group-hover:text-rose-500" />
+                <span className="hidden sm:inline">Sign Out</span>
+            </button>
         </>
     );
 };
