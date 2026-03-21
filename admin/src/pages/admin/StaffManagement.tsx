@@ -89,10 +89,12 @@ const StaffManagement: React.FC = () => {
     const fetchStaff = async (): Promise<void> => {
         setLoading(true);
         try {
-            const response = await api.get<Staff[]>(
+            const response = await api.get<any>(
                 `/api/admin/staff`
             );
-            setStaff(response.data ?? []);
+            // Spring Boot returns a Page object `{ content: [...] }` or a direct array
+            const dataList = response.data?.content || response.data || [];
+            setStaff(Array.isArray(dataList) ? dataList : []);
         } catch (err) {
             // eslint-disable-next-line no-console
             console.error("Error fetching staff:", err);
