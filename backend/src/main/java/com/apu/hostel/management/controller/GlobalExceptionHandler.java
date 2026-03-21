@@ -79,8 +79,8 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(DataIntegrityViolationException.class)
         public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex,
                         HttpServletRequest request) {
-                String message = "A database error occurred.";
                 String detail = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+                String message = "Database Error: " + detail;
                 
                 if (detail != null && detail.contains("Duplicate entry")) {
                         message = "A resident (or staff account) with this email already exists.";
@@ -98,11 +98,16 @@ public class GlobalExceptionHandler {
 
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ErrorResponse> handleAllOtherExceptions(Exception ex, HttpServletRequest request) {
+                String detail = ex.getMessage() != null ? ex.getMessage() : "Unknown exception";
+                if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+                        detail += " | Cause: " + ex.getCause().getMessage();
+                }
+
                 ErrorResponse errorResponse = ErrorResponse.builder()
                                 .timestamp(LocalDateTime.now())
                                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                                 .error("Internal Server Error")
-                                .message("An unexpected error occurred. Please try again later.")
+                                .message("Server Error: " + detail)
                                 .path(request.getRequestURI())
                                 .build();
 

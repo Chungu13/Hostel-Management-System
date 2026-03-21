@@ -32,7 +32,8 @@ api.interceptors.response.use(
         // Standardize the error object returned to the catch block
         // Extract message from our new Backend ErrorResponse DTO
         const backendError = error.response?.data as any;
-        const message = backendError?.message || backendError?.error || 'An unexpected error occurred.';
+        const rawBackendMsg = typeof backendError === 'string' ? backendError : '';
+        const message = backendError?.message || backendError?.error || rawBackendMsg || error.message || 'An unexpected error occurred.';
 
         // Attach the improved message to the error object
         (error as any).friendlyMessage = message;
