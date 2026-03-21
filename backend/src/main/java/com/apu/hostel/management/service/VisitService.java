@@ -30,10 +30,14 @@ public class VisitService {
 
     public Page<VisitRequest> getRequestsByResident(Long residentId, java.time.LocalDateTime clearedAt,
             Pageable pageable) {
-        if (clearedAt == null) {
-            return visitRequestRepository.findByResidentId(residentId, pageable);
+        try {
+            if (clearedAt == null) {
+                return visitRequestRepository.findByResidentId(residentId, pageable);
+            }
+            return visitRequestRepository.findByResidentIdAndAfter(residentId, clearedAt, pageable);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to load resident visit requests: " + e.getMessage(), e);
         }
-        return visitRequestRepository.findByResidentIdAndAfter(residentId, clearedAt, pageable);
     }
 
     @Transactional
@@ -86,15 +90,23 @@ public class VisitService {
     }
 
     public List<VisitRequest> getHistory(LocalDateTime clearedAt) {
-        List<VisitRequest> all = visitRequestRepository.findAll();
-        if (clearedAt == null)
-            return all;
-        return all.stream()
-                .filter(r -> r.getRequestDate() != null && r.getRequestDate().isAfter(clearedAt))
-                .collect(java.util.stream.Collectors.toList());
+        try {
+            List<VisitRequest> all = visitRequestRepository.findAll();
+            if (clearedAt == null)
+                return all;
+            return all.stream()
+                    .filter(r -> r.getRequestDate() != null && r.getRequestDate().isAfter(clearedAt))
+                    .collect(java.util.stream.Collectors.toList());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to load system visit history: " + e.getMessage(), e);
+        }
     }
 
     public Page<VisitRequest> getAllHistoryAdmin(Pageable pageable) {
-        return visitRequestRepository.findAll(pageable);
+        try {
+            return visitRequestRepository.findAll(pageable);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to load admin visit history: " + e.getMessage(), e);
+        }
     }
 }

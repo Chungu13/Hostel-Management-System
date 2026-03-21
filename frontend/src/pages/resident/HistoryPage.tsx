@@ -74,7 +74,7 @@ const VisitHistory: React.FC = () => {
             const endpoint =
                 user.myRole === "Resident"
                     ? `/api/visits/resident/${user.id}`
-                    : "/api/visits/history";
+                    : "/api/visits/admin/history";
             const response = await api.get<any>(endpoint);
             const dataList = response.data?.content || response.data || [];
             setVisits(Array.isArray(dataList) ? dataList : []);
@@ -86,8 +86,11 @@ const VisitHistory: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchHistory();
-    }, [user?.id, user?.myRole]);
+        if (user) {
+            fetchHistory();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleCancelVisit = async (visitId?: number | string) => {
         if (!visitId) return;

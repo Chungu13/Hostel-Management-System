@@ -22,8 +22,9 @@ public class VisitRequest implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "resident_id", referencedColumnName = "id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"myUser", "property", "hibernateLazyInitializer", "handler"})
     private Residents resident;
 
     @Column(name = "resident_name", nullable = false)
