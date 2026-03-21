@@ -94,10 +94,12 @@ const ResidentManagement: React.FC = () => {
     const fetchResidents = async (): Promise<void> => {
         setLoading(true);
         try {
-            const response = await api.get<Resident[]>(
+            const response = await api.get<any>(
                 `/api/admin/residents`
             );
-            setResidents(response.data ?? []);
+            // Spring Boot returns a Page object `{ content: [...] }` or a direct array
+            const dataList = response.data?.content || response.data || [];
+            setResidents(Array.isArray(dataList) ? dataList : []);
         } catch (err) {
             // eslint-disable-next-line no-console
             console.error("Error fetching residents:", err);
