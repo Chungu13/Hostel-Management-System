@@ -103,11 +103,22 @@ public class GlobalExceptionHandler {
                         detail += " | Cause: " + ex.getCause().getMessage();
                 }
 
+                String friendlyMessage = "An unexpected issue occurred on our servers. Please try again shortly.";
+                if (ex instanceof org.springframework.http.converter.HttpMessageNotReadableException) {
+                        friendlyMessage = "We couldn't process your request because some information was formatted incorrectly.";
+                } else if (ex instanceof org.springframework.web.HttpMediaTypeNotSupportedException) {
+                        friendlyMessage = "The type of data submitted is not supported.";
+                } else if (ex instanceof org.springframework.web.HttpRequestMethodNotSupportedException) {
+                        friendlyMessage = "This action is not supported.";
+                } else {
+                        friendlyMessage = "A system error occurred (" + ex.getClass().getSimpleName() + "). Please try again later.";
+                }
+
                 ErrorResponse errorResponse = ErrorResponse.builder()
                                 .timestamp(LocalDateTime.now())
                                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                                .error("Internal Server Error")
-                                .message("Server Error: " + detail)
+                                .error(detail) // Raw technical details go here for debugging
+                                .message(friendlyMessage) // Clean user-friendly message for the UI popup
                                 .path(request.getRequestURI())
                                 .build();
 

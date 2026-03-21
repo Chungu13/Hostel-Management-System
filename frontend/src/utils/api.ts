@@ -30,10 +30,28 @@ api.interceptors.response.use(
         }
 
         // Standardize the error object returned to the catch block
-        // Extract message from our new Backend ErrorResponse DTO
+        // Extract user-friendly 'message' from our new Backend ErrorResponse DTO
         const backendError = error.response?.data as any;
-        const rawBackendMsg = typeof backendError === 'string' ? backendError : '';
-        const message = backendError?.message || backendError?.error || rawBackendMsg || error.message || 'An unexpected error occurred.';
+        
+        // Start with the friendly backend message if it exists
+        let message = backendError?.message;
+
+        if (!message) {
+            // Translate generic Axios network errors into human-readable strings
+            if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+                message = "The server is taking too long to respond. It might be waking up—please try again in a few seconds.";
+            } else if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
+                message = "Unable to connect to the server. Please check your internet connection.";
+            } else if (error.response?.status === 502 || error.response?.status === 503) {
+                message = "The service is temporarily unavailable. Please wait a moment and try again.";
+            } else if (error.response?.status && error.response.status >= 500) {
+                message = "We encountered an unexpected server issue. Please try again later.";
+            } else {
+                // Fallbacks
+                const rawBackendMsg = typeof backendError === 'string' ? backendError : '';
+                message = backendError?.error || rawBackendMsg || error.message || 'An unexpected application error occurred.';
+            }
+        }
 
         // Attach the improved message to the error object
         (error as any).friendlyMessage = message;
