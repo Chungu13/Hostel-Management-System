@@ -46,6 +46,24 @@ public class VisitController {
         return ResponseEntity.ok(visitService.getAllHistoryAdmin(PageRequest.of(page, size)));
     }
 
+    @GetMapping("/history")
+    @Operation(summary = "Get system visit history", description = "Returns a list of all visit requests.")
+    public ResponseEntity<?> getSystemHistory() {
+        Long currentUserId = securityUtils.getUserId();
+        if (currentUserId == null)
+            throw new AccessDeniedException("Not authenticated");
+
+        // Allow Admin or Security Staff to view history
+        if (!securityUtils.isManagingStaff() && !securityUtils.isSecurityStaff()) {
+            throw new AccessDeniedException("Unauthorized to view system history");
+        }
+
+        java.time.LocalDateTime clearedAt = userRepository.findById(currentUserId)
+                .map(MyUsers::getHistoryClearedAt).orElse(null);
+
+        return ResponseEntity.ok(visitService.getHistory(clearedAt));
+    }
+
     @GetMapping("/resident/{id}")
     @Operation(summary = "Get visit history for a resident", description = "Returns paginated visits for a specific resident. IDOR protected: Only owner or staff of same property can view.")
     public ResponseEntity<?> getResidentVisits(

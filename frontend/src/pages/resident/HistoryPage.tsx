@@ -74,7 +74,7 @@ const VisitHistory: React.FC = () => {
             const endpoint =
                 user.myRole === "Resident"
                     ? `/api/visits/resident/${user.id}`
-                    : "/api/visits/admin/history";
+                    : "/api/visits/history";
             const response = await api.get<any>(endpoint);
             const dataList = response.data?.content || response.data || [];
             setVisits(Array.isArray(dataList) ? dataList : []);
