@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Scanner } from '@yudiel/react-qr-scanner';
 
 const VerifyVisitor: React.FC = () => {
     const [visitCode, setVisitCode] = useState('');
@@ -16,33 +16,6 @@ const VerifyVisitor: React.FC = () => {
     const [selectedResident, setSelectedResident] = useState<any | null>(null);
     const [fetchingResident, setFetchingResident] = useState(false);
     const [scanMode, setScanMode] = useState<'manual' | 'camera'>('manual');
-
-    useEffect(() => {
-        if (scanMode === 'camera') {
-            const scanner = new Html5QrcodeScanner(
-                "reader",
-                { fps: 10, qrbox: { width: 250, height: 250 } },
-                false
-            );
-
-            scanner.render(
-                (decodedText) => {
-                    const code = decodedText.trim().toUpperCase();
-                    setVisitCode(code);
-                    scanner.clear();
-                    setScanMode('manual');
-                    verifyCodeDirectly(code);
-                },
-                (error) => {
-                    // Ignore continuous scan errors when no QR is in frame
-                }
-            );
-
-            return () => {
-                scanner.clear().catch(e => console.error("Failed to clear scanner", e));
-            };
-        }
-    }, [scanMode]);
 
     const fetchResidentProfile = async (resId: number) => {
         if (!resId) return;
@@ -149,11 +122,34 @@ const VerifyVisitor: React.FC = () => {
                         </div>
 
                         {scanMode === 'camera' ? (
-                            <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200 min-h-[250px] justify-center">
-                                <div id="reader" className="w-full overflow-hidden rounded-xl border-2 border-dashed border-emerald-500/30 bg-gray-50 [&>div]:border-none [&>div>div]:shadow-none" />
+                            <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200 min-h-[250px] justify-center items-center">
+                                <div className="w-full max-w-[280px] overflow-hidden rounded-2xl border-4 border-gray-100 shadow-inner">
+                                    <Scanner 
+                                        onScan={(result) => {
+                                            if (result && result.length > 0) {
+                                                const code = result[0].rawValue.trim().toUpperCase();
+                                                setVisitCode(code);
+                                                setScanMode('manual');
+                                                verifyCodeDirectly(code);
+                                            }
+                                        }}
+                                        formats={['qr_code']}
+                                        components={{
+                                            audio: false,
+                                            onOff: true,
+                                            torch: true,
+                                            zoom: true,
+                                            finder: true,
+                                        }}
+                                        styles={{
+                                            container: { borderRadius: '1rem', width: '100%', aspectRatio: '1/1' },
+                                            video: { objectFit: 'cover' }
+                                        }}
+                                    />
+                                </div>
                                 <div className="text-center">
-                                    <p className="text-[0.8rem] font-medium text-emerald-600">Camera Active</p>
-                                    <p className="text-[0.7rem] text-gray-400 mt-0.5">Point your camera at the visitor's QR code. It will scan automatically.</p>
+                                    <p className="text-[0.8rem] font-medium text-emerald-600 animate-pulse">Scanning for QR Passes...</p>
+                                    <p className="text-[0.7rem] text-gray-400 mt-0.5">Please ensure your browser has camera permissions.</p>
                                 </div>
                             </div>
                         ) : (
