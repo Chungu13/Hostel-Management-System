@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ShieldCheck, Fingerprint, CheckCircle,
-    XCircle, Loader2, ScanLine, ChevronLeft
+    XCircle, Loader2, ScanLine, ChevronLeft, Camera
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 
 const VerifyVisitor: React.FC = () => {
     const [visitCode, setVisitCode] = useState('');
@@ -14,6 +15,34 @@ const VerifyVisitor: React.FC = () => {
     const [result, setResult] = useState<{ success: boolean; message: string; data?: any } | null>(null);
     const [selectedResident, setSelectedResident] = useState<any | null>(null);
     const [fetchingResident, setFetchingResident] = useState(false);
+    const [scanMode, setScanMode] = useState<'manual' | 'camera'>('manual');
+
+    useEffect(() => {
+        if (scanMode === 'camera') {
+            const scanner = new Html5QrcodeScanner(
+                "reader",
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                false
+            );
+
+            scanner.render(
+                (decodedText) => {
+                    const code = decodedText.trim().toUpperCase();
+                    setVisitCode(code);
+                    scanner.clear();
+                    setScanMode('manual');
+                    verifyCodeDirectly(code);
+                },
+                (error) => {
+                    // Ignore continuous scan errors when no QR is in frame
+                }
+            );
+
+            return () => {
+                scanner.clear().catch(e => console.error("Failed to clear scanner", e));
+            };
+        }
+    }, [scanMode]);
 
     const fetchResidentProfile = async (resId: number) => {
         if (!resId) return;
@@ -28,18 +57,22 @@ const VerifyVisitor: React.FC = () => {
         }
     };
 
-    const handleVerify = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const verifyCodeDirectly = async (code: string) => {
         setLoading(true);
         setResult(null);
         try {
-            const response = await api.post('/api/security/verify', { visitCode });
+            const response = await api.post('/api/security/verify', { visitCode: code });
             setResult({ success: true, message: response.data.message, data: response.data });
         } catch (err: any) {
             setResult({ success: false, message: err.response?.data?.message || 'Verification failed.' });
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleVerify = async (e: React.FormEvent) => {
+        e.preventDefault();
+        verifyCodeDirectly(visitCode);
     };
 
     const handleReset = () => {
@@ -92,14 +125,38 @@ const VerifyVisitor: React.FC = () => {
                         }}
                     >
                         {/* Card header */}
-                        <div className="flex items-center gap-3 mb-6">
-
+                        <div className="flex items-center justify-between mb-6">
                             <div>
-                                <h2 className="text-[0.9rem] font-bold text-gray-900 leading-tight">Enter Access Code</h2>
-                                <p className="text-xs text-gray-400 mt-0.5">Found on the visitor's QR pass</p>
+                                <h2 className="text-[0.9rem] font-bold text-gray-900 leading-tight">Visitor Access</h2>
+                                <p className="text-xs text-gray-400 mt-0.5">Enter code or scan QR pass</p>
+                            </div>
+                            <div className="flex bg-gray-100 p-1 rounded-lg">
+                                <button 
+                                    type="button"
+                                    onClick={() => setScanMode('manual')}
+                                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${scanMode === 'manual' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    Manual
+                                </button>
+                                <button 
+                                    type="button"
+                                    onClick={() => setScanMode('camera')}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md transition-all ${scanMode === 'camera' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    <Camera size={13} /> Camera
+                                </button>
                             </div>
                         </div>
 
+                        {scanMode === 'camera' ? (
+                            <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200 min-h-[250px] justify-center">
+                                <div id="reader" className="w-full overflow-hidden rounded-xl border-2 border-dashed border-emerald-500/30 bg-gray-50 [&>div]:border-none [&>div>div]:shadow-none" />
+                                <div className="text-center">
+                                    <p className="text-[0.8rem] font-medium text-emerald-600">Camera Active</p>
+                                    <p className="text-[0.7rem] text-gray-400 mt-0.5">Point your camera at the visitor's QR code. It will scan automatically.</p>
+                                </div>
+                            </div>
+                        ) : (
                         <form onSubmit={handleVerify} className="flex flex-col gap-5">
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-[0.72rem] font-medium text-gray-500 uppercase tracking-wider">
@@ -140,6 +197,7 @@ const VerifyVisitor: React.FC = () => {
                                 {loading ? 'Checking…' : 'Verify Access Pass'}
                             </button>
                         </form>
+                        )}
                     </motion.div>
 
                     {/* ── Result Card ── */}
