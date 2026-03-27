@@ -1,4 +1,4 @@
-# Malo - Visitor Verification for Residential Properties 
+# GatePass — Visitor Verification for Residential Properties 🏨
 
 > A multi-tenant, full-stack visitor verification platform for hostels, apartment complexes, and residential properties. Residents generate session-scoped QR passes for their visitors, security staff verify them at the gate, and property admins manage the entire operation from a live dashboard.
 
@@ -61,7 +61,7 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 
 - **Logical multi-tenancy via `propertyId`** — All tenants share the same database schema, with every record scoped to a `propertyId`. This keeps infrastructure simple and cost-effective while enforcing strict data isolation at the application layer. Every API query is tenant-scoped, preventing cross-property data leakage.
 
-- **Resident-initiated visitor QR passes** — Rather than issuing QR codes centrally, residents generate passes themselves. Each pass is session-scoped, single-use, and tied to a specific visitor and time window — meaning the trust chain runs from the resident outward, not from the system. This required building a pass lifecycle system with state transitions (pending → used → expired).
+- **Resident-initiated visitor QR passes** — Rather than issuing QR codes centrally, residents generate passes themselves. Each pass is tied to a specific visitor and validity window, with a status-based lifecycle (pending → verified → expired). The first scan officially logs the visitor's arrival; subsequent scans continue to show "Verified" — mirroring how a physical visitor badge works, so a visitor can present their pass to multiple guards throughout their visit without being blocked.
 
 - **Hybrid Google OAuth flow** — The frontend initiates Google's OAuth consent flow and receives an identity token. The backend independently verifies the token against Google's public keys and issues its own JWT, keeping session management fully under application control rather than delegating it to Google.
 
@@ -79,12 +79,14 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 
 ### 🧍 Visitor — Frictionless gate entry
 - Receives a QR pass from a resident (via link or screenshot)
-- Presents QR code at the gate for scanning
+- Presents QR code at the gate — first scan logs arrival and marks pass as Verified
+- Can show the same pass to multiple guards throughout their visit
 - No account or app required
 
 ### 🏠 Resident — Visitor management
 - Register via email/password or Google OAuth
-- Generate single-use, time-limited QR passes for visitors
+- Generate time-limited QR passes for expected visitors
+- Pass status transitions from Pending → Verified on first scan
 - View pass history and visitor activity log
 
 ### 👑 Property Admin — Full property oversight
