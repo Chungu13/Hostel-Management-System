@@ -1,6 +1,6 @@
-# GatePass — Visitor Verification for Residential Properties 🏨
+# Malo — Visitor Verification for Residential Properties 
 
-> A multi-tenant, full-stack visitor verification platform for hostels, apartment complexes, and residential properties. Residents generate status-based QR passes for their visitors, security staff verify them at the gate, and property admins manage the entire operation from a live dashboard.
+> A multi-tenant, full-stack visitor verification platform for hostels, apartment complexes, and residential properties. Residents generate status-based QR passes for their visitors, security staff verify them at the gate, and property admins manage the entire operation.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Resident%20Portal-brightgreen)](#)
 [![Admin Portal](https://img.shields.io/badge/Live%20Demo-Admin%20Portal-blue)](#)
@@ -25,23 +25,23 @@
 
 | Portal | URL |
 |---|---|
-| 🏠 Resident Portal | your-resident-url |
-| 🛠️ Admin Dashboard | your-admin-url |
-| 📖 API Docs (Swagger) | your-api-url/swagger-ui.html |
+| Resident Portal | your-resident-url |
+| Admin Dashboard | your-admin-url |
+| API Docs (Swagger) | your-api-url/swagger-ui.html |
 
 ---
 
-## 🧩 Problem & Solution
+## Problem & Solution
 
-Residential properties — hostels, apartments, and complexes — have no reliable way to verify visitors beyond a manual sign-in book. This creates security gaps, no audit trail, and no way for residents to pre-authorise guests.
+Residential properties - hostels, apartments, and complexes, have no reliable way to verify visitors beyond a manual sign-in book. This creates security gaps, no audit trail, and no way for residents to pre-authorise guests.
 
-GatePass solves this with a resident-initiated QR pass system: residents generate a time-limited, single-use QR code for their visitor, the visitor presents it at the gate, and security staff scan it to verify entry — all with a full audit log per property.
+Malo solves this with a resident-initiated QR pass system: residents generate a reusable, time-limited QR code for their visitor, the visitor presents it at the gate, and security staff scan it to verify entry all.
 
 The platform is multi-tenant, meaning a single deployment serves multiple independent properties, each with fully isolated data.
 
 ---
 
-## ⚙️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -73,7 +73,7 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 
 ---
 
-## ✨ Features
+##  Features
 
 > Access is controlled via JWT-based RBAC, scoped per tenant. Each role sees only what's relevant to their property and function.
 
