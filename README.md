@@ -1,4 +1,4 @@
-# Malo — Visitor Verification for Residential Properties 
+# Malo - Visitor Verification for Residential Properties 
 
 > A multi-tenant, full-stack visitor verification platform for hostels, apartment complexes, and residential properties. Residents generate status-based QR passes for their visitors, security staff verify them at the gate, and property admins manage the entire operation.
 
