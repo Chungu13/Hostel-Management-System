@@ -13,7 +13,7 @@
 
 ## 🎥 Demo
 
-[![GatePass Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+[![Malo Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
 
 > Covers the full visitor pass flow — resident generates a QR pass, visitor presents it at the gate, first scan logs arrival and marks the pass as Verified.
 
@@ -57,17 +57,17 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 
 ---
 
-## 🔑 Key Engineering Decisions
+## Key Engineering Decisions
 
-- **Logical multi-tenancy via `propertyId`** — Shared database schema with every record scoped to a `propertyId`. All API queries are tenant-scoped, preventing cross-property data leakage.
+- **Logical multi-tenancy via `propertyId`** - Shared database schema with every record scoped to a `propertyId`. All API queries are tenant-scoped, preventing cross-property data leakage.
 
-- **Status + time-based QR passes** — Resident-generated passes follow a dual expiry model: status-based (pending → verified → expired) and a hard 24-hour time limit. First scan logs arrival; subsequent scans still show Verified so visitors can pass multiple checkpoints.
+- **Status + time-based QR passes** - Resident-generated passes follow a dual expiry model: status-based (pending → verified → expired) and a hard 24-hour time limit. First scan logs arrival; subsequent scans still show Verified so visitors can pass multiple checkpoints.
 
-- **Hybrid Google OAuth** — Frontend initiates the OAuth flow, backend independently verifies the Google token and issues its own JWT, keeping session control server-side.
+- **Hybrid Google OAuth** - Frontend initiates the OAuth flow, backend independently verifies the Google token and issues its own JWT, keeping session control server-side.
 
 - **Unified auth pipeline** — Email/password and Google OAuth both resolve to the same internal user model via Spring Security, with no duplicate logic.
 
-- **Tenant-scoped RBAC** — Roles are evaluated per property, not globally. The same user can hold different roles across different properties.
+- **Tenant-scoped RBAC** — Roles are evaluated per property, not globally. A user's permissions are always scoped to the property they belong to.
 
 - **Docker-first deployment** — Full stack orchestrated via `docker-compose` for reproducible builds and consistent deployments.
 
