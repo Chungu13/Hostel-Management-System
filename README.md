@@ -1,6 +1,6 @@
 # GatePass — Visitor Verification for Residential Properties 🏨
 
-> A multi-tenant, full-stack visitor verification platform for hostels, apartment complexes, and residential properties. Residents generate session-scoped QR passes for their visitors, security staff verify them at the gate, and property admins manage the entire operation from a live dashboard.
+> A multi-tenant, full-stack visitor verification platform for hostels, apartment complexes, and residential properties. Residents generate status-based QR passes for their visitors, security staff verify them at the gate, and property admins manage the entire operation from a live dashboard.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Resident%20Portal-brightgreen)](#)
 [![Admin Portal](https://img.shields.io/badge/Live%20Demo-Admin%20Portal-blue)](#)
@@ -15,7 +15,7 @@
 
 [![GatePass Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
 
-> Covers the full visitor pass flow — resident generates a QR code, visitor presents it at the gate, security verifies entry.
+> Covers the full visitor pass flow — resident generates a QR pass, visitor presents it at the gate, first scan logs arrival and marks the pass as Verified.
 
 *Replace `YOUR_VIDEO_ID` with your YouTube or Loom link before publishing.*
 
@@ -61,7 +61,7 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 
 - **Logical multi-tenancy via `propertyId`** — All tenants share the same database schema, with every record scoped to a `propertyId`. This keeps infrastructure simple and cost-effective while enforcing strict data isolation at the application layer. Every API query is tenant-scoped, preventing cross-property data leakage.
 
-- **Resident-initiated visitor QR passes** — Rather than issuing QR codes centrally, residents generate passes themselves. Each pass is tied to a specific visitor and validity window, with a status-based lifecycle (pending → verified → expired). The first scan officially logs the visitor's arrival; subsequent scans continue to show "Verified" — mirroring how a physical visitor badge works, so a visitor can present their pass to multiple guards throughout their visit without being blocked.
+- **Resident-initiated visitor QR passes** — Rather than issuing QR codes centrally, residents generate passes themselves. Each pass has a dual expiry model: it follows a status-based lifecycle (pending → verified → expired) where the first scan logs arrival and marks the pass as Verified, and a hard 24-hour time limit after which the pass becomes invalid regardless of status. This mirrors how a physical day-pass works — a visitor can show it to multiple guards throughout their visit, but it cannot be reused the next day.
 
 - **Hybrid Google OAuth flow** — The frontend initiates Google's OAuth consent flow and receives an identity token. The backend independently verifies the token against Google's public keys and issues its own JWT, keeping session management fully under application control rather than delegating it to Google.
 
@@ -81,12 +81,13 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 - Receives a QR pass from a resident (via link or screenshot)
 - Presents QR code at the gate — first scan logs arrival and marks pass as Verified
 - Can show the same pass to multiple guards throughout their visit
+- Pass automatically expires 24 hours after generation
 - No account or app required
 
 ### 🏠 Resident — Visitor management
 - Register via email/password or Google OAuth
-- Generate time-limited QR passes for expected visitors
-- Pass status transitions from Pending → Verified on first scan
+- Generate QR passes valid for 24 hours for expected visitors
+- Pass status transitions from Pending → Verified on first scan, Expired after 24 hours
 - View pass history and visitor activity log
 
 ### 👑 Property Admin — Full property oversight
