@@ -65,11 +65,11 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 
 - **Hybrid Google OAuth** - Frontend initiates the OAuth flow, backend independently verifies the Google token and issues its own JWT, keeping session control server-side.
 
-- **Unified auth pipeline** — Email/password and Google OAuth both resolve to the same internal user model via Spring Security, with no duplicate logic.
+- **Unified auth pipeline** - Email/password and Google OAuth both resolve to the same internal user model via Spring Security, with no duplicate logic.
 
-- **Tenant-scoped RBAC** — Roles are evaluated per property, not globally. A user's permissions are always scoped to the property they belong to.
+- **Tenant-scoped RBAC** - Roles are evaluated per property, not globally. A user's permissions are always scoped to the property they belong to.
 
-- **Docker-first deployment** — Full stack orchestrated via `docker-compose` for reproducible builds and consistent deployments.
+- **Docker-first deployment** - Full stack orchestrated via `docker-compose` for reproducible builds and consistent deployments.
 
 ---
 
@@ -77,20 +77,20 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 
 > Access is controlled via JWT-based RBAC, scoped per tenant. Each role sees only what's relevant to their property and function.
 
-### 🧍 Visitor — Frictionless gate entry
+### 🧍 Visitor - Frictionless gate entry
 - Receives a QR pass from a resident (via link or screenshot)
-- Presents QR code at the gate — first scan logs arrival and marks pass as Verified
+- Presents QR code at the gate, first scan logs arrival and marks pass as Verified
 - Can show the same pass to multiple guards throughout their visit
 - Pass automatically expires 24 hours after generation
 - No account or app required
 
-### 🏠 Resident — Visitor management
+### 🏠 Resident - Visitor management
 - Register via email/password or Google OAuth
 - Generate QR passes valid for 24 hours for expected visitors
 - Pass status transitions from Pending → Verified on first scan, Expired after 24 hours
 - View pass history and visitor activity log
 
-### 👑 Property Admin — Full property oversight
+### 👑 Property Admin - Full property oversight
 - Manage resident accounts and onboarding
 - View all visitor logs and entry history for their property
 - Monitor pass activity and flag anomalies
@@ -113,10 +113,10 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 ```
 
 **Production Infrastructure:**
-- **Frontend/Admin** — Vercel with automatic Git deployments
-- **Backend** — Dockerized, deployed via docker-compose
-- **Database** — MySQL (production), H2 in-memory (development)
-- **Security** — Rate limiting via Bucket4j, JWT session management, HTTPS
+- **Frontend/Admin** - Vercel with automatic Git deployments
+- **Backend** - Dockerized, deployed via docker-compose
+- **Database** - MySQL (production), H2 in-memory (development)
+- **Security** - Rate limiting via Bucket4j, JWT session management, HTTPS
 
 ---
 
@@ -126,7 +126,7 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 - Java 17
 - Node.js 18+
 - Maven
-- MySQL (optional — defaults to H2 in development)
+- MySQL (optional - defaults to H2 in development)
 
 ### 1. Clone
 
@@ -173,4 +173,4 @@ docker-compose up --build
 
 ## 📌 About
 
-Built to explore multi-tenant SaaS architecture, OAuth2 authentication flows, and role-scoped access control in a real-world residential security context. Designed to be property-agnostic — any hostel, apartment complex, or gated community can onboard as an independent tenant.
+Built to explore multi-tenant SaaS architecture, OAuth2 authentication flows, and role-scoped access control in a real-world residential security context. Any hostel, apartment complex, or gated community can sign up and run as their own independent space on the platform.
