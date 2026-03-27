@@ -59,17 +59,17 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 
 ## 🔑 Key Engineering Decisions
 
-- **Logical multi-tenancy via `propertyId`** — All tenants share the same database schema, with every record scoped to a `propertyId`. This keeps infrastructure simple and cost-effective while enforcing strict data isolation at the application layer. Every API query is tenant-scoped, preventing cross-property data leakage.
+- **Logical multi-tenancy via `propertyId`** — Shared database schema with every record scoped to a `propertyId`. All API queries are tenant-scoped, preventing cross-property data leakage.
 
-- **Resident-initiated visitor QR passes** — Rather than issuing QR codes centrally, residents generate passes themselves. Each pass has a dual expiry model: it follows a status-based lifecycle (pending → verified → expired) where the first scan logs arrival and marks the pass as Verified, and a hard 24-hour time limit after which the pass becomes invalid regardless of status. This mirrors how a physical day-pass works — a visitor can show it to multiple guards throughout their visit, but it cannot be reused the next day.
+- **Status + time-based QR passes** — Resident-generated passes follow a dual expiry model: status-based (pending → verified → expired) and a hard 24-hour time limit. First scan logs arrival; subsequent scans still show Verified so visitors can pass multiple checkpoints.
 
-- **Hybrid Google OAuth flow** — The frontend initiates Google's OAuth consent flow and receives an identity token. The backend independently verifies the token against Google's public keys and issues its own JWT, keeping session management fully under application control rather than delegating it to Google.
+- **Hybrid Google OAuth** — Frontend initiates the OAuth flow, backend independently verifies the Google token and issues its own JWT, keeping session control server-side.
 
-- **Dual authentication methods** — Supports both email/password and Google OAuth through a unified authentication pipeline, with Spring Security resolving both flows to the same internal user model.
+- **Unified auth pipeline** — Email/password and Google OAuth both resolve to the same internal user model via Spring Security, with no duplicate logic.
 
-- **Role-based access per tenant** — Each property has its own Resident, Security, and Admin roles. A user's permissions are always evaluated in the context of their tenant, not globally — meaning the same person could be an admin at one property and a resident at another.
+- **Tenant-scoped RBAC** — Roles are evaluated per property, not globally. The same user can hold different roles across different properties.
 
-- **Docker-first deployment** — The entire backend stack is orchestrated via `docker-compose`, making environment setup reproducible and deployment consistent across machines.
+- **Docker-first deployment** — Full stack orchestrated via `docker-compose` for reproducible builds and consistent deployments.
 
 ---
 
