@@ -13,11 +13,13 @@
 
 ## 🎥 Demo
 
-[![Malo Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+[![Malo Demo]
+
+https://www.loom.com/share/202d7252a8864fed9cad0cd42dd49113
 
 > Covers the full visitor pass flow — resident generates a QR pass, visitor presents it at the gate, first scan logs arrival and marks the pass as Verified.
 
-*Replace `YOUR_VIDEO_ID` with your YouTube or Loom link before publishing.*
+
 
 ---
 
