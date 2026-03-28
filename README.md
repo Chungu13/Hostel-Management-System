@@ -100,7 +100,7 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 .
@@ -122,7 +122,7 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 
 ---
 
-## 🚀 Local Setup
+##  Local Setup
 
 ### Prerequisites
 - Java 17
