@@ -34,6 +34,16 @@ https://www.loom.com/share/202d7252a8864fed9cad0cd42dd49113
 
 ---
 
+## 🔐 Demo Credentials
+
+### Admin / Managing Staff
+- **Email:** chungumuloshi5086@gmail.com
+- **Password:** yourpassword
+
+### Resident
+- **Email:** testresident@gmail.com  
+- **Password:** yourpassword
+
 ## Problem & Solution
 
 Residential properties - hostels, apartments, and complexes, have no reliable way to verify visitors beyond a manual sign-in book. This creates security gaps, no audit trail, and no way for residents to pre-authorise guests.
@@ -80,20 +90,20 @@ The platform is multi-tenant, meaning a single deployment serves multiple indepe
 
 > Access is controlled via JWT-based RBAC, scoped per tenant. Each role sees only what's relevant to their property and function.
 
-### 🧍 Visitor - Frictionless gate entry
+###  Visitor - Frictionless gate entry
 - Receives a QR pass from a resident (via link or screenshot)
 - Presents QR code at the gate, first scan logs arrival and marks pass as Verified
 - Can show the same pass to multiple guards throughout their visit
 - Pass automatically expires 24 hours after generation
 - No account or app required
 
-### 🏠 Resident - Visitor management
+###  Resident - Visitor management
 - Register via email/password or Google OAuth
 - Generate QR passes valid for 24 hours for expected visitors
 - Pass status transitions from Pending → Verified on first scan, Expired after 24 hours
 - View pass history and visitor activity log
 
-### 👑 Property Admin - Full property oversight
+###  Property Admin - Full property oversight
 - Manage resident accounts and onboarding
 - View all visitor logs and entry history for their property
 - Monitor pass activity and flag anomalies
