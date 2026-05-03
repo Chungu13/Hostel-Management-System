@@ -13,7 +13,7 @@
 
 ## 🎥 Demo
 
-[![Malo Demo]
+Malo Demo Video
 
 https://www.loom.com/share/202d7252a8864fed9cad0cd42dd49113
 
@@ -30,14 +30,18 @@ https://www.loom.com/share/202d7252a8864fed9cad0cd42dd49113
 | Resident Portal | https://hostel-management-system-reeq.vercel.app/login |
 | Security Portal | https://hostel-management-system-reeq.vercel.app/login |
 | Admin Portal | https://hostel-management-system-one-vert.vercel.app/login |
-| API Docs (Swagger) | your-api-url/swagger-ui.html |
+
 
 ---
 
-## 🔐 Demo Credentials
+##  Demo Credentials
 
-### Admin / Managing Staff
+### Admin
 - **Email:** chungumuloshi5086@gmail.com
+- **Password:** yourpassword
+
+### Resident
+- **Email:** testresident@gmail.com  
 - **Password:** yourpassword
 
 ### Resident
