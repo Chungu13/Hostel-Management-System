@@ -5,7 +5,7 @@ import { History, CheckCircle2, Calendar } from 'lucide-react'
 export default async function SecurityHistoryPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect('/security/login')
 
   const { data: profile } = await supabase.from('users').select('property_id').eq('id', user.id).single()
 
@@ -34,7 +34,7 @@ export default async function SecurityHistoryPage() {
         <div className="flex flex-col gap-3 max-w-2xl">
           {(records ?? []).map(r => (
             <div key={r.id} className="card flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-emerald-600/10 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-md bg-emerald-600/10 flex items-center justify-center">
                 <CheckCircle2 size={18} className="text-emerald-600" />
               </div>
               <div className="flex-1">

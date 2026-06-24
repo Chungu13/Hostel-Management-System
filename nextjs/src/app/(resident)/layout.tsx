@@ -13,12 +13,12 @@ export default async function ResidentLayout({ children }: { children: React.Rea
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'Resident') redirect('/login')
+  if (profile?.role !== 'Resident') redirect('/login')  // residents redirect to resident portal
 
   return (
-    <div className="flex min-h-screen bg-[#f7f7f5]" style={{ backgroundImage: 'radial-gradient(circle at 5% 10%, rgba(134,197,152,0.10) 0%, transparent 45%), radial-gradient(circle at 95% 90%, rgba(134,197,152,0.07) 0%, transparent 45%)' }}>
+    <div className="flex min-h-screen bg-[#fafafa]">
       <Sidebar role="Resident" name={profile.full_name ?? ''} email={profile.email ?? ''} />
-      <main className="w-full box-border px-5 py-6 md:py-10 md:pl-20 md:pr-10">
+      <main className="w-full box-border px-5 py-8 md:py-12 md:pl-20 md:pr-10">
         {children}
       </main>
     </div>

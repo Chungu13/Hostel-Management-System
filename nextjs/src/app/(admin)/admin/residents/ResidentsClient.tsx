@@ -2,11 +2,10 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, Search, Plus, CheckCircle2, XCircle, Loader2, X, Trash2 } from 'lucide-react'
+import { Search, Plus, Loader2, X, Trash2, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 type Resident = { id: string; name: string; email: string; phone?: string; room?: string; gender?: string; approved: boolean }
-
 interface Props { propertyId: string; residents: Resident[] }
 
 export default function ResidentsClient({ propertyId, residents: initial }: Props) {
@@ -27,14 +26,12 @@ export default function ResidentsClient({ propertyId, residents: initial }: Prop
     e.preventDefault()
     setLoading(true)
     setError('')
-
     const { data, error: err } = await supabase
       .from('residents')
       .insert({ ...form, property_id: propertyId, approved: false })
       .select()
       .single()
-
-    if (err || !data) { setError('Failed to add resident.'); setLoading(false); return }
+    if (err || !data) { setError(err?.message ?? 'Failed to add resident.'); setLoading(false); return }
     setResidents(r => [data, ...r])
     setShowAdd(false)
     setForm({ name: '', email: '', phone: '', room: '', gender: 'Male' })
@@ -53,49 +50,60 @@ export default function ResidentsClient({ propertyId, residents: initial }: Prop
 
   return (
     <>
-      <header className="mb-7 flex items-start justify-between gap-4">
+      <header className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <h1 className="page-title flex items-center gap-2"><Users size={24} className="text-zinc-400" /><span className="text-black">Residents</span></h1>
-          <p className="mt-1 text-sm text-zinc-400">Manage property residents.</p>
+          <p className="text-[0.7rem] font-semibold text-zinc-400 tracking-[0.14em] uppercase mb-1">Admin</p>
+          <h1 className="text-[1.85rem] font-bold text-zinc-900 tracking-[-0.03em]">Residents</h1>
         </div>
-        <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition">
-          <Plus size={16} /> Add Resident
+        <button
+          onClick={() => setShowAdd(true)}
+          className="flex items-center gap-2 px-4 py-2.5 text-[0.82rem] font-semibold text-white bg-zinc-900 hover:bg-zinc-800 transition-colors"
+        >
+          <Plus size={14} /> Add Resident
         </button>
       </header>
 
-      <div className="mb-5 relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-300 w-4 h-4" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search residents…" className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-zinc-200 rounded-xl outline-none focus:border-emerald-500 transition" />
+      <div className="mb-6 relative max-w-xs">
+        <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-zinc-300 w-4 h-4" />
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search residents..."
+          className="w-full pl-6 pr-3 py-2.5 text-[0.875rem] bg-transparent border-0 border-b border-zinc-200 outline-none focus:border-zinc-900 transition-colors placeholder:text-zinc-300"
+        />
       </div>
 
       {filtered.length === 0 ? (
-        <div className="card text-center py-12">
-          <Users size={32} className="text-zinc-200 mx-auto mb-3" />
-          <p className="text-sm text-zinc-400">No residents found.</p>
-        </div>
+        <p className="text-[0.875rem] text-zinc-400 py-10">No residents found.</p>
       ) : (
-        <div className="flex flex-col gap-3 max-w-2xl">
+        <div className="border border-zinc-100 divide-y divide-zinc-100 bg-white max-w-2xl">
           {filtered.map(r => (
-            <div key={r.id} className="card flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-emerald-600/10 flex items-center justify-center text-emerald-600 font-bold text-sm">
+            <div key={r.id} className="flex items-center gap-4 px-5 py-4">
+              <div className="w-8 h-8 bg-zinc-100 flex items-center justify-center text-[0.8rem] font-bold text-zinc-700 shrink-0">
                 {r.name[0]}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-zinc-900">{r.name}</div>
-                <div className="text-xs text-zinc-400">{r.email} {r.room ? `· Room ${r.room}` : ''}</div>
+                <div className="text-[0.88rem] font-semibold text-zinc-900">{r.name}</div>
+                <div className="text-[0.75rem] text-zinc-400">
+                  {r.email}{r.room ? ` · Room ${r.room}` : ''}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {r.approved ? (
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full">
-                    <CheckCircle2 size={11} /> Approved
-                  </span>
+                  <span className="text-[0.72rem] font-semibold text-[#4caf6e] tracking-wide">Approved</span>
                 ) : (
-                  <button onClick={() => handleApprove(r.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full hover:bg-amber-100 transition">
-                    Approve
+                  <button
+                    onClick={() => handleApprove(r.id)}
+                    className="flex items-center gap-1.5 text-[0.75rem] font-semibold text-zinc-500 border border-zinc-200 px-2.5 py-1 hover:bg-zinc-50 transition-colors"
+                  >
+                    <Check size={11} /> Approve
                   </button>
                 )}
-                <button onClick={() => handleDelete(r.id)} className="w-7 h-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-rose-500 hover:bg-rose-50 transition">
-                  <Trash2 size={14} />
+                <button
+                  onClick={() => handleDelete(r.id)}
+                  className="w-7 h-7 flex items-center justify-center text-zinc-300 hover:text-rose-500 transition-colors"
+                >
+                  <Trash2 size={13} />
                 </button>
               </div>
             </div>
@@ -103,41 +111,62 @@ export default function ResidentsClient({ propertyId, residents: initial }: Prop
         </div>
       )}
 
-      {/* Add Modal */}
       <AnimatePresence>
         {showAdd && (
           <>
-            <motion.div className="fixed inset-0 z-[400] bg-black/30 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAdd(false)} />
             <motion.div
-              className="fixed inset-x-4 top-1/2 z-[500] bg-white rounded-[24px] p-6 max-w-md mx-auto -translate-y-1/2"
-              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="fixed inset-0 z-[400] bg-black/20"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowAdd(false)}
+            />
+            <motion.div
+              className="fixed inset-x-4 top-1/2 z-[500] bg-white p-8 max-w-md mx-auto -translate-y-1/2 shadow-lg"
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.2 }}
             >
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-bold text-zinc-900">Add Resident</h3>
-                <button onClick={() => setShowAdd(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-100 hover:bg-zinc-200 transition"><X size={16} /></button>
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-[1.1rem] font-bold text-zinc-900 tracking-tight">Add Resident</h3>
+                <button onClick={() => setShowAdd(false)} className="w-7 h-7 flex items-center justify-center border border-zinc-200 hover:bg-zinc-50 transition">
+                  <X size={13} className="text-zinc-500" />
+                </button>
               </div>
-              <form onSubmit={handleAdd} className="flex flex-col gap-3">
+              <form onSubmit={handleAdd} className="flex flex-col gap-6">
                 {[
                   { label: 'Full Name', key: 'name', type: 'text', placeholder: 'Jane Doe', required: true },
                   { label: 'Email', key: 'email', type: 'email', placeholder: 'jane@example.com', required: true },
-                  { label: 'Phone', key: 'phone', type: 'text', placeholder: '+260XXXXXXXXX', required: false },
+                  { label: 'Phone', key: 'phone', type: 'text', placeholder: '+260 XXXXXXXXX', required: false },
                   { label: 'Room', key: 'room', type: 'text', placeholder: 'A203', required: false },
                 ].map(({ label, key, type, placeholder, required }) => (
-                  <div key={key} className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{label}</label>
-                    <input type={type} value={form[key as keyof typeof form]} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))} placeholder={placeholder} required={required} className="w-full px-3 py-2.5 text-sm bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white transition" />
+                  <div key={key}>
+                    <label className="block text-[0.7rem] font-semibold text-zinc-400 tracking-[0.12em] uppercase mb-2">{label}</label>
+                    <input
+                      type={type}
+                      value={form[key as keyof typeof form]}
+                      onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
+                      placeholder={placeholder}
+                      required={required}
+                      className="w-full bg-transparent border-0 border-b border-zinc-200 px-0 py-2.5 text-[0.9rem] text-zinc-900 outline-none focus:border-zinc-900 transition-colors placeholder:text-zinc-300"
+                    />
                   </div>
                 ))}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Gender</label>
-                  <select value={form.gender} onChange={e => setForm(p => ({ ...p, gender: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:border-emerald-500 transition">
+                <div>
+                  <label className="block text-[0.7rem] font-semibold text-zinc-400 tracking-[0.12em] uppercase mb-2">Gender</label>
+                  <select
+                    value={form.gender}
+                    onChange={e => setForm(p => ({ ...p, gender: e.target.value }))}
+                    className="w-full bg-transparent border-0 border-b border-zinc-200 px-0 py-2.5 text-[0.9rem] text-zinc-900 outline-none focus:border-zinc-900 transition-colors"
+                  >
                     <option>Male</option><option>Female</option><option>Other</option>
                   </select>
                 </div>
-                {error && <p className="text-sm text-rose-500 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">{error}</p>}
-                <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition disabled:opacity-60">
-                  {loading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                  {loading ? 'Adding…' : 'Add Resident'}
+                {error && <p className="text-[0.82rem] text-rose-500">{error}</p>}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full mt-2 py-3 bg-zinc-900 text-white text-[0.88rem] font-semibold hover:bg-zinc-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading && <Loader2 size={14} className="animate-spin" />}
+                  {loading ? 'Adding...' : 'Add Resident'}
                 </button>
               </form>
             </motion.div>

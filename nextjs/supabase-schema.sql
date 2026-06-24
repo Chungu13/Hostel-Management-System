@@ -128,6 +128,17 @@ create policy "users_own" on users for all using (auth.uid() = id);
 -- Properties readable by anyone authenticated
 create policy "properties_read" on properties for select using (auth.role() = 'authenticated');
 
+-- Allow managing staff to create and update their own property
+create policy "properties_insert" on properties for insert
+  with check (auth.uid() = admin_id);
+
+create policy "properties_manage" on properties for update
+  using (admin_id = auth.uid())
+  with check (admin_id = auth.uid());
+
+create policy "properties_delete" on properties for delete
+  using (admin_id = auth.uid());
+
 -- Residents: visible within same property
 create policy "residents_property" on residents for all
   using (property_id = (select property_id from users where id = auth.uid()));

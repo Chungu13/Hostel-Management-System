@@ -50,7 +50,7 @@ export default async function ResidentDashboard() {
           <h1 className="page-title">Hello, <span className="text-black">{displayName}</span></h1>
           <p className="m-0 text-sm font-normal text-zinc-400">Manage your visitor passes and stay updated.</p>
         </div>
-        <div className="mt-1 inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-[0.8rem] font-medium text-zinc-500 shadow-sm">
+        <div className="mt-1 inline-flex items-center gap-2 whitespace-nowrap rounded-md border border-zinc-200 bg-white px-3.5 py-2 text-[0.8rem] font-medium text-zinc-500 shadow-sm">
           <Calendar size={14} />
           {todayLabel}
         </div>
@@ -58,8 +58,8 @@ export default async function ResidentDashboard() {
 
       {/* Stat Cards */}
       <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="relative overflow-hidden rounded-[18px] border border-black/5 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)]">
-          <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[10px] bg-emerald-600/10">
+        <div className="relative overflow-hidden rounded-md border border-black/5 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)]">
+          <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-emerald-600/10">
             <CheckCircle2 size={20} className="text-emerald-600" />
           </div>
           <div className="mb-1 text-[2rem] font-bold tracking-[-0.03em] leading-none text-zinc-900">{approvedVisits.length}</div>
@@ -67,8 +67,8 @@ export default async function ResidentDashboard() {
           <div className="absolute bottom-0 left-0 right-0 h-[3px] rounded-b-[18px] bg-gradient-to-r from-emerald-600 to-emerald-300" />
         </div>
 
-        <div className="relative overflow-hidden rounded-[18px] border border-black/5 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)]">
-          <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[10px] bg-sky-500/10">
+        <div className="relative overflow-hidden rounded-md border border-black/5 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)]">
+          <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-sky-500/10">
             <Calendar size={20} className="text-sky-400" />
           </div>
           <div className="mb-1 text-[1.1rem] font-bold tracking-[-0.02em] leading-snug text-zinc-900">
@@ -90,8 +90,8 @@ export default async function ResidentDashboard() {
           <div className="space-y-3">
             {(onDuty ?? []).length > 0 ? (
               (onDuty ?? []).map((staff, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-bold text-xs">
+                <div key={idx} className="flex items-center gap-3 p-3 rounded-md bg-zinc-50 border border-zinc-100">
+                  <div className="w-8 h-8 rounded bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-bold text-xs">
                     {staff.name?.[0] ?? 'S'}
                   </div>
                   <div>
@@ -102,7 +102,7 @@ export default async function ResidentDashboard() {
                 </div>
               ))
             ) : (
-              <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 flex flex-col items-center text-center">
+              <div className="p-4 rounded-md bg-amber-50 border border-amber-100 flex flex-col items-center text-center">
                 <AlertCircle size={20} className="text-amber-500 mb-2" />
                 <p className="text-xs font-bold text-amber-900">Reduced Presence</p>
                 <p className="text-[10px] text-amber-700 font-medium">Remote monitoring active</p>
@@ -116,9 +116,9 @@ export default async function ResidentDashboard() {
           <h2 className="section-title mb-5">Quick Tools</h2>
           <Link
             href="/resident/visit-request"
-            className="group mb-2.5 flex items-center gap-3.5 rounded-[14px] bg-gradient-to-br from-emerald-600 to-emerald-500 px-4 py-4 text-white shadow-[0_4px_14px_rgba(16,185,129,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(16,185,129,0.32)]"
+            className="group mb-2.5 flex items-center gap-3.5 rounded-md bg-gradient-to-br from-emerald-600 to-emerald-500 px-4 py-4 text-white shadow-[0_4px_14px_rgba(16,185,129,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(16,185,129,0.32)]"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-white/20">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-white/20">
               <PlusCircle size={20} className="text-white" />
             </div>
             <div className="flex-1">
@@ -129,9 +129,9 @@ export default async function ResidentDashboard() {
           </Link>
           <Link
             href="/resident/history"
-            className="group flex items-center gap-3.5 rounded-[14px] border border-zinc-200 bg-zinc-50 px-4 py-4 text-zinc-800 transition hover:-translate-y-0.5 hover:bg-zinc-100"
+            className="group flex items-center gap-3.5 rounded-md border border-zinc-200 bg-zinc-50 px-4 py-4 text-zinc-800 transition hover:-translate-y-0.5 hover:bg-zinc-100"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-emerald-600/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-600/10">
               <History size={20} className="text-emerald-600" />
             </div>
             <div className="flex-1">
@@ -148,7 +148,7 @@ export default async function ResidentDashboard() {
             <AlertCircle size={17} className={(notice as any)?.importance === 'High' ? 'text-rose-500' : 'text-emerald-600'} />
             Resident Notice
           </h2>
-          <div className="rounded-[14px] border border-zinc-200 bg-zinc-50 p-4">
+          <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
             {notice && (
               <div className="flex items-center gap-2 mb-2.5">
                 <span className="text-[0.9rem] font-bold text-zinc-900">{(notice as any).title}</span>

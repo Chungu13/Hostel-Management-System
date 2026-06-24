@@ -34,7 +34,7 @@ export default function AdminProfileClient({ userId, profile, property }: Props)
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg space-y-5">
         <div className="card flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-600/10 flex items-center justify-center text-emerald-600 font-bold text-xl">{initials}</div>
+          <div className="w-14 h-14 rounded-md bg-emerald-600/10 flex items-center justify-center text-emerald-600 font-bold text-xl">{initials}</div>
           <div>
             <div className="font-semibold text-zinc-900">{formData.full_name || 'Unnamed'}</div>
             <div className="text-sm text-zinc-400">{profile.email}</div>
@@ -65,12 +65,12 @@ export default function AdminProfileClient({ userId, profile, property }: Props)
               <label className="text-[0.78rem] font-medium text-zinc-500 tracking-[0.06em] uppercase">{label}</label>
               <div className="relative">
                 <Icon className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-300 w-4 h-4" />
-                <input value={formData[key as keyof typeof formData]} onChange={e => setFormData(p => ({ ...p, [key]: e.target.value }))} placeholder={placeholder} className="w-full pl-9 pr-3 py-2.5 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white transition" />
+                <input value={formData[key as keyof typeof formData]} onChange={e => setFormData(p => ({ ...p, [key]: e.target.value }))} placeholder={placeholder} className="w-full pl-9 pr-3 py-2.5 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-md outline-none focus:border-emerald-500 focus:bg-white transition" />
               </div>
             </div>
           ))}
-          {error && <p className="text-sm text-rose-500 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3">{error}</p>}
-          <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-white rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-500 transition hover:opacity-95 disabled:opacity-60">
+          {error && <p className="text-sm text-rose-500 bg-rose-50 border border-rose-200 rounded-md px-4 py-3">{error}</p>}
+          <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-white rounded-md bg-gradient-to-br from-emerald-600 to-emerald-500 transition hover:opacity-95 disabled:opacity-60">
             {loading ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : null}
             {saved ? 'Saved!' : loading ? 'Saving…' : 'Save Changes'}
           </button>

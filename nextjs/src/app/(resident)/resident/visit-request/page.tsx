@@ -59,20 +59,20 @@ export default function RequestVisitPage() {
           </div>
           <h2 className="text-xl font-bold text-zinc-900 mb-2">Pass Created!</h2>
           <p className="text-sm text-zinc-500 mb-4">Share this code with your guest.</p>
-          <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 mb-6">
+          <div className="bg-zinc-50 border border-zinc-200 rounded-md p-4 mb-6">
             <div className="text-[2rem] font-bold tracking-[0.15em] text-emerald-600">{visitCode}</div>
             <div className="text-xs text-zinc-400 mt-1">Visit Access Code</div>
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => { setSuccess(false); setFormData({ visitorName: '', visitDate: '', visitTime: '', purpose: '' }) }}
-              className="flex-1 py-3 rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition"
+              className="flex-1 py-3 rounded-md border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition"
             >
               New Pass
             </button>
             <button
               onClick={() => router.push('/resident/history')}
-              className="flex-1 py-3 rounded-xl bg-emerald-600 text-sm font-medium text-white hover:bg-emerald-700 transition"
+              className="flex-1 py-3 rounded-md bg-emerald-600 text-sm font-medium text-white hover:bg-emerald-700 transition"
             >
               View History
             </button>
@@ -99,7 +99,7 @@ export default function RequestVisitPage() {
                 type="text"
                 value={formData.visitorName}
                 onChange={e => setFormData(p => ({ ...p, visitorName: e.target.value }))}
-                className="w-full pl-10 pr-3 py-3 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] transition"
+                className="w-full pl-10 pr-3 py-3 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-md outline-none focus:border-emerald-500 focus:bg-white focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] transition"
                 placeholder="John Doe"
                 required
               />
@@ -115,7 +115,7 @@ export default function RequestVisitPage() {
                 value={formData.visitDate}
                 onChange={e => setFormData(p => ({ ...p, visitDate: e.target.value }))}
                 min={new Date().toISOString().split('T')[0]}
-                className="w-full pl-10 pr-3 py-3 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] transition"
+                className="w-full pl-10 pr-3 py-3 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-md outline-none focus:border-emerald-500 focus:bg-white focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] transition"
                 required
               />
             </div>
@@ -129,7 +129,7 @@ export default function RequestVisitPage() {
                 type="time"
                 value={formData.visitTime}
                 onChange={e => setFormData(p => ({ ...p, visitTime: e.target.value }))}
-                className="w-full pl-10 pr-3 py-3 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] transition"
+                className="w-full pl-10 pr-3 py-3 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-md outline-none focus:border-emerald-500 focus:bg-white focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] transition"
               />
             </div>
           </div>
@@ -141,19 +141,19 @@ export default function RequestVisitPage() {
               <textarea
                 value={formData.purpose}
                 onChange={e => setFormData(p => ({ ...p, purpose: e.target.value }))}
-                className="w-full pl-10 pr-3 py-3 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] transition resize-none"
+                className="w-full pl-10 pr-3 py-3 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-md outline-none focus:border-emerald-500 focus:bg-white focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] transition resize-none"
                 placeholder="Family visit, delivery, etc."
                 rows={3}
               />
             </div>
           </div>
 
-          {error && <p className="text-[0.82rem] text-rose-500 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3">{error}</p>}
+          {error && <p className="text-[0.82rem] text-rose-500 bg-rose-50 border border-rose-200 rounded-md px-4 py-3">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-3.5 text-sm font-semibold text-white rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-500 shadow-[0_4px_16px_rgba(16,185,129,0.25)] transition hover:opacity-95 hover:-translate-y-[1px] disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 py-3.5 text-sm font-semibold text-white rounded-md bg-gradient-to-br from-emerald-600 to-emerald-500 shadow-[0_4px_16px_rgba(16,185,129,0.25)] transition hover:opacity-95 hover:-translate-y-[1px] disabled:opacity-60"
           >
             {loading ? <Loader2 size={17} className="animate-spin" /> : null}
             {loading ? 'Creating Pass…' : 'Create Visit Pass'}

@@ -22,13 +22,13 @@ export default async function GuestPassPage({ params }: { params: Promise<{ code
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-[#f7f7f5]"
       style={{ backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(134,197,152,0.12) 0%, transparent 50%)' }}>
-      <div className="w-full max-w-sm bg-white rounded-[24px] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.04)]">
+      <div className="w-full max-w-sm bg-white rounded-md overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.04)]">
         <div className="h-[3px] bg-gradient-to-r from-emerald-600 to-emerald-300" />
 
         {/* Header */}
         <div className="px-8 pt-8 pb-4">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-emerald-600 to-emerald-300">
+            <div className="w-7 h-7 rounded flex items-center justify-center bg-gradient-to-br from-emerald-600 to-emerald-300">
               <span className="text-white font-bold text-xs">M</span>
             </div>
             <span className="text-sm font-bold text-zinc-500 tracking-wide uppercase">Malo Guest Pass</span>
@@ -45,7 +45,7 @@ export default async function GuestPassPage({ params }: { params: Promise<{ code
           <div className="px-8 pb-8">
             {/* QR Code */}
             <div className="flex justify-center mb-5">
-              <div className="p-3 bg-zinc-50 border border-zinc-100 rounded-2xl">
+              <div className="p-3 bg-zinc-50 border border-zinc-100 rounded-md">
                 <QRCodeSVG value={visit.visit_code} size={150} />
               </div>
             </div>

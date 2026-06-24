@@ -1,0 +1,175 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Loader2, Check } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+
+export default function AdminRegisterPage() {
+  const [formData, setFormData] = useState({ email: '', password: '', confirmPassword: '' })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+  const router = useRouter()
+  const supabase = createClient()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (formData.password !== formData.confirmPassword) { setError('Passwords do not match.'); return }
+    setLoading(true)
+    setError('')
+
+    const { data, error: authError } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+    })
+
+    if (authError || !data.user) {
+      setError(authError?.message || 'Registration failed. Please try again.')
+      setLoading(false)
+      return
+    }
+
+    await supabase.from('users').insert({
+      id: data.user.id,
+      email: formData.email,
+      role: 'Managing Staff' as const,
+      is_onboarded: false,
+      is_approved: false,
+    })
+
+    setSuccess(true)
+    setTimeout(() => router.push('/onboarding'), 1400)
+  }
+
+  return (
+    <div className="min-h-screen flex bg-white">
+      {/* Left — dark brand panel */}
+      <div className="hidden lg:flex w-[440px] shrink-0 bg-[#0f0f0f] flex-col justify-between px-12 py-14">
+        <div>
+          <div className="flex items-center gap-3 mb-20">
+            <div className="w-8 h-8 rounded bg-[#4caf6e] flex items-center justify-center">
+              <span className="text-white text-[0.95rem] font-bold">M</span>
+            </div>
+            <span className="text-white text-[1.1rem] font-semibold tracking-tight">Malo</span>
+          </div>
+
+          <h2 className="text-white text-[2.1rem] font-bold tracking-[-0.04em] leading-[1.15] mb-5">
+            Your property,<br />your <span className="text-[#4caf6e]">control.</span>
+          </h2>
+          <p className="text-zinc-500 text-[0.85rem] leading-relaxed max-w-[260px]">
+            Register your building and get full oversight of residents, visitors, and staff.
+          </p>
+
+          <div className="flex flex-col gap-4 mt-14">
+            {['Resident management', 'Visitor access control', 'Staff oversight', 'Reports & analytics'].map((item, i) => (
+              <div key={i} className="flex items-center gap-3 text-[0.82rem] text-zinc-500">
+                <div className="w-1 h-1 rounded-full bg-[#4caf6e]" />
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="text-zinc-700 text-[0.7rem] tracking-widest uppercase" suppressHydrationWarning>
+          Malo &copy; {new Date().getFullYear()}
+        </p>
+      </div>
+
+      {/* Right — form */}
+      <div className="flex-1 flex items-center justify-center px-8 py-16 bg-white">
+        <motion.div
+          className="w-full max-w-[360px] relative"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <AnimatePresence>
+            {success && (
+              <motion.div
+                className="absolute inset-0 bg-white flex flex-col items-center justify-center gap-4 z-10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="w-16 h-16 rounded-full border border-zinc-100 flex items-center justify-center bg-zinc-50">
+                  <Check size={28} className="text-[#4caf6e]" strokeWidth={2} />
+                </div>
+                <div className="text-center">
+                  <p className="text-zinc-900 font-semibold text-[1.1rem] tracking-tight">Account created</p>
+                  <p className="text-zinc-400 text-[0.82rem] mt-1">Setting up your profile...</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2.5 mb-12 lg:hidden">
+            <div className="w-7 h-7 rounded bg-[#4caf6e] flex items-center justify-center">
+              <span className="text-white text-[0.8rem] font-bold">M</span>
+            </div>
+            <span className="text-zinc-900 text-[1rem] font-semibold">Malo</span>
+          </div>
+
+          <p className="text-[0.7rem] font-semibold text-zinc-400 tracking-[0.15em] uppercase mb-3">Admin Portal</p>
+          <h1 className="text-[2rem] font-bold text-zinc-900 tracking-[-0.03em] leading-tight mb-10">Create account</h1>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+            <div>
+              <label className="block text-[0.7rem] font-semibold text-zinc-400 tracking-[0.12em] uppercase mb-2">Email</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                className="w-full bg-transparent border-0 border-b border-zinc-200 px-0 py-3 text-[0.95rem] text-zinc-900 outline-none focus:border-zinc-900 transition-colors duration-200 placeholder:text-zinc-300"
+                placeholder="admin@yourproperty.com"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-[0.7rem] font-semibold text-zinc-400 tracking-[0.12em] uppercase mb-2">Password</label>
+              <input
+                type="password"
+                value={formData.password}
+                onChange={e => setFormData({ ...formData, password: e.target.value })}
+                className="w-full bg-transparent border-0 border-b border-zinc-200 px-0 py-3 text-[0.95rem] text-zinc-900 outline-none focus:border-zinc-900 transition-colors duration-200 placeholder:text-zinc-300"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-[0.7rem] font-semibold text-zinc-400 tracking-[0.12em] uppercase mb-2">Confirm Password</label>
+              <input
+                type="password"
+                value={formData.confirmPassword}
+                onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                className="w-full bg-transparent border-0 border-b border-zinc-200 px-0 py-3 text-[0.95rem] text-zinc-900 outline-none focus:border-zinc-900 transition-colors duration-200 placeholder:text-zinc-300"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            {error && <p className="text-[0.82rem] text-rose-500">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 mt-2 bg-zinc-900 text-white text-[0.88rem] font-semibold tracking-wide hover:bg-zinc-800 transition-colors duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loading && <Loader2 size={15} className="animate-spin" />}
+              {loading ? 'Creating account...' : 'Create Account'}
+            </button>
+          </form>
+
+          <p className="mt-8 text-[0.82rem] text-zinc-400">
+            Already have an account?{' '}
+            <Link href="/admin/login" className="text-zinc-900 font-semibold hover:underline">Sign in</Link>
+          </p>
+        </motion.div>
+      </div>
+    </div>
+  )
+}

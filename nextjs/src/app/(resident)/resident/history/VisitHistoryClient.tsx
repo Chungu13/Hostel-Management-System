@@ -48,7 +48,7 @@ export default function VisitHistoryClient({ visits }: { visits: Visit[] }) {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search by visitor or code…"
-          className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-zinc-200 rounded-xl outline-none focus:border-emerald-500 focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] transition"
+          className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-zinc-200 rounded-md outline-none focus:border-emerald-500 focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] transition"
         />
       </div>
 
@@ -98,7 +98,7 @@ export default function VisitHistoryClient({ visits }: { visits: Visit[] }) {
               onClick={() => setSelected(null)}
             />
             <motion.div
-              className="fixed inset-x-4 bottom-0 z-[500] bg-white rounded-t-[24px] p-6 pb-10 max-w-md mx-auto md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[24px] md:max-w-sm md:w-full"
+              className="fixed inset-x-4 bottom-0 z-[500] bg-white rounded-t-[24px] p-6 pb-10 max-w-md mx-auto md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-md md:max-w-sm md:w-full"
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0 }}
@@ -112,7 +112,7 @@ export default function VisitHistoryClient({ visits }: { visits: Visit[] }) {
               </div>
 
               <div className="flex justify-center mb-5">
-                <div className="p-3 bg-zinc-50 rounded-2xl border border-zinc-100">
+                <div className="p-3 bg-zinc-50 rounded-md border border-zinc-100">
                   <QRCodeSVG value={selected.visit_code} size={140} />
                 </div>
               </div>

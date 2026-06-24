@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Users, ShieldCheck, LogOut, UserCircle,
-  History, FileText, Menu, X, ChevronRight, Bell,
+  History, FileText, Menu, X, Bell,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
@@ -57,7 +57,9 @@ export default function Sidebar({ role, name, email }: Props) {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/login')
+    if (role === 'Managing Staff') router.push('/admin/login')
+    else if (role === 'Security Staff') router.push('/security/login')
+    else router.push('/login')
   }
 
   return (
@@ -65,55 +67,55 @@ export default function Sidebar({ role, name, email }: Props) {
       <button
         onClick={() => setIsOpen(true)}
         aria-label="Open menu"
-        className="fixed left-5 top-5 z-[300] flex h-[42px] w-[42px] items-center justify-center rounded-xl border border-zinc-200 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition hover:-translate-y-[1px] hover:bg-zinc-50"
+        className="fixed left-5 top-5 z-[300] flex h-10 w-10 items-center justify-center border border-zinc-200 bg-white transition hover:bg-zinc-50"
       >
-        <Menu size={18} className="text-zinc-700" />
+        <Menu size={17} className="text-zinc-700" />
       </button>
 
       <AnimatePresence>
         {isOpen && (
           <>
             <motion.div
-              className="fixed inset-0 z-[400] bg-black/15 backdrop-blur-[2px]"
+              className="fixed inset-0 z-[400] bg-black/10"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.18 }}
               onClick={() => setIsOpen(false)}
             />
             <motion.aside
-              className="fixed left-0 top-0 z-[500] flex h-screen w-[260px] flex-col border-r border-zinc-200 bg-white px-4 py-6 shadow-[4px_0_32px_rgba(0,0,0,0.08)]"
+              className="fixed left-0 top-0 z-[500] flex h-screen w-[256px] flex-col border-r border-zinc-100 bg-white px-4 py-6"
               initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             >
               {/* Brand */}
-              <div className="mb-8 flex items-center justify-between px-2">
+              <div className="mb-9 flex items-center justify-between px-1">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-[34px] w-[34px] items-center justify-center rounded-[9px] bg-gradient-to-br from-emerald-600 to-emerald-300 shadow-[0_2px_8px_rgba(16,185,129,0.28)]">
-                    <span className="text-[1rem] font-bold text-white">M</span>
+                  <div className="flex h-8 w-8 items-center justify-center rounded bg-[#4caf6e]">
+                    <span className="text-[0.9rem] font-bold text-white">M</span>
                   </div>
-                  <span className="text-[1.15rem] font-bold tracking-[-0.02em] text-zinc-900">Malo</span>
+                  <span className="text-[1.05rem] font-semibold tracking-tight text-zinc-900">Malo</span>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 transition hover:bg-zinc-100"
+                  className="flex h-7 w-7 items-center justify-center border border-zinc-200 transition hover:bg-zinc-50"
                 >
-                  <X size={14} className="text-zinc-600" />
+                  <X size={13} className="text-zinc-500" />
                 </button>
               </div>
 
               {/* User card */}
-              <div className="mb-6 flex items-center gap-2.5 rounded-[14px] border border-zinc-200 bg-zinc-50 px-3.5 py-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-emerald-600/15 text-[0.85rem] font-bold text-emerald-600">
+              <div className="mb-7 flex items-center gap-2.5 border-b border-zinc-100 pb-5 px-1">
+                <div className="flex h-8 w-8 items-center justify-center bg-zinc-100 text-[0.8rem] font-bold text-zinc-700">
                   {initials}
                 </div>
-                <div>
-                  <div className="text-[0.85rem] font-semibold leading-tight text-zinc-900">{name || email}</div>
-                  <div className="text-[0.72rem] text-zinc-400">{role}</div>
+                <div className="min-w-0">
+                  <div className="text-[0.85rem] font-semibold leading-tight text-zinc-900 truncate">{name || email}</div>
+                  <div className="text-[0.7rem] text-zinc-400">{role}</div>
                 </div>
               </div>
 
-              <div className="mb-1.5 px-2 text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-zinc-400">Menu</div>
+              <p className="mb-2 px-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-zinc-300">Navigation</p>
 
-              <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
+              <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
                 {menuItems.map(item => {
                   const Icon = item.icon
                   const isActive = pathname === item.path
@@ -123,39 +125,38 @@ export default function Sidebar({ role, name, email }: Props) {
                       href={item.path}
                       onClick={() => setIsOpen(false)}
                       className={[
-                        'group flex items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-[0.875rem] font-medium transition',
+                        'flex items-center gap-2.5 px-3 py-2.5 text-[0.85rem] font-medium transition-colors',
                         isActive
-                          ? 'bg-emerald-600/10 text-emerald-600 font-semibold'
-                          : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900',
+                          ? 'bg-zinc-900 text-white'
+                          : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900',
                       ].join(' ')}
                     >
-                      <Icon className="h-[18px] w-[18px] shrink-0" />
+                      <Icon className="h-4 w-4 shrink-0" />
                       <span>{item.label}</span>
-                      {isActive && <ChevronRight size={14} className="ml-auto text-emerald-600" />}
                     </Link>
                   )
                 })}
               </nav>
 
-              <div className="mt-2 border-t border-zinc-200 pt-4">
+              <div className="mt-3 border-t border-zinc-100 pt-4 flex flex-col gap-0.5">
                 <Link
                   href={profilePath}
                   onClick={() => setIsOpen(false)}
                   className={[
-                    'flex w-full items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-[0.875rem] font-medium transition',
+                    'flex items-center gap-2.5 px-3 py-2.5 text-[0.85rem] font-medium transition-colors',
                     pathname === profilePath
-                      ? 'bg-emerald-600/10 text-emerald-600 font-semibold'
-                      : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900',
+                      ? 'bg-zinc-900 text-white'
+                      : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900',
                   ].join(' ')}
                 >
-                  <UserCircle size={18} />
+                  <UserCircle size={16} />
                   <span>My Profile</span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="mt-1 flex w-full items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-[0.875rem] font-medium text-rose-500 transition hover:bg-rose-50 hover:text-rose-600"
+                  className="flex w-full items-center gap-2.5 px-3 py-2.5 text-[0.85rem] font-medium text-zinc-400 transition-colors hover:bg-zinc-50 hover:text-zinc-900"
                 >
-                  <LogOut size={18} />
+                  <LogOut size={16} />
                   <span>Sign Out</span>
                 </button>
               </div>

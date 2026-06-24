@@ -60,13 +60,13 @@ export default function SecurityDashboard() {
           <p className="m-0 text-sm text-zinc-400">Monitor and verify visitor access.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-[0.8rem] font-medium text-zinc-500 shadow-sm">
+          <div className="inline-flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-3.5 py-2 text-[0.8rem] font-medium text-zinc-500 shadow-sm">
             <Calendar size={14} />{todayLabel}
           </div>
           <button
             onClick={toggleDuty}
             disabled={toggling}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${staff?.on_duty ? 'bg-emerald-600 text-white shadow-[0_4px_12px_rgba(16,185,129,0.3)]' : 'bg-zinc-100 text-zinc-600'}`}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition ${staff?.on_duty ? 'bg-emerald-600 text-white shadow-[0_4px_12px_rgba(16,185,129,0.3)]' : 'bg-zinc-100 text-zinc-600'}`}
           >
             {staff?.on_duty ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
             {staff?.on_duty ? 'On Duty' : 'Off Duty'}
@@ -84,9 +84,9 @@ export default function SecurityDashboard() {
             key={label}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative overflow-hidden rounded-[18px] border border-black/5 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)]"
+            className="relative overflow-hidden rounded-md border border-black/5 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)]"
           >
-            <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-[10px] ${bg}`}>
+            <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-md ${bg}`}>
               <Icon size={20} className={color} />
             </div>
             <div className="mb-1 text-[2rem] font-bold tracking-[-0.03em] leading-none text-zinc-900">{value}</div>
@@ -98,8 +98,8 @@ export default function SecurityDashboard() {
 
       <div className="card max-w-md">
         <h2 className="section-title mb-4">Quick Actions</h2>
-        <a href="/security/verify" className="flex items-center gap-3 p-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition group">
-          <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+        <a href="/security/verify" className="flex items-center gap-3 p-4 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition group">
+          <div className="w-10 h-10 rounded bg-white/20 flex items-center justify-center">
             <ShieldCheck size={20} />
           </div>
           <div className="flex-1">

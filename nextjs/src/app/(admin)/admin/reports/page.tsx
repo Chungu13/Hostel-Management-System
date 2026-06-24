@@ -5,7 +5,7 @@ import { FileText } from 'lucide-react'
 export default async function ReportsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect('/admin/login')
 
   const { data: profile } = await supabase.from('users').select('property_id').eq('id', user.id).single()
 
@@ -90,7 +90,7 @@ export default async function ReportsPage() {
           <h2 className="section-title mb-4">Visit Request Status Breakdown</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {Object.entries(statusCounts).map(([status, count]) => (
-              <div key={status} className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 text-center">
+              <div key={status} className="bg-zinc-50 border border-zinc-200 rounded-md p-4 text-center">
                 <div className="text-2xl font-bold text-zinc-900 mb-1">{count}</div>
                 <div className="text-xs text-zinc-500">{status}</div>
               </div>

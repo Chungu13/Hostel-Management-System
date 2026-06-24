@@ -92,13 +92,13 @@ export default function VerifyVisitorPage() {
               value={code}
               onChange={e => setCode(e.target.value.toUpperCase())}
               placeholder="Enter visit code…"
-              className="w-full pl-9 pr-3 py-2.5 text-sm font-mono text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] transition"
+              className="w-full pl-9 pr-3 py-2.5 text-sm font-mono text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-md outline-none focus:border-emerald-500 focus:bg-white focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] transition"
             />
           </div>
           <button
             type="submit"
             disabled={loading || !code.trim()}
-            className="px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition disabled:opacity-50"
+            className="px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700 transition disabled:opacity-50"
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : 'Look up'}
           </button>
@@ -144,19 +144,19 @@ export default function VerifyVisitorPage() {
                 <button
                   onClick={handleVerify}
                   disabled={verifying}
-                  className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition disabled:opacity-60"
+                  className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700 transition disabled:opacity-60"
                 >
                   {verifying ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
                   {verifying ? 'Verifying…' : 'Mark as Verified'}
                 </button>
               )}
               {(result.status === 'Verified' || verified) && (
-                <div className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-xl border border-emerald-200">
+                <div className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-md border border-emerald-200">
                   <CheckCircle2 size={16} /> Access Verified
                 </div>
               )}
               {result.status === 'Expired' && (
-                <div className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-zinc-500 bg-zinc-100 rounded-xl">
+                <div className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-zinc-500 bg-zinc-100 rounded-md">
                   Pass Expired — Access Denied
                 </div>
               )}

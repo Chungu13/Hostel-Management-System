@@ -25,11 +25,13 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
 
   // Public paths — no auth needed
-  const publicPaths = ['/login', '/register', '/guest-pass']
+  const publicPaths = ['/login', '/register', '/admin/login', '/admin/register', '/security/login', '/security/register', '/guest-pass']
   if (publicPaths.some(p => path.startsWith(p))) return supabaseResponse
 
-  // Unauthenticated → login
+  // Unauthenticated → role-appropriate login
   if (!user) {
+    if (path.startsWith('/admin')) return NextResponse.redirect(new URL('/admin/login', request.url))
+    if (path.startsWith('/security')) return NextResponse.redirect(new URL('/security/login', request.url))
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
@@ -55,13 +57,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/pending-approval', request.url))
   }
 
-  // Role-based path protection
+  // Role-based path protection — redirect to the correct portal's login
   const role = profile?.role
   if (path.startsWith('/admin') && role !== 'Managing Staff') {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/admin/login', request.url))
   }
   if (path.startsWith('/security') && role !== 'Security Staff') {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/security/login', request.url))
   }
   if (path.startsWith('/resident') && role !== 'Resident') {
     return NextResponse.redirect(new URL('/login', request.url))

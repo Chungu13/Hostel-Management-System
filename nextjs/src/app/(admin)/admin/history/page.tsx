@@ -5,7 +5,7 @@ import { History, Calendar, CheckCircle2, Clock, XCircle } from 'lucide-react'
 export default async function AdminHistoryPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect('/admin/login')
 
   const { data: profile } = await supabase.from('users').select('property_id').eq('id', user.id).single()
 

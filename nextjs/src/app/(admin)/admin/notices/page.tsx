@@ -5,7 +5,7 @@ import NoticesClient from './NoticesClient'
 export default async function NoticesPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect('/admin/login')
 
   const { data: profile } = await supabase.from('users').select('property_id').eq('id', user.id).single()
 
