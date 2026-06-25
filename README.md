@@ -10,13 +10,6 @@
 
 ---
 
-## Demo
-
-https://www.loom.com/share/202d7252a8864fed9cad0cd42dd49113
-
-> Covers the full visitor pass flow — resident generates a QR pass, visitor presents it at the gate, security staff scans or enters the code to verify entry.
-
----
 
 ## Live Demo
 
