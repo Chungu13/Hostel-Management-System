@@ -68,15 +68,16 @@ export default function OnboardingPage() {
       }).eq('id', user.id)
       router.push('/security/dashboard')
     } else {
+      // Update users first so property_id is set before the residents RLS check runs
+      await supabase.from('users').update({
+        full_name: formData.name, phone: formData.phone, ic: formData.ic,
+        property_id: formData.propertyId, is_onboarded: true,
+      }).eq('id', user.id)
       await supabase.from('residents').insert({
         user_id: user.id, name: formData.name, email: user.email ?? '',
         phone: formData.phone, ic: formData.ic, gender: formData.gender,
         room: formData.room, property_id: formData.propertyId, approved: false,
       })
-      await supabase.from('users').update({
-        full_name: formData.name, phone: formData.phone, ic: formData.ic,
-        property_id: formData.propertyId, is_onboarded: true,
-      }).eq('id', user.id)
       router.push('/pending-approval')
     }
     setLoading(false)

@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { History, CheckCircle2, Calendar } from 'lucide-react'
 
 export default async function SecurityHistoryPage() {
   const supabase = await createClient()
@@ -20,31 +19,27 @@ export default async function SecurityHistoryPage() {
 
   return (
     <>
-      <header className="mb-7">
-        <h1 className="page-title flex items-center gap-2"><History size={24} className="text-zinc-400" /><span className="text-black">Verification Records</span></h1>
-        <p className="mt-1 text-sm text-zinc-400">All verified visitors for your property.</p>
+      <header className="mb-8">
+        <p className="text-[0.7rem] font-semibold text-zinc-400 tracking-[0.14em] uppercase mb-1">Security</p>
+        <h1 className="text-[1.85rem] font-bold text-zinc-900 tracking-[-0.03em]">Verification Records</h1>
       </header>
 
       {(records ?? []).length === 0 ? (
-        <div className="card text-center py-12">
-          <History size={32} className="text-zinc-200 mx-auto mb-3" />
-          <p className="text-sm text-zinc-400">No verification records yet.</p>
-        </div>
+        <p className="text-[0.875rem] text-zinc-400 py-10">No verification records yet.</p>
       ) : (
-        <div className="flex flex-col gap-3 max-w-2xl">
+        <div className="border border-zinc-100 divide-y divide-zinc-100 bg-white max-w-2xl">
           {(records ?? []).map(r => (
-            <div key={r.id} className="card flex items-center gap-4">
-              <div className="w-10 h-10 rounded-md bg-emerald-600/10 flex items-center justify-center">
-                <CheckCircle2 size={18} className="text-emerald-600" />
+            <div key={r.id} className="flex items-center gap-4 px-5 py-4">
+              <div className="w-8 h-8 bg-zinc-100 flex items-center justify-center text-[0.8rem] font-bold text-zinc-700 shrink-0">
+                {(r.resident_name ?? 'U')[0].toUpperCase()}
               </div>
-              <div className="flex-1">
-                <div className="text-sm font-semibold text-zinc-900">{r.resident_name ?? 'Unknown'}</div>
-                <div className="text-xs text-zinc-400 font-mono">{r.visit_code}</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[0.88rem] font-semibold text-zinc-900">{r.resident_name ?? 'Unknown'}</div>
+                <div className="text-[0.75rem] font-mono text-zinc-400">{r.visit_code}</div>
               </div>
-              <div className="text-right">
-                <div className="text-xs font-medium text-emerald-600">{r.status}</div>
-                <div className="text-[0.7rem] text-zinc-400 flex items-center gap-1">
-                  <Calendar size={10} />
+              <div className="text-right shrink-0">
+                <div className="text-[0.72rem] font-semibold tracking-wide text-[#4caf6e]">{r.status}</div>
+                <div className="text-[0.7rem] text-zinc-400 mt-0.5">
                   {new Date(r.verified_at).toLocaleString()}
                 </div>
               </div>

@@ -9,11 +9,13 @@ export default async function ResidentLayout({ children }: { children: React.Rea
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role, full_name, email')
+    .select('role, full_name, email, is_approved, is_onboarded')
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'Resident') redirect('/login')  // residents redirect to resident portal
+  if (profile?.role !== 'Resident') redirect('/login')
+  if (!profile?.is_onboarded) redirect('/onboarding')
+  if (!profile?.is_approved) redirect('/pending-approval')
 
   return (
     <div className="flex min-h-screen bg-[#fafafa]">

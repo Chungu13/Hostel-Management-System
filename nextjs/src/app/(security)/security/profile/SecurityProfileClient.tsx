@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { User, Phone, MapPin, Loader2, Check } from 'lucide-react'
+import { Loader2, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { motion } from 'framer-motion'
 
 interface Props { userId: string; profile: Record<string, any>; staff: Record<string, any> }
 
@@ -39,40 +38,50 @@ export default function SecurityProfileClient({ userId, profile, staff }: Props)
 
   return (
     <>
-      <header className="mb-9">
-        <h1 className="page-title"><span className="text-black">My Profile</span></h1>
-        <p className="mt-1 text-sm text-zinc-400">Update your security staff profile.</p>
+      <header className="mb-8">
+        <p className="text-[0.7rem] font-semibold text-zinc-400 tracking-[0.14em] uppercase mb-1">Security</p>
+        <h1 className="text-[1.85rem] font-bold text-zinc-900 tracking-[-0.03em]">My Profile</h1>
       </header>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg">
-        <div className="card mb-5 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-md bg-emerald-600/10 flex items-center justify-center text-emerald-600 font-bold text-xl">{initials}</div>
+      <div className="max-w-lg">
+        <div className="border border-zinc-100 bg-white px-6 py-5 mb-6 flex items-center gap-4">
+          <div className="w-12 h-12 bg-zinc-100 flex items-center justify-center text-[1.1rem] font-bold text-zinc-700 shrink-0">
+            {initials}
+          </div>
           <div>
-            <div className="font-semibold text-zinc-900">{formData.full_name || 'Unnamed'}</div>
-            <div className="text-sm text-zinc-400">{profile.email}</div>
-            <div className={`mt-1 text-xs font-medium ${staff.on_duty ? 'text-emerald-600' : 'text-zinc-400'}`}>{staff.on_duty ? '● On Duty' : '○ Off Duty'}</div>
+            <div className="text-[0.95rem] font-semibold text-zinc-900">{formData.full_name || 'Unnamed'}</div>
+            <div className="text-[0.78rem] text-zinc-400">{profile.email}</div>
+            <div className={`mt-1 text-[0.72rem] font-semibold tracking-wide ${staff.on_duty ? 'text-[#4caf6e]' : 'text-zinc-300'}`}>
+              {staff.on_duty ? 'On Duty' : 'Off Duty'}
+            </div>
           </div>
         </div>
 
-        <form onSubmit={handleSave} className="card flex flex-col gap-4">
+        <form onSubmit={handleSave} className="border border-zinc-100 bg-white px-6 py-6 flex flex-col gap-7">
           {[
-            { label: 'Full Name', key: 'full_name', icon: User, placeholder: 'Your name' },
-            { label: 'Phone', key: 'phone', icon: Phone, placeholder: '+260XXXXXXXXX' },
-            { label: 'NRC / ID', key: 'ic', icon: User, placeholder: '######/##/#' },
-            { label: 'Address', key: 'address', icon: MapPin, placeholder: 'Your address' },
-          ].map(({ label, key, icon: Icon, placeholder }) => (
-            <div key={key} className="flex flex-col gap-1.5">
-              <label className="text-[0.78rem] font-medium text-zinc-500 tracking-[0.06em] uppercase">{label}</label>
-              <div className="relative">
-                <Icon className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-300 w-4 h-4" />
-                <input value={formData[key as keyof typeof formData]} onChange={e => setFormData(p => ({ ...p, [key]: e.target.value }))} placeholder={placeholder} className="w-full pl-9 pr-3 py-2.5 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-md outline-none focus:border-emerald-500 focus:bg-white transition" />
-              </div>
+            { label: 'Full Name', key: 'full_name', placeholder: 'Your name' },
+            { label: 'Phone', key: 'phone', placeholder: '+260XXXXXXXXX' },
+            { label: 'NRC / ID', key: 'ic', placeholder: '######/##/#' },
+            { label: 'Address', key: 'address', placeholder: 'Your address' },
+          ].map(({ label, key, placeholder }) => (
+            <div key={key}>
+              <label className="block text-[0.7rem] font-semibold text-zinc-400 tracking-[0.12em] uppercase mb-2">{label}</label>
+              <input
+                value={formData[key as keyof typeof formData]}
+                onChange={e => setFormData(p => ({ ...p, [key]: e.target.value }))}
+                placeholder={placeholder}
+                className="w-full bg-transparent border-0 border-b border-zinc-200 px-0 py-2.5 text-[0.9rem] text-zinc-900 outline-none focus:border-zinc-900 transition-colors placeholder:text-zinc-300"
+              />
             </div>
           ))}
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[0.78rem] font-medium text-zinc-500 tracking-[0.06em] uppercase">Gender</label>
-            <select value={formData.gender} onChange={e => setFormData(p => ({ ...p, gender: e.target.value }))} className="w-full px-3 py-2.5 text-sm text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-md outline-none focus:border-emerald-500 transition">
+          <div>
+            <label className="block text-[0.7rem] font-semibold text-zinc-400 tracking-[0.12em] uppercase mb-2">Gender</label>
+            <select
+              value={formData.gender}
+              onChange={e => setFormData(p => ({ ...p, gender: e.target.value }))}
+              className="w-full bg-transparent border-0 border-b border-zinc-200 px-0 py-2.5 text-[0.9rem] text-zinc-900 outline-none focus:border-zinc-900 transition-colors"
+            >
               <option value="">Select gender</option>
               <option>Male</option>
               <option>Female</option>
@@ -80,14 +89,18 @@ export default function SecurityProfileClient({ userId, profile, staff }: Props)
             </select>
           </div>
 
-          {error && <p className="text-sm text-rose-500 bg-rose-50 border border-rose-200 rounded-md px-4 py-3">{error}</p>}
+          {error && <p className="text-[0.82rem] text-rose-500">{error}</p>}
 
-          <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-white rounded-md bg-gradient-to-br from-emerald-600 to-emerald-500 transition hover:opacity-95 disabled:opacity-60">
-            {loading ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : null}
-            {saved ? 'Saved!' : loading ? 'Saving…' : 'Save Changes'}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 py-3 text-[0.88rem] font-semibold text-white bg-zinc-900 hover:bg-zinc-800 transition-colors disabled:opacity-50"
+          >
+            {loading && <Loader2 size={15} className="animate-spin" />}
+            {saved ? <><Check size={15} /> Saved</> : loading ? 'Saving…' : 'Save Changes'}
           </button>
         </form>
-      </motion.div>
+      </div>
     </>
   )
 }
