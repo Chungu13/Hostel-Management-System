@@ -104,9 +104,9 @@ export default function SecurityDashboard() {
         <p className="text-[0.7rem] font-semibold text-zinc-400 tracking-[0.14em] uppercase mb-3">Quick Actions</p>
         <a
           href="/security/verify"
-          className="flex items-center gap-3 px-4 py-4 bg-[#4caf6e] hover:bg-[#3d9e5f] transition-colors group"
+          className="flex items-center gap-3 px-4 py-4 bg-[#4caf6e] hover:bg-[#3d9e5f] transition-colors"
         >
-          <div className="w-9 h-9 bg-white/10 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 bg-white/20 flex items-center justify-center shrink-0">
             <ShieldCheck size={16} className="text-white" />
           </div>
           <div>
@@ -115,7 +115,6 @@ export default function SecurityDashboard() {
           </div>
         </a>
       </div>
-
     </>
   )
 }

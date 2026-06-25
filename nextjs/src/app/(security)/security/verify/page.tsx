@@ -99,7 +99,6 @@ export default function VerifyVisitorPage() {
       </header>
 
       <div className="max-w-md">
-        {/* Search bar + scan button */}
         <form onSubmit={lookup} className="flex gap-3 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-zinc-300 w-4 h-4" />
@@ -119,7 +118,6 @@ export default function VerifyVisitorPage() {
           </button>
         </form>
 
-        {/* Scan QR toggle */}
         <button
           type="button"
           onClick={() => setScanning(v => !v)}
@@ -129,7 +127,6 @@ export default function VerifyVisitorPage() {
           {scanning ? 'Close Scanner' : 'Scan QR Code'}
         </button>
 
-        {/* Camera scanner */}
         <AnimatePresence>
           {scanning && (
             <motion.div
@@ -144,9 +141,7 @@ export default function VerifyVisitorPage() {
           )}
         </AnimatePresence>
 
-        {error && (
-          <p className="text-[0.82rem] text-rose-500 mb-5">{error}</p>
-        )}
+        {error && <p className="text-[0.82rem] text-rose-500 mb-5">{error}</p>}
 
         <AnimatePresence>
           {result && (
