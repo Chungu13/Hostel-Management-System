@@ -33,14 +33,16 @@ All three portals run on a single deployment:
 ## Demo Credentials
 
 ### Admin (Managing Staff)
-- **Email:** chungumuloshi5086@gmail.com
-- **Password:** yourpassword
+- **Email:** testadmin@gmail.com
+- **Password:** Test@1234
 
 ### Resident
 - **Email:** testresident@gmail.com
-- **Password:** yourpassword
+- **Password:** Resident@1234
 
 ### Security Staff
+- **Name:** John Banda
+- **Passcode:** 1234
 Security staff accounts are created by the admin. Login uses **name + passkey** (not email), at the Security Portal above.
 
 ---
