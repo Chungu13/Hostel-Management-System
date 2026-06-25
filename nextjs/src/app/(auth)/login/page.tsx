@@ -41,7 +41,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex bg-white">
-      {/* Left — dark brand panel */}
       <div className="hidden lg:flex w-[440px] shrink-0 bg-[#0f0f0f] flex-col justify-between px-12 py-14">
         <div>
           <div className="flex items-center gap-3 mb-20">
@@ -72,7 +71,6 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* Right — form */}
       <div className="flex-1 flex items-center justify-center px-8 py-16 bg-white">
         <motion.div
           className="w-full max-w-[360px]"
@@ -80,7 +78,6 @@ export default function LoginPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         >
-          {/* Mobile logo */}
           <div className="flex items-center gap-2.5 mb-12 lg:hidden">
             <div className="w-7 h-7 rounded bg-[#4caf6e] flex items-center justify-center">
               <span className="text-white text-[0.8rem] font-bold">M</span>
